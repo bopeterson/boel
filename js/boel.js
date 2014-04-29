@@ -110,11 +110,11 @@ function init() {
 	background.name = "background";
 	stage.addChild(background);
 		
-	debugText = new createjs.Text("", "10px Helvetica", "#000");
+	debugText = new createjs.Text("", "12px Monaco", "#000");
 	stage.addChild(debugText);
 	debugText.x=20;
-	debugText.y=20;
-	debugText.text="";
+	debugText.y=canvas.height-20;
+	debugText.text="Debug on";
 	
 	//loading assets
 	queue=new createjs.LoadQueue(false);
@@ -149,7 +149,7 @@ function handleBackgroundTouch(event) {
 function printDebug(text) {
 	if (debug) {
 		debugText.text+=text;
-		debugText.text=debugText.text.substring(debugText.text.length-140,debugText.text.length);		
+		debugText.text=debugText.text.substring(debugText.text.length-136,debugText.text.length);		
 	}
 }
 
