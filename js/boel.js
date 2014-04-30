@@ -54,7 +54,7 @@ function rgb(r,g,b) {
 
 function changeCanvasColor(rTo,gTo,bTo,ticks) {
 	//this function relies on global variables rCanvas, gCanvas, bCanvas, rDelta, gDelta, bDelta, startChangeCanvasColor,finishedChangeCanvasColor
-	//do the following to start a transition to new background color:
+	//do the following to start a transition to new background color: 
 	//startChangeCanvasColor=true;
 	//finishedChangeCanvasColor=false;
 	//rCanvasNew=integer from 0 to 255;
