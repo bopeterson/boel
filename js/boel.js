@@ -17,6 +17,8 @@ var update = true;
 
 var dad,dog,boel,cake;
 
+var cakeparts,cakepieces;
+
 
 var debugText;
 
@@ -123,7 +125,19 @@ function init() {
 	queue.addEventListener("error", handleFileError);
 	queue.addEventListener("fileload", handleFileLoad);
 	//weird: seems like no space is allowed before | in src:"assets/bark.mp3| assets/bark.ogg
-	var files=[{id:"boel", src:"assets/boel.png"},{id:"dad", src:"assets/dad.png"},{id:"cake", src:"assets/cake.png"},{id:"dog", src:"assets/dog.png"},{id:"button", src:"assets/button.png"},{id:"daisy", src:"assets/daisy.png"},{id:"dogs", src:"assets/dogsprites.png"}];
+	var simplefiles=[{id:"boel", src:"assets/boel.png"},{id:"dad", src:"assets/dad.png"},{id:"dog", src:"assets/dog.png"},{id:"button", src:"assets/button.png"},{id:"daisy", src:"assets/daisy.png"},{id:"dogs", src:"assets/dogsprites.png"}];
+	
+
+	cakeparts=["cake_base","cake_filling","cake_fillinglines","cake_outsidelines"];
+	cakepieces=6;
+	var cakefiles=buildcakefiles(cakeparts,cakepieces);
+
+	var files=simplefiles.concat(cakefiles);
+	
+	//for (var i=0;i<files.length;i++) {
+	//	alert(files[i]['src']);
+	//}
+	
 	queue.loadManifest(files);
 	filesToLoad=files.length;
 }
@@ -169,7 +183,7 @@ function handleComplete(event) {
 	//event triggered even if file not loaded
 	if (loadedFiles<filesToLoad) {
 		var div = document.getElementById("loader");
-		div.innerHTML = "Some resources were not loaded";
+		div.innerHTML = "Some resources were not loaded: "+(filesToLoad-loadedFiles);
 	}
 
 	//addDaisy();
@@ -181,7 +195,7 @@ function handleComplete(event) {
 	
 	addDad();
 	
-	addCake();
+	addCake(cakeparts,cakepieces);
 	
 	addButton();
 	
@@ -427,6 +441,8 @@ function restoreDad() {
 }
 
 function addCake() {
+	
+	/*
 	cake=new createjs.Bitmap(queue.getResult("cake"));
 	stage.addChild(cake);
 	cake.scaleStart=0.25;
@@ -441,15 +457,17 @@ function addCake() {
 	cake.name = "Tårta";
 	cake.focus=false;
 	cake.addEventListener("mousedown", handleCakeTouch);
-
+	*/
 
 }
 
 function restoreCake() {
+	/*
 	if (cake.focus) {
 		createjs.Tween.get(cake).to({x:cake.xStart, y: cake.yStart, scaleX:cake.scaleStart, scaleY:cake.scaleStart}, 400, createjs.Ease.linear);
 		cake.focus=false;
 	}
+	*/
 }
 
 
@@ -467,3 +485,27 @@ function addButton() {
 	
 	button.addEventListener("mousedown",handleButtonTouch);
 }
+
+
+function buildcakefiles(cakeparts,cakepieces) {	
+	var cakefiles=new Array((cakeparts.length+1)*cakepieces);
+	var shared=cakeparts[cakeparts.length-1];
+	var k=0;
+	for (var i=1;i<cakepieces+1;i++) {
+		for (var j=0;j<cakeparts.length-1;j++) {
+			cakefiles[k]={id:cakeparts[j]+i, src:"assets/"+cakeparts[j]+i+".png"};
+			k++;
+		}
+		var first=i;
+		var second=((i%cakepieces)+1);
+		var third=(i-2+cakepieces)%cakepieces+1;
+		var index=first+""+second;
+		cakefiles[k]={id:shared+index, src:"assets/"+shared+index+".png"};
+		k++;
+		index=first+""+third;
+		cakefiles[k]={id:shared+index, src:"assets/"+shared+index+".png"};
+		k++;
+	}
+	return cakefiles;
+}
+	
