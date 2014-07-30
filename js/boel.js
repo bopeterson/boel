@@ -184,6 +184,9 @@ function handleComplete(event) {
 	addCake();
 	
 	addButton();
+	
+	
+	addOldDog();
 
 	//setup almost complete, start the ticker
 	background.addEventListener("mousedown", handleBackgroundTouch);
@@ -251,6 +254,16 @@ function handleCakeTouch(event) {
 	cake.focus=true;
 	update=true;
 }
+
+function handleOldDogTouch(event) {
+	
+	oldDog.gotoAndPlay("walkright");
+	createjs.Tween.get(oldDog).to({x:event.stageX, y: event.stageY, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
+
+
+	update=true;
+}
+
 
 
 function handleButtonTouch(event) {
@@ -343,6 +356,7 @@ function addOldDog() {
 	oldDog.rotation=0;//180;//xxx
 	 
 	stage.addChild(oldDog);
+	oldDog.addEventListener("mousedown", handleOldDogTouch);
 
 }
 
