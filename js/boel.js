@@ -19,6 +19,7 @@ var dad,dog,boel,cake;
 
 var cakeparts,cakepieces;
 
+var cakefiles;
 
 var debugText;
 
@@ -130,7 +131,7 @@ function init() {
 
 	cakeparts=["cake_base","cake_filling","cake_fillinglines","cake_outsidelines"];
 	cakepieces=6;
-	var cakefiles=buildcakefiles(cakeparts,cakepieces);
+	cakefiles=buildcakefiles(cakeparts,cakepieces);
 
 	var files=simplefiles.concat(cakefiles);
 	
@@ -195,12 +196,12 @@ function handleComplete(event) {
 	
 	addDad();
 	
-	addCake(cakeparts,cakepieces);
+	addCake(cakeparts,cakepieces,cakefiles);
 	
 	addButton();
 	
 	
-	addOldDog();
+	//addOldDog();
 
 	//setup almost complete, start the ticker
 	background.addEventListener("mousedown", handleBackgroundTouch);
@@ -440,34 +441,73 @@ function restoreDad() {
 	}
 }
 
-function addCake() {
+//xxx test code
+function handleCakePieceTouch(event) {
+	event.target.visible=false;
+}
+
+function addCake(cakeparts,cakepieces,cakefiles) {
 	
-	/*
-	cake=new createjs.Bitmap(queue.getResult("cake"));
+	cake = new createjs.Container();
+	
+	//alltså, behöver en cake som är en multidimensionell array, som dels består av alla bitar och varje bit av 5? delar
+	//första index är bit, andra index är del. 
+	
+	var cakeComplete=new Array();
+	var k=0;
+	for (var i=0;i<cakepieces;i++) {
+		var onePiece=new Array(); 
+		for (var j=0;j<cakeparts.length+1;j++) { //+1 because cake_outsidelines doubled
+			var part=new createjs.Bitmap(queue.getResult(cakefiles[k]["id"]));
+			k++;
+			part.number=i+1;
+			onePiece.push(part);
+		}
+		cakeComplete.push(onePiece);
+	//xxx test code
+		cakeComplete[i][0].addEventListener("mousedown", handleCakePieceTouch);
+	//xxx test code		
+	
+	}
+	var pieceOrder=[3,4,2,5,1,6];
+	for (var i=0;i<cakeComplete.length;i++) {
+		for (var j=0;j<cakeComplete[i].length;j++) { //xxx ta bort -2
+			cake.addChild(cakeComplete[pieceOrder[i]-1][j]); //-1 becaues piece1 has index 0 etc
+		}
+	}
+				
+	//ok, hyfsat, men skulle behöva samla kakkonstruktion istället för att ha det så utspritt. 
+	
+	
+			
 	stage.addChild(cake);
 	cake.scaleStart=0.25;
 	cake.scaleX = cake.scaleY = cake.scale = cake.scaleStart;
-	cake.xStart=cake.scale*cake.image.width/2+20;
-	cake.yStart=cake.scale*cake.image.height/2+20;
+	
+	cake.width=cakeComplete[0][0].image.width;
+	cake.height=cakeComplete[0][0].image.height;
+	
+	cake.xStart=cake.scale*cake.width/2+20;
+	cake.yStart=cake.scale*cake.height/2+20;
 	cake.x = cake.xStart;
 	cake.y = cake.yStart;
 	cake.rotation = 0;
-	cake.regX = cake.image.width/2;
-	cake.regY = cake.image.height/2;
+	cake.regX = cake.width/2;
+	cake.regY = cake.height/2;
 	cake.name = "Tårta";
 	cake.focus=false;
 	cake.addEventListener("mousedown", handleCakeTouch);
-	*/
+	
 
 }
 
 function restoreCake() {
-	/*
+	
 	if (cake.focus) {
 		createjs.Tween.get(cake).to({x:cake.xStart, y: cake.yStart, scaleX:cake.scaleStart, scaleY:cake.scaleStart}, 400, createjs.Ease.linear);
 		cake.focus=false;
 	}
-	*/
+	
 }
 
 
@@ -488,7 +528,7 @@ function addButton() {
 
 
 function buildcakefiles(cakeparts,cakepieces) {	
-	var cakefiles=new Array((cakeparts.length+1)*cakepieces);
+	var cakefiles=new Array((cakeparts.length+1)*cakepieces); //+1 because cake_outsidelines doubled
 	var shared=cakeparts[cakeparts.length-1];
 	var k=0;
 	for (var i=1;i<cakepieces+1;i++) {
