@@ -1,11 +1,50 @@
 //coordinates:
 //bimaps and Sprites seem to get an original location at (0,0), with the upper left point as the reference
 //Shapes get an original position defined by the first two parameters of drawRect(-128,-128,256,256), with the upper left
-//corner as the reference. When bitmaps and shapes are moved by changing x and y, by this is considered a transform, 
+//corner as the reference. When bitmaps and shapes are moved by changing x and y, this is considered a transform, 
 //and they still keep their original coordinates. globalTolocal and localToglobal can be used to change between systems. 
 //The reference point can also be changed by changing regX and regY.
+
+/*
+
+
+boll i hörn
+visa boel i början, byt mot bord om man klickar tårta
+ljud???
+
+lös idé:
+slumpa fram x personer runt bord. 
+visa tårta med så många bitar
+en bit till varje person
+visa siffror
+
+Hur interagera?
+
+Peka på varje person, så får personen en bit.
+
+Eller dra en tårtbit till varje person
+
+tore, boel, pappa, mamma, morfar, hunden
+
+ok, något sådant. 
+
+Första steg: klicka på tårta för att "öppna" tårtleken.
+
+Sätt fyra pers runt bord. klicka på person för att person ska få bit. 
+
+Sätt ut siffra för varja person som fått bit. 
+
+Avlångt bord med personerna i profil, utom ev morfar på kanten
+
+
+
+
+*/
+
+
+
 	
-var debug=true;
+var debug=false;
 
 //variable definitions
 var canvas;
@@ -15,12 +54,21 @@ var queue;
 var offset;
 var update = true;
 
-var dad,dog,boel,cake;
+var ball,dog,boel,cake,table;
 
 var cakeparts,cakepieces;
 
 var cakefiles;
 
+
+var table_0007_granddad,table_0006_boel,table_0005_tore,table_0004_table,table_0003_tore_hand,table_0002_dog,table_0001_boel_hand,table_0000_granddad_hand;
+
+var cakepiecesound=new Array();
+
+var numbers=new Array();
+
+var cakeComplete=new Array(); //xxx kan bli problem med global variabel om man har en cake med sex bitar, en annan med 4 bitar. 
+var cakeStatus=new Array();
 var debugText;
 
 var loadedFiles=0;
@@ -104,6 +152,7 @@ function init() {
 	// enable touch interactions if supported on the current device:
 	createjs.Touch.enable(stage);
 
+
 	//the background is an almost invisible object, there to be able to click the background
 	background = new createjs.Shape();
 	background.graphics.beginFill("#FFFFFF").drawRect(0, 0, canvas.width, canvas.height);
@@ -117,23 +166,56 @@ function init() {
 	stage.addChild(debugText);
 	debugText.x=20;
 	debugText.y=canvas.height-20;
-	debugText.text="Debug on";
-	
+	if (debug) {
+		debugText.text="Debug on";
+	} else {
+		debugText="";
+	}
 	//loading assets
 	queue=new createjs.LoadQueue(false);
+	
+	
+	//xxx vad är skillnaden mellan dessa?
+	//createjs.Sound.initializeDefaultPlugins();
 	queue.installPlugin(createjs.Sound);
+	
 	queue.addEventListener("complete",handleComplete);
 	queue.addEventListener("error", handleFileError);
 	queue.addEventListener("fileload", handleFileLoad);
-	//weird: seems like no space is allowed before | in src:"assets/bark.mp3| assets/bark.ogg
-	var simplefiles=[{id:"boel", src:"assets/boel.png"},{id:"dad", src:"assets/dad.png"},{id:"dog", src:"assets/dog.png"},{id:"button", src:"assets/button.png"},{id:"daisy", src:"assets/daisy.png"},{id:"dogs", src:"assets/dogsprites.png"}];
-	
 
+	
+	//weird: seems like no space is allowed before | in src:"assets/bark.mp3| assets/bark.ogg
+	//var soundfiles=[];
+	//var soundfiles=[{id:"cakepiece1",src:"assets/cakepiece1.mp3"}];
+	var soundfiles=[{id:"cakepiece1",src:"assets/cakepiece1.mp3| assets/cakepiece1.ogg"},{id:"cakepiece2",src:"assets/cakepiece2.mp3| assets/cakepiece2.ogg"},{id:"cakepiece3",src:"assets/cakepiece3.mp3| assets/cakepiece3.ogg"},{id:"cakepiece4",src:"assets/cakepiece4.mp3| assets/cakepiece4.ogg"}];
+	
+	var simpleimagefiles=[{id:"boelstart", src:"assets/boelstart.png"},{id:"boel", src:"assets/boel.png"},{id:"ball", src:"assets/ball.png"},{id:"dog", src:"assets/dog.png"},{id:"button", src:"assets/button.png"},{id:"daisy", src:"assets/daisy.png"},{id:"dogs", src:"assets/dogsprites.png"},{id:"cake_plate", src:"assets/cake_plate.png"}];
+	
+	
+	var numberfiles=new Array();
+	for (var i=0;i<10;i++) {
+		numberfiles.push({id:i+"",src:"assets/"+i+".png"});
+	}
 	cakeparts=["cake_base","cake_filling","cake_fillinglines","cake_outsidelines"];
 	cakepieces=6;
 	cakefiles=buildcakefiles(cakeparts,cakepieces);
+	
+	var tableparts=["table_0007_granddad","table_0006_boel","table_0005_tore","table_0004_table","table_0003_tore_hand","table_0002_dog","table_0001_boel_hand","table_0000_granddad_hand"];
+	var tablefiles=new Array();
+	for (var i=0;i<tableparts.length;i++) {
+		tablefiles.push({id:tableparts[i],src:"assets/"+tableparts[i]+".png"});
+	}
+	
 
-	var files=simplefiles.concat(cakefiles);
+	var files=simpleimagefiles.concat(cakefiles,numberfiles,tablefiles,soundfiles);
+	
+	//xxx not a logical place for this code
+	cakepiecesound.push("nosound"); //quick fix to handel array starts with 0, but error prone
+	cakepiecesound.push("cakepiece1");
+	cakepiecesound.push("cakepiece2");
+	cakepiecesound.push("cakepiece3");
+	cakepiecesound.push("cakepiece4");
+	
 	
 	//for (var i=0;i<files.length;i++) {
 	//	alert(files[i]['src']);
@@ -191,14 +273,21 @@ function handleComplete(event) {
 	//createjs.Tween.get(daisy).to({alpha:0.5, y: daisy.y + 300}, 4000, createjs.Ease.linear);
 
 	addDog();
-
+	dog.visible=false;
 	addBoel();
-	
-	addDad();
+	boel.visible=false;
+	addBoelstart();
+	addBall();
+	addTable();
+
 	
 	addCake(cakeparts,cakepieces,cakefiles);
 	
+
 	addButton();
+	
+	addNumbers();
+	
 	
 	
 	//addOldDog();
@@ -224,8 +313,29 @@ function tick(event) {
 	}
 }
 
+
+function handleTable_0006_boelTouch(event) {
+	moveCakePiece(3,-200,-70);
+}
+
+function handleTable_0002_dogTouch(event) {
+	moveCakePiece(0,-80,280);
+}
+
+
+function handleTable_0007_granddadTouch(event) {
+	moveCakePiece(2,100,-150);
+}
+
+function handleTable_0005_toreTouch(event) {
+	moveCakePiece(1,230,50);
+}
+
+
+
+
 function handleDogTouch(event) {
-	restoreDad();
+	restoreBall();
 	restoreCake();
 	createjs.Tween.get(dog).to({x:canvas.width/2+100, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
 	
@@ -240,10 +350,12 @@ function handleDogTouch(event) {
 	update=true;
 }
 
-function handleDadTouch(event) {
+function handleBallTouch(event) {
+	if (!cake.focus) { //xxx quickfix
 	restoreDog();
 	restoreCake();
-	createjs.Tween.get(dad).to({x:canvas.width/2+200, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(ball).to({x:canvas.width/2+200, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear);
 	
 	startChangeCanvasColor=true;
 	finishedChangeCanvasColor=false;
@@ -251,15 +363,19 @@ function handleDadTouch(event) {
 	gCanvasNew=255;
 	bCanvasNew=0;
 
-	dad.focus=true;
+	ball.focus=true;
 	update=true;
+	}
 }
 
 function handleCakeTouch(event) {
+	if (!ball.focus) { //xxx quickfix
 	restoreDog();
-	restoreDad();
-	createjs.Tween.get(cake).to({x:canvas.width/2+100, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
-	
+	restoreBall();
+	createjs.Tween.get(cake).to({x:canvas.width/2+20, y: canvas.height/2+80, scaleX:0.50, scaleY:0.50}, 400, createjs.Ease.linear);
+	createjs.Tween.get(table).to({alpha:1.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear);
+
 	startChangeCanvasColor=true;
 	finishedChangeCanvasColor=false;
 	rCanvasNew=255;
@@ -268,6 +384,7 @@ function handleCakeTouch(event) {
 
 	cake.focus=true;
 	update=true;
+	}
 }
 
 function handleOldDogTouch(event) {
@@ -283,7 +400,7 @@ function handleOldDogTouch(event) {
 
 function handleButtonTouch(event) {
 	restoreDog();
-	restoreDad();
+	restoreBall();
 	restoreCake();
 	startChangeCanvasColor=true;
 	finishedChangeCanvasColor=false;
@@ -387,6 +504,31 @@ function addBoel() {
 	boel.name = "Boel";
 }
 
+function addBoelstart() {
+	boelstart=new createjs.Bitmap(queue.getResult("boelstart"));
+	stage.addChild(boelstart);
+	boel.scaleX = boel.scaleY = boel.scale = 0.2;
+	boel.x = canvas.width/2-200;
+	boel.y = canvas.height/2;
+	boel.rotation = 0;
+	boel.regX = boel.image.width/2|0;
+	boel.regY = boel.image.height/2|0;
+}
+
+
+function addNumbers() {
+	for (var i=0;i<10;i++) {
+		var number=new createjs.Bitmap(queue.getResult(i+""));
+		number.x=canvas.width-200;
+		number.y=0;
+		number.scaleX=0.5;
+		number.scaleY=0.5;
+		number.visible=false;
+		numbers.push(number);
+		stage.addChild(numbers[i]);
+	}
+}
+
 function addDog() {
 	dog=new createjs.Bitmap(queue.getResult("dog"));
 	stage.addChild(dog);
@@ -414,37 +556,73 @@ function restoreDog() {
 	}
 }
 
-function addDad() {
-	dad=new createjs.Bitmap(queue.getResult("dad"));
-	stage.addChild(dad);
-	dad.scaleStart=0.25;
-	dad.scaleX = dad.scaleY = dad.scale = dad.scaleStart;
+function addBall() {
+	ball=new createjs.Bitmap(queue.getResult("ball"));
+	stage.addChild(ball);
+	ball.scaleStart=0.25;
+	ball.scaleX = ball.scaleY = ball.scale = ball.scaleStart;
 
-	dad.xStart=canvas.width-dad.scale*dad.image.width/2-20;
-	dad.yStart=dad.scale*dad.image.height/2+20;
-	dad.x = dad.xStart;
-	dad.y = dad.yStart;
-	dad.rotation = 0;
-	dad.regX = dad.image.width/2;
-	dad.regY = dad.image.height/2;
-	dad.name = "Pappa";
+	ball.xStart=canvas.width-ball.scale*ball.image.width/2-20;
+	ball.yStart=ball.scale*ball.image.height/2+20;
+	ball.x = ball.xStart;
+	ball.y = ball.yStart;
+	ball.rotation = 0;
+	ball.regX = ball.image.width/2;
+	ball.regY = ball.image.height/2;
+	ball.name = "Pappa";
 	
-	dad.focus=false;
-	dad.addEventListener("mousedown", handleDadTouch);
+	ball.focus=false;
+	ball.addEventListener("mousedown", handleBallTouch);
 
 }
 
-function restoreDad() {
-	if (dad.focus) {
-		createjs.Tween.get(dad).to({x:dad.xStart, y: dad.yStart, scaleX:dad.scaleStart, scaleY:dad.scaleStart}, 400, createjs.Ease.linear);
-		dad.focus=false;
+function restoreBall() {
+	if (ball.focus) {
+		createjs.Tween.get(ball).to({x:ball.xStart, y: ball.yStart, scaleX:ball.scaleStart, scaleY:ball.scaleStart}, 400, createjs.Ease.linear);
+		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear);
+		ball.focus=false;
 	}
 }
 
-//xxx test code
+//xxx test code, this should be deleted
+/*
 function handleCakePieceTouch(event) {
-	event.target.visible=false;
+	//event.target.visible=false;
+	piecenumber=event.target.number;
+	showCakePiece(piecenumber,false);
+	showCakePiece((piecenumber+1)%cakeStatus.length,true);
 }
+*/
+
+function addTable() {
+	table=new createjs.Container();
+	
+	
+	table_0007_granddad=new createjs.Bitmap(queue.getResult("table_0007_granddad"));
+	table_0006_boel=new createjs.Bitmap(queue.getResult("table_0006_boel"));
+	table_0005_tore=new createjs.Bitmap(queue.getResult("table_0005_tore"));
+	table_0004_table=new createjs.Bitmap(queue.getResult("table_0004_table"));
+	table_0003_tore_hand=new createjs.Bitmap(queue.getResult("table_0003_tore_hand"));
+	table_0002_dog=new createjs.Bitmap(queue.getResult("table_0002_dog"));
+	table_0001_boel_hand=new createjs.Bitmap(queue.getResult("table_0001_boel_hand"));
+	table_0000_granddad_hand=new createjs.Bitmap(queue.getResult("table_0000_granddad_hand"));
+	table.addChild(table_0007_granddad,table_0006_boel,table_0005_tore,table_0004_table,table_0003_tore_hand,table_0002_dog,table_0001_boel_hand
+,table_0000_granddad_hand);
+	table.x=100;
+	table.y=80;
+	table.alpha=0.0;
+	table.scaleX=table.scaleY=1.0;
+	
+	table_0007_granddad.addEventListener("mousedown", handleTable_0007_granddadTouch);
+	table_0006_boel.addEventListener("mousedown", handleTable_0006_boelTouch);
+	table_0005_tore.addEventListener("mousedown", handleTable_0005_toreTouch);
+	table_0002_dog.addEventListener("mousedown", handleTable_0002_dogTouch);
+	
+	
+	stage.addChild(table);
+	
+}
+
 
 function addCake(cakeparts,cakepieces,cakefiles) {
 	
@@ -453,29 +631,41 @@ function addCake(cakeparts,cakepieces,cakefiles) {
 	//alltså, behöver en cake som är en multidimensionell array, som dels består av alla bitar och varje bit av 5? delar
 	//första index är bit, andra index är del. 
 	
-	var cakeComplete=new Array();
+	
+	
+	//bättre göra varje bit till en container istället för hela tårtan väl...
 	var k=0;
 	for (var i=0;i<cakepieces;i++) {
 		var onePiece=new Array(); 
 		for (var j=0;j<cakeparts.length+1;j++) { //+1 because cake_outsidelines doubled
 			var part=new createjs.Bitmap(queue.getResult(cakefiles[k]["id"]));
 			k++;
-			part.number=i+1;
+			part.number=i; //first piece has number 0
 			onePiece.push(part);
+			if (j==3 || j==4) {
+				part.visible=false;
+			}
 		}
 		cakeComplete.push(onePiece);
+		cakeStatus.push(true); //visible, or actually visible in cake
+		
 	//xxx test code
-		cakeComplete[i][0].addEventListener("mousedown", handleCakePieceTouch);
+		//cakeComplete[i][0].addEventListener("mousedown", handleCakePieceTouch);
 	//xxx test code		
 	
 	}
-	var pieceOrder=[3,4,2,5,1,6];
+	
+	var cake_plate=new createjs.Bitmap(queue.getResult("cake_plate"));
+	cake.addChild(cake_plate);		
+
+	
+	var pieceOrder=[3,4,2,5,1,6]; //xxx funkar ju bara för sexbitarstårta
 	for (var i=0;i<cakeComplete.length;i++) {
-		for (var j=0;j<cakeComplete[i].length;j++) { //xxx ta bort -2
-			cake.addChild(cakeComplete[pieceOrder[i]-1][j]); //-1 becaues piece1 has index 0 etc
+		for (var j=0;j<cakeComplete[i].length;j++) { 
+			cake.addChild(cakeComplete[pieceOrder[i]-1][j]); //-1 because piece 1 has index 0 etc
 		}
 	}
-				
+		
 	//ok, hyfsat, men skulle behöva samla kakkonstruktion istället för att ha det så utspritt. 
 	
 	
@@ -504,7 +694,12 @@ function addCake(cakeparts,cakepieces,cakefiles) {
 function restoreCake() {
 	
 	if (cake.focus) {
+		for (var i=0;i<cakeComplete.length;i++) {
+			moveCakePiece(i,0,0);
+		}
 		createjs.Tween.get(cake).to({x:cake.xStart, y: cake.yStart, scaleX:cake.scaleStart, scaleY:cake.scaleStart}, 400, createjs.Ease.linear);
+		createjs.Tween.get(table).to({alpha:0.0}, 400, createjs.Ease.linear);
+		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear);
 		cake.focus=false;
 	}
 	
@@ -528,24 +723,111 @@ function addButton() {
 
 
 function buildcakefiles(cakeparts,cakepieces) {	
-	var cakefiles=new Array((cakeparts.length+1)*cakepieces); //+1 because cake_outsidelines doubled
+	var cakefiles=new Array(); //((cakeparts.length+1)*cakepieces); //+1 because cake_outsidelines doubled
 	var shared=cakeparts[cakeparts.length-1];
 	var k=0;
 	for (var i=1;i<cakepieces+1;i++) {
 		for (var j=0;j<cakeparts.length-1;j++) {
-			cakefiles[k]={id:cakeparts[j]+i, src:"assets/"+cakeparts[j]+i+".png"};
+			cakefiles.push({id:cakeparts[j]+i, src:"assets/"+cakeparts[j]+i+".png"});
 			k++;
 		}
 		var first=i;
 		var second=((i%cakepieces)+1);
 		var third=(i-2+cakepieces)%cakepieces+1;
 		var index=first+""+second;
-		cakefiles[k]={id:shared+index, src:"assets/"+shared+index+".png"};
+		cakefiles.push({id:shared+index, src:"assets/"+shared+index+".png"});
 		k++;
 		index=first+""+third;
-		cakefiles[k]={id:shared+index, src:"assets/"+shared+index+".png"};
+		cakefiles.push({id:shared+index, src:"assets/"+shared+index+".png"});
 		k++;
 	}
 	return cakefiles;
 }
+
+/*
+function showCakePiece(piecenumber,show) {
+	//piecenumber: piece to show or hide
+	//show: true to show, false to hide
+	var piece=cakeComplete[piecenumber];
+	if (!show) {
+		for (var j=0;j<piece.length;j++) {
+			piece[j].visible=false;
+			cakeStatus[piecenumber]=false;
+		}
+	} else {
+		for (var j=0;j<piece.length;j++) {
+			piece[j].visible=true;
+			cakeStatus[piecenumber]=true;
+		}
+	}
 	
+	for (var k=0;k<cakeStatus.length;k++) {
+		//om bit är synlig men nästa bit ej synlig: visa skiljelinje
+		if (cakeStatus[k] && !cakeStatus[(k+1)%cakeStatus.length]) {
+			cakeComplete[k][3].visible=true;	
+		} else {
+			cakeComplete[k][3].visible=false;
+		}
+		if (cakeStatus[k] && !cakeStatus[(k-1+cakeStatus.length)%cakeStatus.length]) {
+			cakeComplete[k][4].visible=true;	
+		} else {
+			cakeComplete[k][4].visible=false;
+		}
+	
+	}
+}
+*/
+function moveCakePiece(piecenumber,x,y) {
+	//piecenumber: piece to show or hide
+	//show: true to show, false to hide
+	if (cake.focus) {
+		var piece=cakeComplete[piecenumber];
+	
+		if (x!=0 || y!=0) {
+			for (var j=0;j<piece.length;j++) {
+				createjs.Tween.get(piece[j]).to({x:x, y:y}, 200, createjs.Ease.linear);
+
+				//piece[j].x=x;
+				//piece[j].y=y;
+				cakeStatus[piecenumber]=false;
+			}
+		} else {
+			for (var j=0;j<piece.length;j++) {
+				piece[j].x=0;
+				piece[j].y=0;
+				cakeStatus[piecenumber]=true;
+			}
+		}
+		var movedPieces=0;
+		for (var k=0;k<cakeStatus.length;k++) {
+			//om bit är på plats men nästa bit ej på plats: visa skiljelinje
+			if (cakeStatus[k] && !cakeStatus[(k+1)%cakeStatus.length]) {
+				cakeComplete[k][3].visible=true;	
+			} else {
+				cakeComplete[k][3].visible=false;
+			}
+			if (cakeStatus[k] && !cakeStatus[(k-1+cakeStatus.length)%cakeStatus.length]) {
+				cakeComplete[k][4].visible=true;	
+			} else {
+				cakeComplete[k][4].visible=false;
+			}
+			
+			if (!cakeStatus[k]) {	
+				//flyttad bit
+				movedPieces++;
+				cakeComplete[k][3].visible=true;
+				cakeComplete[k][4].visible=true;
+			}
+		
+		}
+		
+		//xxx tillfällig klumpig konstruktion
+		for (var i=0;i<numbers.length;i++) {
+			numbers[i].visible=false;
+		}
+		if (movedPieces>0 && (x!=0 || y!=0)) {
+			numbers[movedPieces].visible=true;
+			createjs.Sound.play(cakepiecesound[movedPieces]);
+		}
+	}
+}
