@@ -354,6 +354,7 @@ function handleBallTouch(event) {
 	if (!cake.focus) { //xxx quickfix
 	restoreDog();
 	restoreCake();
+	cake.alpha=0.1;
 	createjs.Tween.get(ball).to({x:canvas.width/2+200, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
 	createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear);
 	
@@ -372,6 +373,7 @@ function handleCakeTouch(event) {
 	if (!ball.focus) { //xxx quickfix
 	restoreDog();
 	restoreBall();
+	ball.alpha=0.1;
 	createjs.Tween.get(cake).to({x:canvas.width/2+20, y: canvas.height/2+80, scaleX:0.50, scaleY:0.50}, 400, createjs.Ease.linear);
 	createjs.Tween.get(table).to({alpha:1.0}, 400, createjs.Ease.linear);
 	createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear);
@@ -581,6 +583,8 @@ function restoreBall() {
 		createjs.Tween.get(ball).to({x:ball.xStart, y: ball.yStart, scaleX:ball.scaleStart, scaleY:ball.scaleStart}, 400, createjs.Ease.linear);
 		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear);
 		ball.focus=false;
+		cake.alpha=1;
+
 	}
 }
 
@@ -701,6 +705,7 @@ function restoreCake() {
 		createjs.Tween.get(table).to({alpha:0.0}, 400, createjs.Ease.linear);
 		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear);
 		cake.focus=false;
+		ball.alpha=1;
 	}
 	
 }
