@@ -1,50 +1,31 @@
-//coordinates:
-//bimaps and Sprites seem to get an original location at (0,0), with the upper left point as the reference
-//Shapes get an original position defined by the first two parameters of drawRect(-128,-128,256,256), with the upper left
-//corner as the reference. When bitmaps and shapes are moved by changing x and y, this is considered a transform, 
-//and they still keep their original coordinates. globalTolocal and localToglobal can be used to change between systems. 
-//The reference point can also be changed by changing regX and regY.
-
-/*
-
-
-boll i hörn
-visa boel i början, byt mot bord om man klickar tårta
-ljud???
-
-lös idé:
-slumpa fram x personer runt bord. 
-visa tårta med så många bitar
-en bit till varje person
-visa siffror
-
-Hur interagera?
-
-Peka på varje person, så får personen en bit.
-
-Eller dra en tårtbit till varje person
-
-tore, boel, pappa, mamma, morfar, hunden
-
-ok, något sådant. 
-
-Första steg: klicka på tårta för att "öppna" tårtleken.
-
-Sätt fyra pers runt bord. klicka på person för att person ska få bit. 
-
-Sätt ut siffra för varja person som fått bit. 
-
-Avlångt bord med personerna i profil, utom ev morfar på kanten
+var names=[
+	"hunden",
+	"tore",
+	"pappa",
+	"morfar",
+	"mamma",
+	"boel"];
 
 
-
-
-*/
-
-
-
+var cardinal=[
+	"noll",
+	"en",
+	"tvaa",
+	"tre",
+	"fyra",
+	"fem",
+	"sex"];
 	
-var debug=false;
+var ordinal=[
+	"nollte",
+	"foersta",
+	"andra",
+	"tredje",
+	"fjaerde",
+	"femte",
+	"sjaette"];
+	
+var debug=true;
 
 //variable definitions
 var canvas;
@@ -52,29 +33,26 @@ var stage;
 var background;
 var queue;
 var offset;
-var update = true;
+var update = false;
+var nextupdate = false;
+var ball,boel,cake,table;
 
-var ball,dog,boel,cake,table;
-
-var cakeparts,cakepieces;
+var pieceParts,cakepieces;
 
 var cakefiles;
 
-
-var table_0007_granddad,table_0006_boel,table_0005_tore,table_0004_table,table_0003_tore_hand,table_0002_dog,table_0001_boel_hand,table_0000_granddad_hand;
-
-var cakepiecesound=new Array();
+var table_0008_mom,table_0007_granddad,table_0006_boel,table_0005b_dad,table_0005_tore,table_0004_table,table_0004_mom_hand,table_0003b_dad_hand,table_0003_tore_hand,table_0002_dog,table_0001_boel_hand,table_0000_granddad_hand;
 
 var numbers=new Array();
 
 var cakeComplete=new Array(); //xxx kan bli problem med global variabel om man har en cake med sex bitar, en annan med 4 bitar. 
-var cakeStatus=new Array();
+//var cakeStatus=new Array();
 var debugText;
 
 var loadedFiles=0;
 var filesToLoad;
 
-var fps=30;
+var fps=24; //var 30
 
 var rCanvasStart=134;
 var gCanvasStart=219;
@@ -94,6 +72,22 @@ var bCanvasNew;
 
 var startChangeCanvasColor=false;
 var finishedChangeCanvasColor=true;
+
+var now=0;
+var nextSmash=-1;
+var nextRandomCheck=-1;
+var pieceNumberToSmash=-1;
+
+var minSecSelectName=10; //min random time before voice: "x vill ha tårta, var är x"
+var maxSecSelectName=15; //max random time...
+
+var numberOfRunningTweens=0;
+
+//xx these two are initiated also in restoreCake, must only be done in one place
+var selectedNameNumber=-1;
+var selectedName=""; 
+
+var soundQueue=[];
 
 function rgb(r,g,b) {
 	//returns a string "rgb(r,g,b)"
@@ -161,22 +155,10 @@ function init() {
 	background.alpha=0.05;
 	background.name = "background";
 	stage.addChild(background);
-		
-	debugText = new createjs.Text("", "12px Monaco", "#000");
-	stage.addChild(debugText);
-	debugText.x=20;
-	debugText.y=canvas.height-20;
-	if (debug) {
-		debugText.text="Debug on";
-	} else {
-		debugText="";
-	}
+
 	//loading assets
 	queue=new createjs.LoadQueue(false);
 	
-	
-	//xxx vad är skillnaden mellan dessa?
-	//createjs.Sound.initializeDefaultPlugins();
 	queue.installPlugin(createjs.Sound);
 	
 	queue.addEventListener("complete",handleComplete);
@@ -184,23 +166,50 @@ function init() {
 	queue.addEventListener("fileload", handleFileLoad);
 
 	
-	//weird: seems like no space is allowed before | in src:"assets/bark.mp3| assets/bark.ogg
-	//var soundfiles=[];
-	//var soundfiles=[{id:"cakepiece1",src:"assets/cakepiece1.mp3"}];
-	var soundfiles=[{id:"cakepiece1",src:"assets/cakepiece1.mp3| assets/cakepiece1.ogg"},{id:"cakepiece2",src:"assets/cakepiece2.mp3| assets/cakepiece2.ogg"},{id:"cakepiece3",src:"assets/cakepiece3.mp3| assets/cakepiece3.ogg"},{id:"cakepiece4",src:"assets/cakepiece4.mp3| assets/cakepiece4.ogg"}];
+	var soundfiles=[
+		{id:"en",src:"assets/en.mp3"},
+		{id:"tvaa",src:"assets/tvaa.mp3"},
+		{id:"tre",src:"assets/tre.mp3"},
+		{id:"fyra",src:"assets/fyra.mp3"},
+		{id:"fem",src:"assets/fem.mp3"},
+		{id:"sex",src:"assets/sex.mp3"},
+		{id:"foersta",src:"assets/foersta.mp3"},
+		{id:"andra",src:"assets/andra.mp3"},
+		{id:"tredje",src:"assets/tredje.mp3"},
+		{id:"fjaerde",src:"assets/fjaerde.mp3"},
+		{id:"femte",src:"assets/femte.mp3"},
+		{id:"sjaette",src:"assets/sjaette.mp3"},
+		{id:"hunden",src:"assets/hunden.mp3"},
+		{id:"tore",src:"assets/tore.mp3"},
+		{id:"pappa",src:"assets/pappa.mp3"},
+		{id:"morfar",src:"assets/morfar.mp3"},
+		{id:"mamma",src:"assets/mamma.mp3"},
+		{id:"boel",src:"assets/boel.mp3"},
+		{id:"faar",src:"assets/faar.mp3"},
+		{id:"vill_ha_taarta_var_aer",src:"assets/vill_ha_taarta_var_aer.mp3"},
+		{id:"det_var_vael_inte",src:"assets/det_var_vael_inte.mp3"},
+		{id:"det_aer_ju",src:"assets/det_aer_ju.mp3"},
+		{id:"taartbit",src:"assets/taartbit.mp3"},
+		{id:"taartbiten",src:"assets/taartbiten.mp3"},
+		{id:"taartbitar",src:"assets/taartbitar.mp3"},
+		{id:"tyst1000",src:"assets/tyst1000.mp3"},
+		{id:"som",src:"assets/som.mp3"},
+		{id:"ett_till_tjugo",src:"assets/ett_till_tjugo.mp3"}];
+			
 	
-	var simpleimagefiles=[{id:"boelstart", src:"assets/boelstart.png"},{id:"boel", src:"assets/boel.png"},{id:"ball", src:"assets/ball.png"},{id:"dog", src:"assets/dog.png"},{id:"button", src:"assets/button.png"},{id:"daisy", src:"assets/daisy.png"},{id:"dogs", src:"assets/dogsprites.png"},{id:"cake_plate", src:"assets/cake_plate.png"}];
+	
+	var simpleimagefiles=[{id:"boelstart", src:"assets/boelstart.png"},{id:"boel", src:"assets/boel.png"},{id:"ball", src:"assets/ball.png"},{id:"dog", src:"assets/dog.png"},{id:"button", src:"assets/button.png"},{id:"cake_plate", src:"assets/cake_plate.png"}];
 	
 	
 	var numberfiles=new Array();
 	for (var i=0;i<10;i++) {
 		numberfiles.push({id:i+"",src:"assets/"+i+".png"});
 	}
-	cakeparts=["cake_base","cake_filling","cake_fillinglines","cake_outsidelines"];
+	pieceParts=["smashed_piece","cake_base","cake_outsidelines"]; //should be pieceparts
 	cakepieces=6;
-	cakefiles=buildcakefiles(cakeparts,cakepieces);
+	cakefiles=buildcakefiles(pieceParts,cakepieces);
 	
-	var tableparts=["table_0007_granddad","table_0006_boel","table_0005_tore","table_0004_table","table_0003_tore_hand","table_0002_dog","table_0001_boel_hand","table_0000_granddad_hand"];
+	var tableparts=["table_0008_mom","table_0007_granddad","table_0006_boel","table_0005b_dad","table_0005_tore","table_0004_table","table_0004_mom_hand","table_0003b_dad_hand","table_0003_tore_hand","table_0002_dog","table_0001_boel_hand","table_0000_granddad_hand"];
 	var tablefiles=new Array();
 	for (var i=0;i<tableparts.length;i++) {
 		tablefiles.push({id:tableparts[i],src:"assets/"+tableparts[i]+".png"});
@@ -209,29 +218,14 @@ function init() {
 
 	var files=simpleimagefiles.concat(cakefiles,numberfiles,tablefiles,soundfiles);
 	
-	//xxx not a logical place for this code
-	cakepiecesound.push("nosound"); //quick fix to handel array starts with 0, but error prone
-	cakepiecesound.push("cakepiece1");
-	cakepiecesound.push("cakepiece2");
-	cakepiecesound.push("cakepiece3");
-	cakepiecesound.push("cakepiece4");
-	
-	
-	//for (var i=0;i<files.length;i++) {
-	//	alert(files[i]['src']);
-	//}
-	
 	queue.loadManifest(files);
 	filesToLoad=files.length;
 }
 
-function stop() {
-	createjs.Ticker.removeEventListener("tick", tick);
-}
-
-
 
 function handleBackgroundTouch(event) {
+	console.log("background touch",event.stageX,event.stageY);
+	
 /*	
 	startChangeCanvasColor=true;
 	finishedChangeCanvasColor=false;
@@ -239,14 +233,13 @@ function handleBackgroundTouch(event) {
 	gCanvasNew=Math.floor(Math.random()*255);
 	bCanvasNew=Math.floor(Math.random()*255);
 */	
-	update=true;
+	//update=true;
 }
-
 
 function printDebug(text) {
 	if (debug) {
 		debugText.text+=text;
-		debugText.text=debugText.text.substring(debugText.text.length-136,debugText.text.length);		
+		debugText.text=debugText.text.substring(debugText.text.length-68,debugText.text.length);		
 	}
 }
 
@@ -269,139 +262,217 @@ function handleComplete(event) {
 		div.innerHTML = "Some resources were not loaded: "+(filesToLoad-loadedFiles);
 	}
 
-	//addDaisy();
-	//createjs.Tween.get(daisy).to({alpha:0.5, y: daisy.y + 300}, 4000, createjs.Ease.linear);
-
-	addDog();
-	dog.visible=false;
 	addBoel();
 	boel.visible=false;
 	addBoelstart();
-	addBall();
 	addTable();
 
 	
-	addCake(cakeparts,cakepieces,cakefiles);
+	addCake(pieceParts,cakepieces,cakefiles);
 	
+	addBall();
 
 	addButton();
 	
 	addNumbers();
 	
+	addDebugText();
 	
-	
-	//addOldDog();
-
 	//setup almost complete, start the ticker
 	background.addEventListener("mousedown", handleBackgroundTouch);
 	document.getElementById("loader").className = "";
-	createjs.Ticker.addEventListener("tick", tick);
-	createjs.Ticker.setFPS(fps);		
+	createjs.Ticker.addEventListener("tick", handleTick);
+	
+	//RAF_SYNCHED TEST
+	//createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
+	//createjs.Ticker.setFPS(30);
+	//no visible difference
+	
+	createjs.Ticker.setFPS(fps);
+	stage.update();		
 }
 
-function tick(event) {
+function handleTick(event) {
 	//this set makes it so the stage only re-renders when an event handler indicates a change has happened.
+
+	
 	now=createjs.Ticker.getTicks(false)
+	
+	if (now>nextSmash && nextSmash>0) {
+		console.log("smash");
+		var movedAndNotSmashed=[];
+		for (var pieceNumber in cakeComplete) {
+			piece=cakeComplete[pieceNumber];
+			if (piece.moved && !piece.smashed) {
+				movedAndNotSmashed.push(pieceNumber);
+			}
+		}
+		if (movedAndNotSmashed.length>0) {
+			//här bestäms vilken som ska smashas. när bestäms däremot i moveCakePiece
+			var randomIndex=Math.floor(Math.random()*movedAndNotSmashed.length);
+			var randomPiece=movedAndNotSmashed[randomIndex];
+			console.log("smashar snart bit ",randomPiece);
+			bounceTo(randomPiece);
+		}
+		//nextSmash=-1;
+		nextSmash=randomFutureTicks(30,30.01);
+		console.log("next smash om ", (nextSmash-now)/fps," s");
+
+	}
+	
+	
+	if (now>nextRandomCheck && nextRandomCheck>0) {
+		//vem har inte fått tårtbit än?
+		if (soundQueue.length==0 && selectedNameNumber==-1) {
+			var notMoved=[];
+			for (var pieceNumber in cakeComplete) {
+				piece=cakeComplete[pieceNumber];
+
+				if (!piece.moved) {
+					notMoved.push(pieceNumber);
+				}
+			}
+			if (notMoved.length>0) { 
+				var randomIndex=Math.floor(Math.random()*notMoved.length);
+				selectedNameNumber=notMoved[randomIndex];
+				selectedName=names[selectedNameNumber];
+				extendAndPlayQueue([selectedName,"vill_ha_taarta_var_aer",selectedName]);
+			}
+		} 
+		nextRandomCheck=-1;
+	}
+	
+	
+	
+	
 	
 	if (startChangeCanvasColor || !finishedChangeCanvasColor) {
 		changeCanvasColor(rCanvasNew,gCanvasNew,bCanvasNew,10);
-		printDebug("("+rCanvas.toFixed(2) +","+gCanvas.toFixed(2)+","+bCanvas.toFixed(2)+")");
+		//printDebug("("+rCanvas.toFixed(2) +","+gCanvas.toFixed(2)+","+bCanvas.toFixed(2)+")");
 	}
 	
+	printDebug(numberOfRunningTweens);
+	
 	if (update) {		
-		stage.update(event);
+		stage.update(event); //pass event to make sure for example sprite animation works
+	}
+	if (!nextupdate) {
+		update=false;
 	}
 }
 
 
-function handleTable_0006_boelTouch(event) {
-	moveCakePiece(3,-200,-70);
-}
 
 function handleTable_0002_dogTouch(event) {
 	moveCakePiece(0,-80,280);
 }
 
+function handleTable_0006_boelTouch(event) {
+	moveCakePiece(5,-200,0);
+}
+
+function handleTable_0008_momTouch(event) {
+	moveCakePiece(4,-150,-170);
+}
 
 function handleTable_0007_granddadTouch(event) {
-	moveCakePiece(2,100,-150);
+	moveCakePiece(3,200,-180);
+}
+
+function handleTable_0005b_dadTouch(event) {
+	moveCakePiece(2,250,-160);
 }
 
 function handleTable_0005_toreTouch(event) {
-	moveCakePiece(1,230,50);
+	moveCakePiece(1,270,200);
+}
+
+function handleCakePieceTouch(event) {
+	
+	piecenumber=event.target.number;
+	
+	//console.log("cakepiecetouch",event.stageX,event.stageY);
+
+	
+	
+	
+	switch (piecenumber) {
+		case 0:
+			moveCakePiece(0,-80,280); //xxx used also in handleTable_0002_dogTouch, coordinates must be moved to central place
+			break;
+		case 1: 
+			moveCakePiece(1,270,200);
+			break;
+		case 2:
+			moveCakePiece(2,250,-160);
+			break;
+		case 3:
+			moveCakePiece(3,200,-180);
+			break;
+		case 4:
+			moveCakePiece(4,-150,-170);
+			break;
+		case 5:
+			moveCakePiece(5,-200,0);
+			break;
+		default:
+			break;
+	}
+
 }
 
 
 
-
-function handleDogTouch(event) {
-	restoreBall();
-	restoreCake();
-	createjs.Tween.get(dog).to({x:canvas.width/2+100, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
-	
-	startChangeCanvasColor=true;
-	finishedChangeCanvasColor=false;
-	rCanvasNew=33;
-	gCanvasNew=118;
-	bCanvasNew=180;
-
-	dog.focus=true;
-	
-	update=true;
-}
 
 function handleBallTouch(event) {
-	if (!cake.focus) { //xxx quickfix
-	restoreDog();
-	restoreCake();
-	cake.alpha=0.1;
-	createjs.Tween.get(ball).to({x:canvas.width/2+200, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
-	createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear);
-	
-	startChangeCanvasColor=true;
-	finishedChangeCanvasColor=false;
-	rCanvasNew=255;
-	gCanvasNew=255;
-	bCanvasNew=0;
-
-	ball.focus=true;
-	update=true;
+	if (!cake.focus  && !ball.focus) { //xxx quickfix
+	  restoreCake();
+	  cake.alpha=0.1;
+	  tweenStart();
+	  createjs.Tween.get(ball).to({x:canvas.width/2+200, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear).call(tweenStop);
+	  tweenStart();
+	  createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear).call(tweenStop);
+	  
+	  startChangeCanvasColor=true;
+	  finishedChangeCanvasColor=false;
+	  rCanvasNew=255;
+	  gCanvasNew=255;
+	  bCanvasNew=0;
+  
+	  ball.focus=true;
+	  //update=true;
 	}
 }
 
 function handleCakeTouch(event) {
-	if (!ball.focus) { //xxx quickfix
-	restoreDog();
-	restoreBall();
-	ball.alpha=0.1;
-	createjs.Tween.get(cake).to({x:canvas.width/2+20, y: canvas.height/2+80, scaleX:0.50, scaleY:0.50}, 400, createjs.Ease.linear);
-	createjs.Tween.get(table).to({alpha:1.0}, 400, createjs.Ease.linear);
-	createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear);
-
-	startChangeCanvasColor=true;
-	finishedChangeCanvasColor=false;
-	rCanvasNew=255;
-	gCanvasNew=149;
-	bCanvasNew=203;
-
-	cake.focus=true;
-	update=true;
+	
+	
+	//alert('caketouch');
+	if (!ball.focus && !cake.focus) { //xxx quickfix
+	  extendAndPlayQueue(["tyst1000"]);//xxx very weird. this sound is needed for first sound to play on iphone.
+	  nextRandomCheck=randomFutureTicks(minSecSelectName,maxSecSelectName);
+	  restoreBall();
+	  //ball.alpha=0.1;
+	  ball.x=canvas.width+200; //move outside
+	  tweenStart();
+	  createjs.Tween.get(cake).to({x:canvas.width/2+20, y: canvas.height/2+80, scaleX:0.50, scaleY:0.50}, 400, createjs.Ease.linear).call(tweenStop);
+	  tweenStart();
+	  createjs.Tween.get(table).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
+	  tweenStart();
+	  createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear).call(tweenStop);
+  
+	  startChangeCanvasColor=true;
+	  finishedChangeCanvasColor=false;
+	  rCanvasNew=255;
+	  gCanvasNew=149;
+	  bCanvasNew=203;
+  
+	  cake.focus=true;
+	  //update=true;
 	}
 }
 
-function handleOldDogTouch(event) {
-	
-	oldDog.gotoAndPlay("walkright");
-	createjs.Tween.get(oldDog).to({x:event.stageX, y: event.stageY, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear);
-
-
-	update=true;
-}
-
-
-
 function handleButtonTouch(event) {
-	restoreDog();
 	restoreBall();
 	restoreCake();
 	startChangeCanvasColor=true;
@@ -410,88 +481,19 @@ function handleButtonTouch(event) {
 	gCanvasNew=gCanvasStart;
 	bCanvasNew=bCanvasStart;
 
-	update=true;
+	//update=true;
 }
 
-function addDaisy() {
-	daisy=new createjs.Bitmap(queue.getResult("daisy"));
-	
-	stage.addChild(daisy);
-	daisy.x = 200;//canvas.width * Math.random()|0;
-	daisy.y = 300;//canvas.height * Math.random()|0;
-	daisy.rotation = 0;//360 * Math.random()|0;
-	daisy.regX = daisy.image.width/2|0;
-	daisy.regY = daisy.image.height/2|0;
-	daisy.scaleX = daisy.scaleY = daisy.scale = 0.5; //Math.random()*0.4+0.6;
-	daisy.name = "daisy";
-	daisy.addEventListener("pressmove",function(evt) {
-		// currentTarget will be the container that the event listener was added to:
-		//var offset = {x:evt.currentTarget.x-evt.stageX, y:evt.currentTarget.y-evt.stageY};
-		//offset not working
-		evt.currentTarget.x = evt.stageX;//+offset.x;
-		evt.currentTarget.y = evt.stageY;//+offset.y;
-		// make sure to redraw the stage to show the change:
-		update=true;   
-	});	
-}
-
-function addOldDog() {
-	//create the dog
-	dogs = new createjs.Bitmap(queue.getResult("dogs"));		
-	var spriteSheet = new createjs.SpriteSheet({
-		// image to use
-		images: [dogs.image], 
-		// width, height & registration point of each sprite
-		frames: {width: 256, height: 256, regX: 128, regY: 128}, 
-		animations: {	
-			walkleft: [0,11,"walkleft",0.5],
-			walkright: [12,23,"walkright",0.5],
-			upleft: {
-				frames:[24,25,26,27],
-				next: "walkleft",
-				speed: 0.5
-			},
-			upright: {
-				frames:[28,29,30,31],
-				next: "walkright",
-				speed: 0.5
-			},
-			wagleft: {
-				frames:[32,33,34,35,36,37,38,39,32,33,34,35,36,37,38,39],
-				next: false,
-				speed: 1
-			},
-			wagright: {
-				frames:[40,41,42,43,44,45,46,47,40,41,42,43,44,45,46,47],
-				next: false,
-				speed: 1
-			},
-			downleft: {
-				frames:[27,26,25,24],
-				next: false,
-				speed: 0.5
-			},
-			downright: {
-				frames:[31,30,29,28],
-				next: false,
-				speed: 0.5
-			}
-
-		}
-	});
-	
-	oldDog = new createjs.Sprite(spriteSheet);
-			
-	oldDog.gotoAndStop(28); 
-
-	oldDog.name="Fido";
-	oldDog.x=150;
-	oldDog.y=100;
-	oldDog.rotation=0;//180;//xxx
-	 
-	stage.addChild(oldDog);
-	oldDog.addEventListener("mousedown", handleOldDogTouch);
-
+function addDebugText() {
+	debugText = new createjs.Text("", "24px Courier", "#000");
+	debugText.x=20;
+	debugText.y=canvas.height-30;
+	if (debug) {
+		debugText.text="Debug on";
+	} else {
+		debugText="";
+	}
+	stage.addChild(debugText);
 }
 
 function addBoel() {
@@ -517,7 +519,6 @@ function addBoelstart() {
 	boel.regY = boel.image.height/2|0;
 }
 
-
 function addNumbers() {
 	for (var i=0;i<10;i++) {
 		var number=new createjs.Bitmap(queue.getResult(i+""));
@@ -531,32 +532,6 @@ function addNumbers() {
 	}
 }
 
-function addDog() {
-	dog=new createjs.Bitmap(queue.getResult("dog"));
-	stage.addChild(dog);
-	dog.scaleStart=0.25;
-	dog.scaleX = dog.scaleY = dog.scale = dog.scaleStart;
-	dog.xStart=canvas.width-dog.scale*dog.image.width/2-20;
-	dog.yStart=canvas.height-dog.scale*dog.image.height/2-20;
-
-	dog.x = dog.xStart;
-	dog.y = dog.yStart;
-	dog.rotation = 0;
-	dog.regX = dog.image.width/2;
-	dog.regY = dog.image.height/2;
-	dog.name = "Hunden";
-	
-	dog.focus=false;
-	
-	dog.addEventListener("mousedown", handleDogTouch);
-}
-
-function restoreDog() {
-	if (dog.focus) {
-		createjs.Tween.get(dog).to({x:dog.xStart, y: dog.yStart, scaleX:dog.scaleStart, scaleY:dog.scaleStart}, 400, createjs.Ease.linear);
-		dog.focus=false;
-	}
-}
 
 function addBall() {
 	ball=new createjs.Bitmap(queue.getResult("ball"));
@@ -580,45 +555,44 @@ function addBall() {
 
 function restoreBall() {
 	if (ball.focus) {
-		createjs.Tween.get(ball).to({x:ball.xStart, y: ball.yStart, scaleX:ball.scaleStart, scaleY:ball.scaleStart}, 400, createjs.Ease.linear);
-		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear);
+		tweenStart();
+		createjs.Tween.get(ball).to({x:ball.xStart, y: ball.yStart, scaleX:ball.scaleStart, scaleY:ball.scaleStart}, 400, createjs.Ease.linear).call(tweenStop);
+		tweenStart();
+		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
 		ball.focus=false;
 		cake.alpha=1;
 
 	}
 }
 
-//xxx test code, this should be deleted
-/*
-function handleCakePieceTouch(event) {
-	//event.target.visible=false;
-	piecenumber=event.target.number;
-	showCakePiece(piecenumber,false);
-	showCakePiece((piecenumber+1)%cakeStatus.length,true);
-}
-*/
+
 
 function addTable() {
 	table=new createjs.Container();
 	
-	
+	table_0008_mom=new createjs.Bitmap(queue.getResult("table_0008_mom"));
 	table_0007_granddad=new createjs.Bitmap(queue.getResult("table_0007_granddad"));
 	table_0006_boel=new createjs.Bitmap(queue.getResult("table_0006_boel"));
+	table_0005b_dad=new createjs.Bitmap(queue.getResult("table_0005b_dad"));
 	table_0005_tore=new createjs.Bitmap(queue.getResult("table_0005_tore"));
 	table_0004_table=new createjs.Bitmap(queue.getResult("table_0004_table"));
+	table_0004_mom_hand=new createjs.Bitmap(queue.getResult("table_0004_mom_hand"));
+	table_0003b_dad_hand=new createjs.Bitmap(queue.getResult("table_0003b_dad_hand"));
 	table_0003_tore_hand=new createjs.Bitmap(queue.getResult("table_0003_tore_hand"));
 	table_0002_dog=new createjs.Bitmap(queue.getResult("table_0002_dog"));
 	table_0001_boel_hand=new createjs.Bitmap(queue.getResult("table_0001_boel_hand"));
 	table_0000_granddad_hand=new createjs.Bitmap(queue.getResult("table_0000_granddad_hand"));
-	table.addChild(table_0007_granddad,table_0006_boel,table_0005_tore,table_0004_table,table_0003_tore_hand,table_0002_dog,table_0001_boel_hand
+	table.addChild(table_0008_mom,table_0007_granddad,table_0006_boel,table_0005b_dad,table_0005_tore,table_0004_table,table_0004_mom_hand,table_0003b_dad_hand,table_0003_tore_hand,table_0002_dog,table_0001_boel_hand
 ,table_0000_granddad_hand);
 	table.x=100;
 	table.y=80;
 	table.alpha=0.0;
 	table.scaleX=table.scaleY=1.0;
 	
+	table_0008_mom.addEventListener("mousedown", handleTable_0008_momTouch);
 	table_0007_granddad.addEventListener("mousedown", handleTable_0007_granddadTouch);
 	table_0006_boel.addEventListener("mousedown", handleTable_0006_boelTouch);
+	table_0005b_dad.addEventListener("mousedown", handleTable_0005b_dadTouch);
 	table_0005_tore.addEventListener("mousedown", handleTable_0005_toreTouch);
 	table_0002_dog.addEventListener("mousedown", handleTable_0002_dogTouch);
 	
@@ -628,7 +602,7 @@ function addTable() {
 }
 
 
-function addCake(cakeparts,cakepieces,cakefiles) {
+function addCake(pieceParts,cakepieces,cakefiles) {
 	
 	cake = new createjs.Container();
 	
@@ -641,18 +615,25 @@ function addCake(cakeparts,cakepieces,cakefiles) {
 	var k=0;
 	for (var i=0;i<cakepieces;i++) {
 		var onePiece=new Array(); 
-		for (var j=0;j<cakeparts.length+1;j++) { //+1 because cake_outsidelines doubled
+		for (var j=0;j<pieceParts.length+1;j++) { //+1 because cake_outsidelines doubled
 			var part=new createjs.Bitmap(queue.getResult(cakefiles[k]["id"]));
 			k++;
 			part.number=i; //first piece has number 0
 			onePiece.push(part);
-			if (j==3 || j==4) {
+			part.addEventListener("mousedown", handleCakePieceTouch);
+			if (j==0 || j==2 || j==3) {
 				part.visible=false;
 			}
 		}
+		onePiece.moved=false;
+		onePiece.smashed=false;
 		cakeComplete.push(onePiece);
-		cakeStatus.push(true); //visible, or actually visible in cake
+		//cakeStatus.push(true); //visible, or actually visible in cake. Maybe I should say: Not moved
 		
+		//xxx test code
+		//cakeComplete[i][0].addEventListener("mousedown", handleCakePieceTouch);
+		//xxx end test code
+	
 	//xxx test code
 		//cakeComplete[i][0].addEventListener("mousedown", handleCakePieceTouch);
 	//xxx test code		
@@ -698,12 +679,36 @@ function addCake(cakeparts,cakepieces,cakefiles) {
 function restoreCake() {
 	
 	if (cake.focus) {
+		soundQueue=[];
+		nextRandomCheck=-1;
+		selectedNameNumber=-1
+		selectedName="";
+		hideNumber();
 		for (var i=0;i<cakeComplete.length;i++) {
+			//xxx måste ha en funktion istället som återställer tårtbit. den kan också 
+			//anropas när tårtbit skapas
+			piece=cakeComplete[i];
+			for (j=0;j<piece.length;j++) {
+				if (j==0 || j==2 || j==3) {
+					piece[j].visible=false;
+				} else {
+					piece[j].visible=true;
+				}
+				piece.smashed=false;
+				piece.moved=false;
+			}
 			moveCakePiece(i,0,0);
 		}
-		createjs.Tween.get(cake).to({x:cake.xStart, y: cake.yStart, scaleX:cake.scaleStart, scaleY:cake.scaleStart}, 400, createjs.Ease.linear);
-		createjs.Tween.get(table).to({alpha:0.0}, 400, createjs.Ease.linear);
-		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear);
+		
+		
+		
+		
+		tweenStart();
+		createjs.Tween.get(cake).to({x:cake.xStart, y: cake.yStart, scaleX:cake.scaleStart, scaleY:cake.scaleStart}, 400, createjs.Ease.linear).call(tweenStop);
+		tweenStart();
+		createjs.Tween.get(table).to({alpha:0.0}, 400, createjs.Ease.linear).call(tweenStop);
+		tweenStart();
+		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
 		cake.focus=false;
 		ball.alpha=1;
 	}
@@ -727,15 +732,16 @@ function addButton() {
 }
 
 
-function buildcakefiles(cakeparts,cakepieces) {	
-	var cakefiles=new Array(); //((cakeparts.length+1)*cakepieces); //+1 because cake_outsidelines doubled
-	var shared=cakeparts[cakeparts.length-1];
+function buildcakefiles(pieceParts,cakepieces) {	
+	var cakefiles=new Array(); //((pieceParts.length+1)*cakepieces); //+1 because cake_outsidelines doubled
+	var shared=pieceParts[pieceParts.length-1];
 	var k=0;
 	for (var i=1;i<cakepieces+1;i++) {
-		for (var j=0;j<cakeparts.length-1;j++) {
-			cakefiles.push({id:cakeparts[j]+i, src:"assets/"+cakeparts[j]+i+".png"});
+		for (var j=0;j<pieceParts.length-1;j++) {
+			cakefiles.push({id:pieceParts[j]+i, src:"assets/"+pieceParts[j]+i+".png"});
 			k++;
 		}
+		//here is some tricky code to find outside lines...
 		var first=i;
 		var second=((i%cakepieces)+1);
 		var third=(i-2+cakepieces)%cakepieces+1;
@@ -785,54 +791,201 @@ function showCakePiece(piecenumber,show) {
 function moveCakePiece(piecenumber,x,y) {
 	//piecenumber: piece to show or hide
 	//show: true to show, false to hide
-	if (cake.focus) {
+	var movePerformed=false;
+	if (cake.focus  && soundQueue.length==0) {
 		var piece=cakeComplete[piecenumber];
 	
-		if (x!=0 || y!=0) {
+		if ((x!=0 || y!=0) && !piece.moved) {//cakeStatus[piecenumber]) { //mycket klumpig konstruktion
 			for (var j=0;j<piece.length;j++) {
-				createjs.Tween.get(piece[j]).to({x:x, y:y}, 200, createjs.Ease.linear);
-
-				//piece[j].x=x;
-				//piece[j].y=y;
-				cakeStatus[piecenumber]=false;
+				tweenStart();
+				createjs.Tween.get(piece[j]).to({x:x, y:y}, 200, createjs.Ease.linear).call(tweenStop);
+				piece.moved=true; //cakeStatus[piecenumber]=false;
+				movePerformed=true;
 			}
-		} else {
+		} else if (x==0 && y==0) { //used in restoreCake
 			for (var j=0;j<piece.length;j++) {
 				piece[j].x=0;
 				piece[j].y=0;
-				cakeStatus[piecenumber]=true;
+				piece.moved=false; //cakeStatus[piecenumber]=true;
 			}
 		}
 		var movedPieces=0;
-		for (var k=0;k<cakeStatus.length;k++) {
+		for (var k=0;k<cakeComplete.length;k++) {
 			//om bit är på plats men nästa bit ej på plats: visa skiljelinje
-			if (cakeStatus[k] && !cakeStatus[(k+1)%cakeStatus.length]) {
-				cakeComplete[k][3].visible=true;	
+			piece=cakeComplete[k];
+			nextPiece=cakeComplete[(k+1)%cakeComplete.length];
+			if (!piece.moved && nextPiece.moved) {
+				piece[2].visible=true;	
 			} else {
-				cakeComplete[k][3].visible=false;
+				piece[2].visible=false;
 			}
-			if (cakeStatus[k] && !cakeStatus[(k-1+cakeStatus.length)%cakeStatus.length]) {
-				cakeComplete[k][4].visible=true;	
+			prevPiece=cakeComplete[(k-1+cakeComplete.length)%cakeComplete.length];
+			if (!piece.moved && prevPiece.moved) {
+				piece[3].visible=true;	
 			} else {
-				cakeComplete[k][4].visible=false;
+				piece[3].visible=false;
 			}
 			
-			if (!cakeStatus[k]) {	
+			if (piece.moved) {	
 				//flyttad bit
 				movedPieces++;
-				cakeComplete[k][3].visible=true;
-				cakeComplete[k][4].visible=true;
+				if (!piece.smashed) {
+					piece[2].visible=true;
+					piece[3].visible=true;
+				}
 			}
 		
 		}
 		
-		//xxx tillfällig klumpig konstruktion
-		for (var i=0;i<numbers.length;i++) {
-			numbers[i].visible=false;
-		}
-		if (movedPieces>0 && (x!=0 || y!=0)) {
-			numbers[movedPieces].visible=true;
-			createjs.Sound.play(cakepiecesound[movedPieces]);
+		if (movePerformed && (x!=0 || y!=0)) {
+			//här bestämmer vi tid för nästa smash. Vilken bit som smashas bestäms dock inte här
+			//utan i handleTick
+			nextSmash=randomFutureTicks(10,10.01);
+			console.log("next smash om ", (nextSmash-now)/fps," s");
+			if (selectedNameNumber==piecenumber || selectedNameNumber==-1) {	
+				//"rätt" person klickad		
+				extendAndPlayQueue([names[piecenumber],"faar",ordinal[movedPieces],"taartbiten"]);
+				selectedNameNumber=-1;
+				nextRandomCheck=randomFutureTicks(minSecSelectName,maxSecSelectName);
+			} else {
+				//"fel" person klickad
+				extendAndPlayQueue(["det_var_vael_inte",names[selectedNameNumber],"det_aer_ju",names[piecenumber],"som","faar",ordinal[movedPieces],"taartbiten"]);
+			}
 		}
 	}
 }
+
+function extendAndPlayQueue(sounds) {
+	var soundQueueLengthBefore=soundQueue.length;
+	soundQueue=soundQueue.concat(sounds);
+	if (soundQueueLengthBefore==0) { //queue was empty, no sound was playing
+		playQueue();
+	}
+}
+
+function playQueue() {
+	var soundinstance;
+	if (soundQueue.length>0) {
+		sq0=soundQueue[0];
+		watchSound(sq0);
+		soundinstance=createjs.Sound.play(sq0);
+		soundinstance.addEventListener("complete",handleNextSound);
+	}
+}
+
+function handleNextSound(evt) {
+	soundQueue=soundQueue.splice(1);
+	playQueue();
+}
+
+function watchSound(s0) {
+	for (var i=0;i<ordinal.length;i++) {
+		if (s0==ordinal[i]) {
+			showNumber(i);	
+		}
+	}
+	
+}
+
+function hideNumber() {
+	for (var i=0;i<numbers.length;i++) {
+		numbers[i].visible=false;
+	}
+}
+
+function showNumber(number) {
+	hideNumber();
+	
+	n=numbers[number];
+	
+	n.x=canvas.width/2|0;
+	n.y=canvas.height/2|0;
+	n.scaleX=n.scaleY=1.0;
+	n.visible=true;
+	tweenStart();
+	createjs.Tween.get(n).to({x:canvas.width-200, y: 0, scaleX:0.5, scaleY:0.5}, 400, createjs.Ease.linear).call(tweenStop);
+	
+	
+}
+
+function tweenStart() {
+	numberOfRunningTweens++;
+	update=true;
+	nextupdate=true;
+}
+
+function tweenStop() {
+	numberOfRunningTweens--;
+	if (numberOfRunningTweens==0) {
+		//this is to allow one last tick after tweens have stopped
+		nextupdate=false;
+	} else {
+		nextupdate=true;
+	}
+}
+
+function randomFutureTicks(minsec,maxsec) {
+	//returns a time in ticks in the future, minsec to maxsec seconds from now
+	randomSec=minsec+Math.random()*(maxsec-minsec);
+	printDebug(" "+Math.floor(randomSec));
+	randomTimeTicks=Math.floor(now+fps*randomSec);
+	return randomTimeTicks;
+
+}
+
+function bounceTo(piecenumber) {
+	var time = 1500.0;
+	
+	var startX=ball.x;
+	var startY=ball.y;
+	
+	console.log("startX",startX,"startY",startY);
+	
+	var smashX=cake.x+cake.scaleX*cakeComplete[piecenumber][0].x;
+	var smashY=cake.y+cake.scaleY*cakeComplete[piecenumber][0].y;
+	
+	//antag startX=10, smashX=40. då ska endX bli 70
+	
+	var endX=startX+(smashX-startX)*3.9; 
+	//should be 4 but this only affects movement outside canvas
+	//it is slightly less than 4 to ensure that x tween finishes before y tween
+	var endY=startY;
+	
+	ball.alpha=1.0;
+	
+	pieceNumberToSmash=piecenumber;
+	
+	tweenStart();
+	createjs.Tween.get(ball).to({
+		x: endX
+	}, 3.9 * time, createjs.Ease.linear).call(tweenStop);
+	tweenStart();
+	createjs.Tween.get(ball).to({
+		y: smashY
+	}, time, createjs.Ease.getPowIn(2)).call(smashPiece).to({
+		y: startY
+	}, time, createjs.Ease.getPowOut(2)).to({
+		y: smashY
+	}, time, createjs.Ease.getPowIn(2)).to({
+		y: startY
+	}, time, createjs.Ease.getPowOut(2)).call(handleBounceComplete);
+}
+
+function handleBounceComplete() {
+	if (ball.x>canvas.width+100) {
+		ball.x=canvas.width+100;
+	} else if (ball.x<-100) {
+		ball.x=-100;
+	}
+	tweenStop();
+}
+
+function smashPiece() {
+			var piece=cakeComplete[pieceNumberToSmash];
+			piece.smashed=true;
+			piece[0].visible=true;
+			piece[1].visible=false;
+			piece[2].visible=false;
+			piece[3].visible=false;
+}
+
