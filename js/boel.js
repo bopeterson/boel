@@ -1,11 +1,4 @@
-var names=[
-	"hunden",
-	"tore",
-	"pappa",
-	"morfar",
-	"mamma",
-	"boel"];
-
+var characters=new Object(); //to find character connected to piece through getCharacter function
 
 var cardinal=[
 	"noll",
@@ -17,13 +10,13 @@ var cardinal=[
 	"sex"];
 	
 var ordinal=[
-	"nollte",
-	"foersta",
-	"andra",
-	"tredje",
-	"fjaerde",
-	"femte",
-	"sjaette"];
+	"nolltetaartbiten",
+	"foerstataartbiten",
+	"andrataartbiten",
+	"tredjetaartbiten",
+	"fjaerdetaartbiten",
+	"femtetaartbiten",
+	"sjaettetaartbiten"];
 	
 var debug=true;
 
@@ -35,18 +28,25 @@ var queue;
 var offset;
 var update = false;
 var nextupdate = false;
-var ball,boel,cake,table;
+var ball,boel,cake;
 
 var pieceParts,cakepieces;
 
 var cakefiles;
 
-var table_0008_mom,table_0007_granddad,table_0006_boel,table_0005b_dad,table_0005_tore,table_0004_table,table_0004_mom_hand,table_0003b_dad_hand,table_0003_tore_hand,table_0002_dog,table_0001_boel_hand,table_0000_granddad_hand;
+var table;
+var tableBoel=new Object();
+var tableMom=new Object();
+var tableGrandDad=new Object();
+var tableDad=new Object();
+var tableTore=new Object();
+var tableDog=new Object();
+
+var tableTable;
 
 var numbers=new Array();
 
-var cakeComplete=new Array(); //xxx kan bli problem med global variabel om man har en cake med sex bitar, en annan med 4 bitar. 
-//var cakeStatus=new Array();
+var cakeComplete=new Array(); 
 var debugText;
 
 var loadedFiles=0;
@@ -129,7 +129,6 @@ function changeCanvasColor(rTo,gTo,bTo,ticks) {
 	finishedChangeCanvasColor=finished;
 }
 
-
 function init() {	
 	if (window.top != window) {
 		document.getElementById("header").style.display = "none";
@@ -165,40 +164,43 @@ function init() {
 	queue.addEventListener("error", handleFileError);
 	queue.addEventListener("fileload", handleFileLoad);
 
-	
 	var soundfiles=[
-		{id:"en",src:"assets/en.mp3"},
-		{id:"tvaa",src:"assets/tvaa.mp3"},
-		{id:"tre",src:"assets/tre.mp3"},
-		{id:"fyra",src:"assets/fyra.mp3"},
-		{id:"fem",src:"assets/fem.mp3"},
-		{id:"sex",src:"assets/sex.mp3"},
-		{id:"foersta",src:"assets/foersta.mp3"},
-		{id:"andra",src:"assets/andra.mp3"},
-		{id:"tredje",src:"assets/tredje.mp3"},
-		{id:"fjaerde",src:"assets/fjaerde.mp3"},
-		{id:"femte",src:"assets/femte.mp3"},
-		{id:"sjaette",src:"assets/sjaette.mp3"},
-		{id:"hunden",src:"assets/hunden.mp3"},
-		{id:"tore",src:"assets/tore.mp3"},
-		{id:"pappa",src:"assets/pappa.mp3"},
-		{id:"morfar",src:"assets/morfar.mp3"},
-		{id:"mamma",src:"assets/mamma.mp3"},
-		{id:"boel",src:"assets/boel.mp3"},
+		{id:"andrataartbiten",src:"assets/andrataartbiten.mp3"},
+		{id:"boelslut",src:"assets/boelslut.mp3"},
+		{id:"boelstart",src:"assets/boelstart.mp3"},
+		{id:"boelvill_",src:"assets/boelvill_.mp3"},
+		{id:"detaerju",src:"assets/detaerju.mp3"},
+		{id:"detaerjuentaartbit",src:"assets/detaerjuentaartbit.mp3"},
+		{id:"detvarvaelinte",src:"assets/detvarvaelinte.mp3"},
 		{id:"faar",src:"assets/faar.mp3"},
-		{id:"vill_ha_taarta_var_aer",src:"assets/vill_ha_taarta_var_aer.mp3"},
-		{id:"det_var_vael_inte",src:"assets/det_var_vael_inte.mp3"},
-		{id:"det_aer_ju",src:"assets/det_aer_ju.mp3"},
-		{id:"taartbit",src:"assets/taartbit.mp3"},
-		{id:"taartbiten",src:"assets/taartbiten.mp3"},
-		{id:"taartbitar",src:"assets/taartbitar.mp3"},
+		{id:"femtetaartbiten",src:"assets/femtetaartbiten.mp3"},
+		{id:"fjaerdetaartbiten",src:"assets/fjaerdetaartbiten.mp3"},
+		{id:"foerstataartbiten",src:"assets/foerstataartbiten.mp3"},
+		{id:"hundenslut",src:"assets/hundenslut.mp3"},
+		{id:"hundenstart",src:"assets/hundenstart.mp3"},
+		{id:"hundenvill_",src:"assets/hundenvill_.mp3"},
+		{id:"ja",src:"assets/ja.mp3"},
+		{id:"mammaslut",src:"assets/mammaslut.mp3"},
+		{id:"mammastart",src:"assets/mammastart.mp3"},
+		{id:"mammavill_",src:"assets/mammavill_.mp3"},
+		{id:"morfarslut",src:"assets/morfarslut.mp3"},
+		{id:"morfarstart",src:"assets/morfarstart.mp3"},
+		{id:"morfarvill_",src:"assets/morfarvill_.mp3"},
+		{id:"pappaslut",src:"assets/pappaslut.mp3"},
+		{id:"pappastart",src:"assets/pappastart.mp3"},
+		{id:"pappavill_",src:"assets/pappavill_.mp3"},
+		{id:"sjaettetaartbiten",src:"assets/sjaettetaartbiten.mp3"},
+		{id:"somfaar",src:"assets/somfaar.mp3"},
+		{id:"toreslut",src:"assets/toreslut.mp3"},
+		{id:"torestart",src:"assets/torestart.mp3"},
+		{id:"torevill_",src:"assets/torevill_.mp3"},
+		{id:"tredjetaartbiten",src:"assets/tredjetaartbiten.mp3"},
 		{id:"tyst1000",src:"assets/tyst1000.mp3"},
-		{id:"som",src:"assets/som.mp3"},
-		{id:"ett_till_tjugo",src:"assets/ett_till_tjugo.mp3"}];
+		{id:"cakebounce",src:"assets/cakebounce.mp3"}];
 			
 	
 	
-	var simpleimagefiles=[{id:"boelstart", src:"assets/boelstart.png"},{id:"boel", src:"assets/boel.png"},{id:"ball", src:"assets/ball.png"},{id:"dog", src:"assets/dog.png"},{id:"button", src:"assets/button.png"},{id:"cake_plate", src:"assets/cake_plate.png"}];
+	var simpleimagefiles=[{id:"boelSplashScreen", src:"assets/boelsplashscreen.png"},{id:"ball", src:"assets/ball.png"},{id:"dog", src:"assets/dog.png"},{id:"button", src:"assets/button.png"},{id:"cake_plate", src:"assets/cake_plate.png"}];
 	
 	
 	var numberfiles=new Array();
@@ -209,13 +211,29 @@ function init() {
 	cakepieces=6;
 	cakefiles=buildcakefiles(pieceParts,cakepieces);
 	
-	var tableparts=["table_0008_mom","table_0007_granddad","table_0006_boel","table_0005b_dad","table_0005_tore","table_0004_table","table_0004_mom_hand","table_0003b_dad_hand","table_0003_tore_hand","table_0002_dog","table_0001_boel_hand","table_0000_granddad_hand"];
-	var tablefiles=new Array();
-	for (var i=0;i<tableparts.length;i++) {
-		tablefiles.push({id:tableparts[i],src:"assets/"+tableparts[i]+".png"});
-	}
-	
 
+	//no camelCase in filenames (might lead to cross platform issues...)
+	tablefiles=[
+				{"id":"tableMom","src":"assets/tablemom.png"},
+				{"id":"tableMomSad","src":"assets/tablemomsad.png"},
+				{"id":"tableGrandDad","src":"assets/tablegranddad.png"},
+				{"id":"tableGrandDadSad","src":"assets/tablegranddadsad.png"},
+				{"id":"tableBoel","src":"assets/tableboel.png"},
+				{"id":"tableBoelSad","src":"assets/tableboelsad.png"},
+				{"id":"tableDad","src":"assets/tabledad.png"},
+				{"id":"tableDadSad","src":"assets/tabledadsad.png"},
+				{"id":"tableTore","src":"assets/tabletore.png"},
+				{"id":"tableToreSad","src":"assets/tabletoresad.png"},
+				{"id":"tableTable","src":"assets/tabletable.png"},
+				{"id":"tableMomHand","src":"assets/tablemomhand.png"},
+				{"id":"tableDadHand","src":"assets/tabledadhand.png"},
+				{"id":"tableToreHand","src":"assets/tabletorehand.png"},
+				{"id":"tableDog","src":"assets/tabledog.png"},
+				{"id":"tableDogSad","src":"assets/tabledogsad.png"},
+				{"id":"tableBoelHand","src":"assets/tableboelhand.png"},
+				{"id":"tableGrandDadHand","src":"assets/tablegranddadhand.png"}
+				];
+	
 	var files=simpleimagefiles.concat(cakefiles,numberfiles,tablefiles,soundfiles);
 	
 	queue.loadManifest(files);
@@ -225,15 +243,9 @@ function init() {
 
 function handleBackgroundTouch(event) {
 	console.log("background touch",event.stageX,event.stageY);
-	
-/*	
-	startChangeCanvasColor=true;
-	finishedChangeCanvasColor=false;
-	rCanvasNew=Math.floor(Math.random()*255);
-	gCanvasNew=Math.floor(Math.random()*255);
-	bCanvasNew=Math.floor(Math.random()*255);
-*/	
-	//update=true;
+	for (i in soundQueue) {
+		console.log(soundQueue[i]);
+	}
 }
 
 function printDebug(text) {
@@ -262,12 +274,11 @@ function handleComplete(event) {
 		div.innerHTML = "Some resources were not loaded: "+(filesToLoad-loadedFiles);
 	}
 
-	addBoel();
-	boel.visible=false;
-	addBoelstart();
+	
+	addBoelSplashScreen();
+	
 	addTable();
 
-	
 	addCake(pieceParts,cakepieces,cakefiles);
 	
 	addBall();
@@ -299,7 +310,7 @@ function handleTick(event) {
 	now=createjs.Ticker.getTicks(false)
 	
 	if (now>nextSmash && nextSmash>0) {
-		console.log("smash");
+		//console.log("smash");
 		var movedAndNotSmashed=[];
 		for (var pieceNumber in cakeComplete) {
 			piece=cakeComplete[pieceNumber];
@@ -311,16 +322,15 @@ function handleTick(event) {
 			//här bestäms vilken som ska smashas. när bestäms däremot i moveCakePiece
 			var randomIndex=Math.floor(Math.random()*movedAndNotSmashed.length);
 			var randomPiece=movedAndNotSmashed[randomIndex];
-			console.log("smashar snart bit ",randomPiece);
+			//console.log("smashar snart bit ",randomPiece);
 			bounceTo(randomPiece);
 		}
 		//nextSmash=-1;
 		nextSmash=randomFutureTicks(30,30.01);
-		console.log("next smash om ", (nextSmash-now)/fps," s");
+		//console.log("next smash om ", (nextSmash-now)/fps," s");
 
 	}
-	
-	
+		
 	if (now>nextRandomCheck && nextRandomCheck>0) {
 		//vem har inte fått tårtbit än?
 		if (soundQueue.length==0 && selectedNameNumber==-1) {
@@ -335,8 +345,8 @@ function handleTick(event) {
 			if (notMoved.length>0) { 
 				var randomIndex=Math.floor(Math.random()*notMoved.length);
 				selectedNameNumber=notMoved[randomIndex];
-				selectedName=names[selectedNameNumber];
-				extendAndPlayQueue([selectedName,"vill_ha_taarta_var_aer",selectedName]);
+				selectedName=getCharacterNameSound(selectedNameNumber);
+				extendAndPlayQueue([selectedName+"vill_"]);//namn vill ha tårta, var är namn?
 			}
 		} 
 		nextRandomCheck=-1;
@@ -361,68 +371,17 @@ function handleTick(event) {
 	}
 }
 
-
-
-function handleTable_0002_dogTouch(event) {
-	moveCakePiece(0,-80,280);
-}
-
-function handleTable_0006_boelTouch(event) {
-	moveCakePiece(5,-200,0);
-}
-
-function handleTable_0008_momTouch(event) {
-	moveCakePiece(4,-150,-170);
-}
-
-function handleTable_0007_granddadTouch(event) {
-	moveCakePiece(3,200,-180);
-}
-
-function handleTable_0005b_dadTouch(event) {
-	moveCakePiece(2,250,-160);
-}
-
-function handleTable_0005_toreTouch(event) {
-	moveCakePiece(1,270,200);
+function handleCharacterTouch(event) {
+	//ok, vi har ett event. detta är en bitmapimage. men hur veta vilken character den hör till?
+	var c=event.target.character;
+	moveCakePiece(c.pieceNumber,c.pieceDeltaX,c.pieceDeltaY,"character");
 }
 
 function handleCakePieceTouch(event) {
-	
-	piecenumber=event.target.number;
-	
-	//console.log("cakepiecetouch",event.stageX,event.stageY);
-
-	
-	
-	
-	switch (piecenumber) {
-		case 0:
-			moveCakePiece(0,-80,280); //xxx used also in handleTable_0002_dogTouch, coordinates must be moved to central place
-			break;
-		case 1: 
-			moveCakePiece(1,270,200);
-			break;
-		case 2:
-			moveCakePiece(2,250,-160);
-			break;
-		case 3:
-			moveCakePiece(3,200,-180);
-			break;
-		case 4:
-			moveCakePiece(4,-150,-170);
-			break;
-		case 5:
-			moveCakePiece(5,-200,0);
-			break;
-		default:
-			break;
-	}
-
+	pieceNumber=event.target.number;
+	var c=getCharacter(pieceNumber);
+	moveCakePiece(c.pieceNumber,c.pieceDeltaX,c.pieceDeltaY,"piece");
 }
-
-
-
 
 function handleBallTouch(event) {
 	if (!cake.focus  && !ball.focus) { //xxx quickfix
@@ -431,7 +390,7 @@ function handleBallTouch(event) {
 	  tweenStart();
 	  createjs.Tween.get(ball).to({x:canvas.width/2+200, y: canvas.height/2, scaleX:1.0, scaleY:1.0}, 400, createjs.Ease.linear).call(tweenStop);
 	  tweenStart();
-	  createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear).call(tweenStop);
+	  createjs.Tween.get(boelSplashScreen).to({alpha:0.0}, 200, createjs.Ease.linear).call(tweenStop);
 	  
 	  startChangeCanvasColor=true;
 	  finishedChangeCanvasColor=false;
@@ -455,11 +414,11 @@ function handleCakeTouch(event) {
 	  //ball.alpha=0.1;
 	  ball.x=canvas.width+200; //move outside
 	  tweenStart();
-	  createjs.Tween.get(cake).to({x:canvas.width/2+20, y: canvas.height/2+80, scaleX:0.50, scaleY:0.50}, 400, createjs.Ease.linear).call(tweenStop);
+	  createjs.Tween.get(cake).to({x:canvas.width/2+20, y: canvas.height/2+50, scaleX:0.50, scaleY:0.50}, 400, createjs.Ease.linear).call(tweenStop);
 	  tweenStart();
 	  createjs.Tween.get(table).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
 	  tweenStart();
-	  createjs.Tween.get(boelstart).to({alpha:0.0}, 200, createjs.Ease.linear).call(tweenStop);
+	  createjs.Tween.get(boelSplashScreen).to({alpha:0.0}, 200, createjs.Ease.linear).call(tweenStop);
   
 	  startChangeCanvasColor=true;
 	  finishedChangeCanvasColor=false;
@@ -496,27 +455,12 @@ function addDebugText() {
 	stage.addChild(debugText);
 }
 
-function addBoel() {
-	boel=new createjs.Bitmap(queue.getResult("boel"));
-	stage.addChild(boel);
-	boel.scaleX = boel.scaleY = boel.scale = 1;
-	boel.x = canvas.width/2-200;
-	boel.y = canvas.height/2;
-	boel.rotation = 0;
-	boel.regX = boel.image.width/2|0;
-	boel.regY = boel.image.height/2|0;
-	boel.name = "Boel";
-}
-
-function addBoelstart() {
-	boelstart=new createjs.Bitmap(queue.getResult("boelstart"));
-	stage.addChild(boelstart);
-	boel.scaleX = boel.scaleY = boel.scale = 0.2;
-	boel.x = canvas.width/2-200;
-	boel.y = canvas.height/2;
-	boel.rotation = 0;
-	boel.regX = boel.image.width/2|0;
-	boel.regY = boel.image.height/2|0;
+function addBoelSplashScreen() {
+	boelSplashScreen=new createjs.Bitmap(queue.getResult("boelSplashScreen"));
+	stage.addChild(boelSplashScreen);
+	boelSplashScreen.scaleX = boelSplashScreen.scaleY = boelSplashScreen.scale = 1;
+	boelSplashScreen.x =0;
+	boelSplashScreen.y =0;
 }
 
 function addNumbers() {
@@ -558,47 +502,162 @@ function restoreBall() {
 		tweenStart();
 		createjs.Tween.get(ball).to({x:ball.xStart, y: ball.yStart, scaleX:ball.scaleStart, scaleY:ball.scaleStart}, 400, createjs.Ease.linear).call(tweenStop);
 		tweenStart();
-		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
+		createjs.Tween.get(boelSplashScreen).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
 		ball.focus=false;
 		cake.alpha=1;
 
 	}
 }
 
-
-
 function addTable() {
 	table=new createjs.Container();
 	
-	table_0008_mom=new createjs.Bitmap(queue.getResult("table_0008_mom"));
-	table_0007_granddad=new createjs.Bitmap(queue.getResult("table_0007_granddad"));
-	table_0006_boel=new createjs.Bitmap(queue.getResult("table_0006_boel"));
-	table_0005b_dad=new createjs.Bitmap(queue.getResult("table_0005b_dad"));
-	table_0005_tore=new createjs.Bitmap(queue.getResult("table_0005_tore"));
-	table_0004_table=new createjs.Bitmap(queue.getResult("table_0004_table"));
-	table_0004_mom_hand=new createjs.Bitmap(queue.getResult("table_0004_mom_hand"));
-	table_0003b_dad_hand=new createjs.Bitmap(queue.getResult("table_0003b_dad_hand"));
-	table_0003_tore_hand=new createjs.Bitmap(queue.getResult("table_0003_tore_hand"));
-	table_0002_dog=new createjs.Bitmap(queue.getResult("table_0002_dog"));
-	table_0001_boel_hand=new createjs.Bitmap(queue.getResult("table_0001_boel_hand"));
-	table_0000_granddad_hand=new createjs.Bitmap(queue.getResult("table_0000_granddad_hand"));
-	table.addChild(table_0008_mom,table_0007_granddad,table_0006_boel,table_0005b_dad,table_0005_tore,table_0004_table,table_0004_mom_hand,table_0003b_dad_hand,table_0003_tore_hand,table_0002_dog,table_0001_boel_hand
-,table_0000_granddad_hand);
+	tableMom.pieceNumber=4;
+	tableMom.pieceDeltaX=-150;
+	tableMom.pieceDeltaY=-110;
+	tableMom.happyPic=new createjs.Bitmap(queue.getResult("tableMom"));
+	tableMom.happyPic.character=tableMom; 
+	//will this circular reference cause garbage? 
+	//Not according to 	
+	//http://stackoverflow.com/questions/7347203/circular-references-in-javascript-garbage-collector
+	tableMom.sadPic=new createjs.Bitmap(queue.getResult("tableMomSad"));
+	tableMom.sadPic.character=tableMom;
+	tableMom.handPic=new createjs.Bitmap(queue.getResult("tableMomHand"));
+	tableMom.name="Mamma"; 
+
+	tableGrandDad.pieceNumber=3;
+	tableGrandDad.pieceDeltaX=200;
+	tableGrandDad.pieceDeltaY=-180;
+	tableGrandDad.happyPic=new createjs.Bitmap(queue.getResult("tableGrandDad"));
+	tableGrandDad.happyPic.character=tableGrandDad;
+	tableGrandDad.sadPic=new createjs.Bitmap(queue.getResult("tableGrandDadSad"));
+	tableGrandDad.sadPic.character=tableGrandDad;
+	tableGrandDad.handPic=new createjs.Bitmap(queue.getResult("tableGrandDadHand"));
+	tableGrandDad.name="Morfar";
+	
+	tableBoel.pieceNumber=5;
+	tableBoel.pieceDeltaX=-200;
+	tableBoel.pieceDeltaY=70;
+	tableBoel.happyPic=new createjs.Bitmap(queue.getResult("tableBoel"));
+	tableBoel.happyPic.character=tableBoel;
+	tableBoel.sadPic=new createjs.Bitmap(queue.getResult("tableBoelSad"));
+	tableBoel.sadPic.character=tableBoel;
+	tableBoel.handPic=new createjs.Bitmap(queue.getResult("tableBoelHand"));
+	tableBoel.name="Boel"; 
+
+	tableDad.pieceNumber=2;
+	tableDad.pieceDeltaX=250;
+	tableDad.pieceDeltaY=-135;
+	tableDad.happyPic=new createjs.Bitmap(queue.getResult("tableDad"));
+	tableDad.happyPic.character=tableDad;
+	tableDad.sadPic=new createjs.Bitmap(queue.getResult("tableDadSad"));
+	tableDad.sadPic.character=tableDad;
+	tableDad.handPic=new createjs.Bitmap(queue.getResult("tableDadHand"));
+	tableDad.name="Pappa"; 
+
+	tableTore.pieceNumber=1;
+	tableTore.pieceDeltaX=270;
+	tableTore.pieceDeltaY=200;
+	tableTore.happyPic=new createjs.Bitmap(queue.getResult("tableTore"));
+	tableTore.happyPic.character=tableTore;
+	tableTore.sadPic=new createjs.Bitmap(queue.getResult("tableToreSad"));
+	tableTore.sadPic.character=tableTore;
+	tableTore.handPic=new createjs.Bitmap(queue.getResult("tableToreHand"));
+	tableTore.name="Tore"; 
+
+	tableDog.pieceNumber=0;
+	tableDog.pieceDeltaX=-80;
+	tableDog.pieceDeltaY=280;
+	tableDog.happyPic=new createjs.Bitmap(queue.getResult("tableDog"));
+	tableDog.happyPic.character=tableDog;
+	tableDog.sadPic=new createjs.Bitmap(queue.getResult("tableDogSad"));
+	tableDog.sadPic.character=tableDog;
+	tableDog.handPic=new createjs.Bitmap(queue.getResult("tableDogHand"));
+	tableDog.name="Hunden"; 
+
+	tableTable=new createjs.Bitmap(queue.getResult("tableTable"));
+
+	table.addChild( tableMom.happyPic,
+					tableMom.sadPic,
+					tableGrandDad.happyPic,
+					tableGrandDad.sadPic,
+					tableBoel.happyPic,
+					tableBoel.sadPic,
+					tableDad.happyPic,
+					tableDad.sadPic,
+					tableTore.happyPic,
+					tableTore.sadPic,
+					tableTable,
+					tableDog.happyPic,
+					tableDog.sadPic,
+					tableMom.handPic,
+					tableGrandDad.handPic,
+					tableBoel.handPic,
+					tableDad.handPic,
+					tableTore.handPic);
+					
 	table.x=100;
-	table.y=80;
+	table.y=50; //80;
 	table.alpha=0.0;
 	table.scaleX=table.scaleY=1.0;
 	
-	table_0008_mom.addEventListener("mousedown", handleTable_0008_momTouch);
-	table_0007_granddad.addEventListener("mousedown", handleTable_0007_granddadTouch);
-	table_0006_boel.addEventListener("mousedown", handleTable_0006_boelTouch);
-	table_0005b_dad.addEventListener("mousedown", handleTable_0005b_dadTouch);
-	table_0005_tore.addEventListener("mousedown", handleTable_0005_toreTouch);
-	table_0002_dog.addEventListener("mousedown", handleTable_0002_dogTouch);
-	
-	
-	stage.addChild(table);
-	
+	//make an object (with integer id-s, making it look like an array) used for looking up character 
+	//associated to cake piece
+	characters[tableMom.pieceNumber]=tableMom;
+	characters[tableGrandDad.pieceNumber]=tableGrandDad;
+	characters[tableBoel.pieceNumber]=tableBoel;
+	characters[tableDad.pieceNumber]=tableDad;
+	characters[tableTore.pieceNumber]=tableTore;
+	characters[tableDog.pieceNumber]=tableDog;
+
+	addCharacterEventListener(tableMom);
+	makeCharacterHappy(tableMom);
+
+	addCharacterEventListener(tableGrandDad);
+	makeCharacterHappy(tableGrandDad);
+
+	addCharacterEventListener(tableBoel);
+	makeCharacterHappy(tableBoel);
+
+	addCharacterEventListener(tableDad);
+	makeCharacterHappy(tableDad);
+
+	addCharacterEventListener(tableTore);
+	makeCharacterHappy(tableTore);
+
+	addCharacterEventListener(tableDog);
+	makeCharacterHappy(tableDog);
+
+	stage.addChild(table);	
+}
+
+function addCharacterEventListener(character) {
+	if (character.hasOwnProperty("happyPic")) {
+		character.happyPic.addEventListener("mousedown", handleCharacterTouch);//xxx ändra till general handle
+	}
+	if (character.hasOwnProperty("sadPic")) {
+		character.sadPic.addEventListener("mousedown", handleCharacterTouch);//xxx ändra till general 
+	}
+}
+
+function makeCharacterHappy(character) {
+	var c=character;
+	if (c.hasOwnProperty("happyPic")) {
+		c.happyPic.visible=true;
+	}
+	if (c.hasOwnProperty("sadPic")) {
+		c.sadPic.visible=false;
+	}
+}
+
+function makeCharacterSad(character) {
+	var c=character;
+	if (c.hasOwnProperty("happyPic")) {
+		c.happyPic.visible=false;
+	}
+	if (c.hasOwnProperty("sadPic")) {
+		c.sadPic.visible=true;
+	}
 }
 
 
@@ -611,14 +670,19 @@ function addCake(pieceParts,cakepieces,cakefiles) {
 	
 	
 	
-	//bättre göra varje bit till en container istället för hela tårtan väl...
+	//xxx bättre göra varje bit till en container istället för hela tårtan väl...
+	//nu finns det en 2-dim array cakeComplete som pieces och parts
+	//sedan är varje part child till cake, istället för att varje part är child till piece som 
+	//är child till part. 
+	//eg skulle jag inte behöva cakeComplete
 	var k=0;
 	for (var i=0;i<cakepieces;i++) {
 		var onePiece=new Array(); 
 		for (var j=0;j<pieceParts.length+1;j++) { //+1 because cake_outsidelines doubled
 			var part=new createjs.Bitmap(queue.getResult(cakefiles[k]["id"]));
 			k++;
-			part.number=i; //first piece has number 0
+			part.number=i; //first piece has number 0, all parts get number i
+			part.name="part"+j+"piece"+i;
 			onePiece.push(part);
 			part.addEventListener("mousedown", handleCakePieceTouch);
 			if (j==0 || j==2 || j==3) {
@@ -684,6 +748,14 @@ function restoreCake() {
 		selectedNameNumber=-1
 		selectedName="";
 		hideNumber();
+		makeCharacterHappy(tableMom);
+		makeCharacterHappy(tableGrandDad);
+		makeCharacterHappy(tableBoel);
+		makeCharacterHappy(tableDad);
+		makeCharacterHappy(tableTore);
+		makeCharacterHappy(tableDog);
+
+		
 		for (var i=0;i<cakeComplete.length;i++) {
 			//xxx måste ha en funktion istället som återställer tårtbit. den kan också 
 			//anropas när tårtbit skapas
@@ -697,7 +769,7 @@ function restoreCake() {
 				piece.smashed=false;
 				piece.moved=false;
 			}
-			moveCakePiece(i,0,0);
+			moveCakePiece(i,0,0,"restore");
 		}
 		
 		
@@ -708,7 +780,7 @@ function restoreCake() {
 		tweenStart();
 		createjs.Tween.get(table).to({alpha:0.0}, 400, createjs.Ease.linear).call(tweenStop);
 		tweenStart();
-		createjs.Tween.get(boelstart).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
+		createjs.Tween.get(boelSplashScreen).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
 		cake.focus=false;
 		ball.alpha=1;
 	}
@@ -755,58 +827,29 @@ function buildcakefiles(pieceParts,cakepieces) {
 	return cakefiles;
 }
 
-/*
-function showCakePiece(piecenumber,show) {
-	//piecenumber: piece to show or hide
-	//show: true to show, false to hide
-	var piece=cakeComplete[piecenumber];
-	if (!show) {
-		for (var j=0;j<piece.length;j++) {
-			piece[j].visible=false;
-			cakeStatus[piecenumber]=false;
-		}
-	} else {
-		for (var j=0;j<piece.length;j++) {
-			piece[j].visible=true;
-			cakeStatus[piecenumber]=true;
-		}
-	}
+function moveCakePiece(piecenumber,x,y,action) {
+	//action can be character, piece or restore
 	
-	for (var k=0;k<cakeStatus.length;k++) {
-		//om bit är synlig men nästa bit ej synlig: visa skiljelinje
-		if (cakeStatus[k] && !cakeStatus[(k+1)%cakeStatus.length]) {
-			cakeComplete[k][3].visible=true;	
-		} else {
-			cakeComplete[k][3].visible=false;
-		}
-		if (cakeStatus[k] && !cakeStatus[(k-1+cakeStatus.length)%cakeStatus.length]) {
-			cakeComplete[k][4].visible=true;	
-		} else {
-			cakeComplete[k][4].visible=false;
-		}
 	
-	}
-}
-*/
-function moveCakePiece(piecenumber,x,y) {
-	//piecenumber: piece to show or hide
-	//show: true to show, false to hide
+	//komplikation 1: samma funktion används för att flytta ut som för att återställa tårtan
+	//denna skulle bli mycket enklare om återställningen sköts av egen funktion, restore piece
+	
 	var movePerformed=false;
 	if (cake.focus  && soundQueue.length==0) {
 		var piece=cakeComplete[piecenumber];
 	
-		if ((x!=0 || y!=0) && !piece.moved) {//cakeStatus[piecenumber]) { //mycket klumpig konstruktion
+		if ((x!=0 || y!=0) && !piece.moved) {
 			for (var j=0;j<piece.length;j++) {
 				tweenStart();
 				createjs.Tween.get(piece[j]).to({x:x, y:y}, 200, createjs.Ease.linear).call(tweenStop);
-				piece.moved=true; //cakeStatus[piecenumber]=false;
+				piece.moved=true;
 				movePerformed=true;
 			}
 		} else if (x==0 && y==0) { //used in restoreCake
 			for (var j=0;j<piece.length;j++) {
 				piece[j].x=0;
 				piece[j].y=0;
-				piece.moved=false; //cakeStatus[piecenumber]=true;
+				piece.moved=false;
 			}
 		}
 		var movedPieces=0;
@@ -837,21 +880,47 @@ function moveCakePiece(piecenumber,x,y) {
 		
 		}
 		
+		var nameClicked=getCharacterNameSound(piecenumber);
+		var nameSelected=getCharacterNameSound(selectedNameNumber);
+		
 		if (movePerformed && (x!=0 || y!=0)) {
 			//här bestämmer vi tid för nästa smash. Vilken bit som smashas bestäms dock inte här
 			//utan i handleTick
 			nextSmash=randomFutureTicks(10,10.01);
-			console.log("next smash om ", (nextSmash-now)/fps," s");
-			if (selectedNameNumber==piecenumber || selectedNameNumber==-1) {	
+			//console.log("next smash om ", (nextSmash-now)/fps," s");
+			if (selectedNameNumber==piecenumber) {	
 				//"rätt" person klickad		
-				extendAndPlayQueue([names[piecenumber],"faar",ordinal[movedPieces],"taartbiten"]);
+				if (action=="character") {
+					extendAndPlayQueue(["ja"]);
+				}
+				extendAndPlayQueue([nameClicked+"start","faar",ordinal[movedPieces]]);
 				selectedNameNumber=-1;
 				nextRandomCheck=randomFutureTicks(minSecSelectName,maxSecSelectName);
+			} else if (selectedNameNumber==-1) {	
+				//person utan tårtbit klickad		
+				extendAndPlayQueue([nameClicked+"start","faar",ordinal[movedPieces]]);//somma som föregående
+				nextRandomCheck=randomFutureTicks(minSecSelectName,maxSecSelectName);	
 			} else {
-				//"fel" person klickad
-				extendAndPlayQueue(["det_var_vael_inte",names[selectedNameNumber],"det_aer_ju",names[piecenumber],"som","faar",ordinal[movedPieces],"taartbiten"]);
+				//"fel" person som inte än fått tårtbit klickad
+				extendAndPlayQueue(["detvarvaelinte",nameSelected+"slut"]);
+				if (action=="character") {
+					extendAndPlayQueue(["detaerju",nameClicked+"start","somfaar",ordinal[movedPieces]]);//xxx inte helt nöjd med denna
+				} else if (action=="piece") {
+					extendAndPlayQueue(["detaerju",ordinal[movedPieces]]);
+				}
 			}
 		}
+		
+		if (!movePerformed && (x!=0 || y!=0) && selectedNameNumber!=piecenumber && selectedNameNumber!=-1) {
+			//"fel" person som redan fått tårtbit klickad
+			extendAndPlayQueue(["detvarvaelinte",nameSelected+"slut"]);
+			if (action=="character") {
+				extendAndPlayQueue(["detaerju",nameClicked+"start"]);
+			} else if (action=="piece") {
+				extendAndPlayQueue(["detaerjuentaartbit"]);
+			}
+		}
+
 	}
 }
 
@@ -869,9 +938,20 @@ function playQueue() {
 		sq0=soundQueue[0];
 		watchSound(sq0);
 		soundinstance=createjs.Sound.play(sq0);
-		soundinstance.addEventListener("complete",handleNextSound);
+		if (soundinstance.playState!="playFailed") {
+			soundinstance.addEventListener("complete",handleNextSound);
+		} else {
+			console.log("play failed");
+			handleNextSound(null);
+		}
 	}
 }
+
+function playSingle(sound) {
+	var soundinstance;
+	soundinstance=createjs.Sound.play(sound);
+}
+
 
 function handleNextSound(evt) {
 	soundQueue=soundQueue.splice(1);
@@ -939,7 +1019,7 @@ function bounceTo(piecenumber) {
 	var startX=ball.x;
 	var startY=ball.y;
 	
-	console.log("startX",startX,"startY",startY);
+	//console.log("startX",startX,"startY",startY);
 	
 	var smashX=cake.x+cake.scaleX*cakeComplete[piecenumber][0].x;
 	var smashY=cake.y+cake.scaleY*cakeComplete[piecenumber][0].y;
@@ -982,10 +1062,32 @@ function handleBounceComplete() {
 
 function smashPiece() {
 			var piece=cakeComplete[pieceNumberToSmash];
+			playSingle("cakebounce");
+			
+			var character=getCharacter(pieceNumberToSmash);
+			makeCharacterSad(character);
+				
 			piece.smashed=true;
 			piece[0].visible=true;
 			piece[1].visible=false;
 			piece[2].visible=false;
 			piece[3].visible=false;
+}
+
+function getCharacterNameSound(pieceNumber) {
+	var character=getCharacter(pieceNumber);
+	if (character.hasOwnProperty("name")) {
+		return character.name.toLowerCase();
+	} else {
+		return "";
+	}
+}
+
+function getCharacter(pieceNumber) {
+	var character=new Object();
+	if (characters.hasOwnProperty(pieceNumber)) {
+		character=characters[pieceNumber];
+	}
+	return character;
 }
 
