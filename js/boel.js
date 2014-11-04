@@ -1,7 +1,9 @@
 /* Boel och Tore - da game */
 
+var newX,newY,finalY,finalX	;
+var startAngle,hitAngle,outAngle;
 
-var xxx;
+var touchedBallTween=new Object();
 
 var characters=new Object(); //to find character connected to piece through getCharacter function
 
@@ -32,7 +34,7 @@ var background;
 var queue;
 var offset;
 var update = false;
-var nextupdate = false;
+//var nextupdate = false; not used
 var ball,boel,cake;
 
 var blueBall,redBall,yellowBall,greenBall;
@@ -89,7 +91,7 @@ var pieceNumberToSmash=-1;
 var minSecSelectName=10; //min random time before voice: "x vill ha tårta, var är x"
 var maxSecSelectName=15; //max random time...
 
-var numberOfRunningTweens=0;
+//var numberOfRunningTweens=0;  not used anymore
 
 //xx these two are initiated also in restoreCake, must only be done in one place
 var selectedNameNumber=-1;
@@ -263,7 +265,10 @@ function init() {
 
 function handleBackgroundTouch(event) {
 	console.log("background touch",event.stageX,event.stageY);
-	printDebug(numberOfRunningTweens);
+	printDebug(createjs.Tween.hasActiveTweens()+" ");
+	newX=event.stageX;
+	newY=event.stageY;
+	
 	stage.update();
 }
 
@@ -380,48 +385,41 @@ function handleTick(event) {
 		//printDebug("("+rCanvas.toFixed(2) +","+gCanvas.toFixed(2)+","+bCanvas.toFixed(2)+")");
 	}
 	
-	printDebug(numberOfRunningTweens);
 	
 	if (update) {		
-	    if (detectBallCollision(blueBall)) {
-			console.log("CRASH!!!");
-			console.log("true/false",createjs.Tween.hasActiveTweens(blueBall),createjs.Tween.hasActiveTweens(redBall),createjs.Tween.hasActiveTweens());
-			//blueBall.x=10;blueBall.y=400; //xxxxxxxxx
+	    if (touchedBallTween.hasOwnProperty("target")) {
+			var ball=touchedBallTween.target;
+			if (detectBallCollision(ball)) {
+				console.log(ball.name+" collided into "+ball.obstacle.name);
 			
-			//annorlunda beteende med 051 och next. 
-			//if (createjs.Tween.hasActiveTweens(blueBall)) {
-			if (isRunning(xxx)) {  
-				xxx.setPaused(true); //funkar nog bäst
-				tweenStop(); 
+				//xxx detectBallCollision måste signalera med vilken boll som den krockat.	
+				hitAngle=Math.atan2(ball.y-ball.obstacle.y,ball.x-ball.obstacle.x);
+	        	console.log("-hitAngle:",-hitAngle*180/Math.PI);
+
+	
+				outAngle=2*hitAngle-Math.PI-startAngle;
+				console.log("-outAngle:",-outAngle*180/Math.PI)
+
+				var deltaX=200*Math.cos(outAngle);
+				var deltaY=200*Math.sin(outAngle);
+				finalX=ball.x+deltaX;
+				finalY=ball.y+deltaY;
+				
+
+				//annorlunda beteende med 051 och next. 
+				//if (createjs.Tween.hasActiveTweens(blueBall)) {
+				if (isRunning(touchedBallTween)) {  
+					touchedBallTween.setPaused(true); //funkar nog bäst
+					tweenStop();
+					createjs.Tween.get(ball).to({x:finalX,y:finalY}, 500, createjs.Ease.linear);
+				}
+			
 			}
-			
 		}
 		stage.update(event); //pass event to make sure for example sprite animation works
 	}
-	if (!nextupdate) {
-		update=false;
-	}
-	//xxx eventuellt: if (!createjs.Tween.hasActiveTweens()) { update=false;}
-	//eller möjligtvis if (!createjs.Tween.hasActiveTweens()) { nextupdate=false;}
-	//eller kanske till och med 
 	
-	//för att säkerställa en sista uppdate:
-	if (!createjs.Tween.hasActiveTweens()) { nextupdate=false;} else { update=true;nextupdate=true }
-	
-	//men funkar troligtvis:
-	if (!createjs.Tween.hasActiveTweens()) { update=false;} else { update=true;nextupdate=true }
-	//och om det funkar så kan nextupdate tas bort helt och hållet
-	//vilket slutligen leder till:
-	//update=createjs.Tween.hasActiveTweens();
-	
-	
-	//så borde man kunna slippa tweenStart()
-	//xxxxx tar bort nextupdate ur tweenstop
-	//verkar faktiskt som om detta funkar och då kan både start och stoptweens tas bort
-	if (createjs.Tween.hasActiveTweens()!=(numberOfRunningTweens>0)) {
-		console.log("hasActiveTweens:",createjs.Tween.hasActiveTweens(),"numberOfRunningTweens",numberOfRunningTweens);
-	}
-	
+	update=createjs.Tween.hasActiveTweens();
 	
 }
 
@@ -615,10 +613,13 @@ function addBall() {
 	setRandomPosition(yellowBall);
 	setRandomPosition(greenBall);
 	
-	greenBall.x=900;greenBall.y=400;yellowBall.x=900;yellowBall.y=400;
+	/*
+	greenBall.x=-50;greenBall.y=-50;yellowBall.x=-50;yellowBall.y=-50;
+	*/
+	/*
 	blueBall.x=600;blueBall.y=200;
 	redBall.x=300;redBall.y=200;
-
+	*/
 }
 
 
@@ -650,6 +651,9 @@ function detectBallCollision(thisBall) {
 		if (allBalls[i]!=thisBall) {
 			otherBall=allBalls[i];
 			collision=collides(thisBall,otherBall);
+			if (collision) {
+				thisBall.obstacle=otherBall;
+			}
 		}
 	}
 	return collision;
@@ -657,13 +661,28 @@ function detectBallCollision(thisBall) {
 
 function handlePlayBallTouch(event) {
 	console.log(event.target.name," touched");
+	
+	var ball=event.target;
+	
+//	bounceToNextBall starta bounce mot slumpvis boll, studsa sedan i rätt riktning tills utanför ram. spiral om fel boll
+	
+	//var newX=redBall.x+100;
+	//var newY=redBall.y+100;
+	
+	startAngle=Math.atan2(newY-ball.y,newX-ball.x);
+	console.log("-startAngle:",-startAngle*180/Math.PI);
+
+	touchedBallTween=createjs.Tween.get(ball).to({x:newX,y:newY},400, createjs.Ease.linear);
+
+/*
 	if (event.target.color=="blue") {		
 		tweenStart();
 	  	createjs.Tween.get(blueBall).to({alpha:0.1}, 2000, createjs.Ease.linear).call(tweenStop);
 
 		tweenStart();
-		xxx=createjs.Tween.get(blueBall).to({x:0,y:0}, 10000, createjs.Ease.linear).call(tweenStop);
+		touchedBallTween=createjs.Tween.get(blueBall).to({x:0,y:0}, 10000, createjs.Ease.linear).call(tweenStop);
 	}
+	*/
 }
 
 function restoreBall() {
@@ -676,18 +695,24 @@ function restoreBall() {
 		
 		blueBall.alpha=0.0;
 		redBall.alpha=0.0;
+
+
 		yellowBall.alpha=0.0;
 		greenBall.alpha=0.0;
 		
 		setRandomPosition(blueBall);
 		setRandomPosition(redBall);
+
 		setRandomPosition(yellowBall);
 		setRandomPosition(greenBall);
 		
-	greenBall.x=900;greenBall.y=400;yellowBall.x=900;yellowBall.y=400;
+/*
+	greenBall.x=-50;greenBall.y=-50;yellowBall.x=-50;yellowBall.y=-50;
+*/
+	/*
 	blueBall.x=600;blueBall.y=200;
 	redBall.x=300;redBall.y=200;
-
+	*/
 		
 		
 		ball.focus=false;
@@ -820,10 +845,10 @@ function addTable() {
 
 function addCharacterEventListener(character) {
 	if (character.hasOwnProperty("happyPic")) {
-		character.happyPic.addEventListener("mousedown", handleCharacterTouch);//xxx ändra till general handle
+		character.happyPic.addEventListener("mousedown", handleCharacterTouch);
 	}
 	if (character.hasOwnProperty("sadPic")) {
-		character.sadPic.addEventListener("mousedown", handleCharacterTouch);//xxx ändra till general 
+		character.sadPic.addEventListener("mousedown", handleCharacterTouch);
 	}
 }
 
@@ -879,23 +904,14 @@ function addCake(pieceParts,cakepieces,cakefiles) {
 		onePiece.moved=false;
 		onePiece.smashed=false;
 		cakeComplete.push(onePiece);
-		//cakeStatus.push(true); //visible, or actually visible in cake. Maybe I should say: Not moved
-		
-		//xxx test code
-		//cakeComplete[i][0].addEventListener("mousedown", handleCakePieceTouch);
-		//xxx end test code
-	
-	//xxx test code
-		//cakeComplete[i][0].addEventListener("mousedown", handleCakePieceTouch);
-	//xxx test code		
-	
+
 	}
 	
 	var cake_plate=new createjs.Bitmap(queue.getResult("cake_plate"));
 	cake.addChild(cake_plate);		
 
 	
-	var pieceOrder=[3,4,2,5,1,6]; //xxx funkar ju bara för sexbitarstårta
+	var pieceOrder=[3,4,2,5,1,6];
 	for (var i=0;i<cakeComplete.length;i++) {
 		for (var j=0;j<cakeComplete[i].length;j++) { 
 			cake.addChild(cakeComplete[pieceOrder[i]-1][j]); //-1 because piece 1 has index 0 etc
@@ -1176,12 +1192,15 @@ function showNumber(number) {
 }
 
 function tweenStart() {
+	/* not used any more
 	numberOfRunningTweens++;
 	update=true;
 	nextupdate=true;
+	*/
 }
 
 function tweenStop() {
+	/* not used any more
 	numberOfRunningTweens--;
 	console.log("number of running tweens",numberOfRunningTweens);
 	if (numberOfRunningTweens<=0) {
@@ -1191,12 +1210,12 @@ function tweenStop() {
 	} else {
 		//nextupdate=true; xxxxx
 	}
+	*/
 }
 
 function randomFutureTicks(minsec,maxsec) {
 	//returns a time in ticks in the future, minsec to maxsec seconds from now
 	randomSec=minsec+Math.random()*(maxsec-minsec);
-	printDebug(" "+Math.floor(randomSec));
 	randomTimeTicks=Math.floor(now+fps*randomSec);
 	return randomTimeTicks;
 
