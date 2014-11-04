@@ -139,7 +139,6 @@ function changeCanvasColor(rTo,gTo,bTo,ticks) {
 
 function init() {
 	console.log("Boel game starting at "+Date());
-	console.log("TweenJS version "+createjs.TweenJS.version);
 	if (window.top != window) {
 		document.getElementById("header").style.display = "none";
 	}
@@ -388,9 +387,9 @@ function handleTick(event) {
 			console.log("true/false",createjs.Tween.hasActiveTweens(blueBall),createjs.Tween.hasActiveTweens(redBall),createjs.Tween.hasActiveTweens());
 			//blueBall.x=10;blueBall.y=400; //xxxxxxxxx
 			
-			//annorlunda beteende med 051 och next. 
-			//if (createjs.Tween.hasActiveTweens(blueBall)) {
-			if (isRunning(xxx)) {  
+			
+			
+			if (createjs.Tween.hasActiveTweens(blueBall)) {
 				xxx.setPaused(true); //funkar nog bäst
 				tweenStop(); 
 			}
@@ -401,32 +400,7 @@ function handleTick(event) {
 	if (!nextupdate) {
 		update=false;
 	}
-	//xxx eventuellt: if (!createjs.Tween.hasActiveTweens()) { update=false;}
-	//eller möjligtvis if (!createjs.Tween.hasActiveTweens()) { nextupdate=false;}
-	//eller kanske till och med 
 	
-	//för att säkerställa en sista uppdate:
-	if (!createjs.Tween.hasActiveTweens()) { nextupdate=false;} else { update=true;nextupdate=true }
-	
-	//men funkar troligtvis:
-	if (!createjs.Tween.hasActiveTweens()) { update=false;} else { update=true;nextupdate=true }
-	//och om det funkar så kan nextupdate tas bort helt och hållet
-	//vilket slutligen leder till:
-	//update=createjs.Tween.hasActiveTweens();
-	
-	
-	//så borde man kunna slippa tweenStart()
-	//xxxxx tar bort nextupdate ur tweenstop
-	//verkar faktiskt som om detta funkar och då kan både start och stoptweens tas bort
-	if (createjs.Tween.hasActiveTweens()!=(numberOfRunningTweens>0)) {
-		console.log("hasActiveTweens:",createjs.Tween.hasActiveTweens(),"numberOfRunningTweens",numberOfRunningTweens);
-	}
-	
-	
-}
-
-function isRunning(tween) {
-	return !tween._paused; //getting a "private" property
 }
 
 function handleCharacterTouch(event) {
@@ -614,10 +588,6 @@ function addBall() {
 	setRandomPosition(redBall);
 	setRandomPosition(yellowBall);
 	setRandomPosition(greenBall);
-	
-	greenBall.x=900;greenBall.y=400;yellowBall.x=900;yellowBall.y=400;
-	blueBall.x=600;blueBall.y=200;
-	redBall.x=300;redBall.y=200;
 
 }
 
@@ -659,7 +629,7 @@ function handlePlayBallTouch(event) {
 	console.log(event.target.name," touched");
 	if (event.target.color=="blue") {		
 		tweenStart();
-	  	createjs.Tween.get(blueBall).to({alpha:0.1}, 2000, createjs.Ease.linear).call(tweenStop);
+	  	createjs.Tween.get(blueBall).to({alpha:0.2}, 10000, createjs.Ease.linear).call(tweenStop);
 
 		tweenStart();
 		xxx=createjs.Tween.get(blueBall).to({x:0,y:0}, 10000, createjs.Ease.linear).call(tweenStop);
@@ -683,12 +653,6 @@ function restoreBall() {
 		setRandomPosition(redBall);
 		setRandomPosition(yellowBall);
 		setRandomPosition(greenBall);
-		
-	greenBall.x=900;greenBall.y=400;yellowBall.x=900;yellowBall.y=400;
-	blueBall.x=600;blueBall.y=200;
-	redBall.x=300;redBall.y=200;
-
-		
 		
 		ball.focus=false;
 		cake.alpha=1;
@@ -1187,9 +1151,9 @@ function tweenStop() {
 	if (numberOfRunningTweens<=0) {
 		//this is to allow one last tick after tweens have stopped
 		numberOfRunningTweens=0;
-		//nextupdate=false; xxxxx
+		nextupdate=false;
 	} else {
-		//nextupdate=true; xxxxx
+		nextupdate=true;
 	}
 }
 
