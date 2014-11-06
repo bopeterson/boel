@@ -1,9 +1,6 @@
 /* Boel och Tore - da game */
 
-var newX,newY,finalY,finalX	;
-var startAngle,hitAngle,outAngle;
-
-var touchedBallTween=new Object();
+var ballTween=new Object();
 
 var characters=new Object(); //to find character connected to piece through getCharacter function
 
@@ -68,20 +65,8 @@ var rCanvasStart=134;
 var gCanvasStart=219;
 var bCanvasStart=213;
 
-var rCanvas=rCanvasStart;//0x86;
-var gCanvas=gCanvasStart;//0xDB;
-var bCanvas=bCanvasStart;//0xD5;
-
-var rDelta;//=(rfinal-r)/40;
-var gDelta;//=(gfinal-g)/40;
-var bDelta;//=(bfinal-b)/40;
-
-var rCanvasNew;
-var gCanvasNew;
-var bCanvasNew;
-
-var startChangeCanvasColor=false;
-var finishedChangeCanvasColor=true;
+var ballBackground;
+var splashScreenBackground;
 
 var now=0;
 var nextSmash=-1;
@@ -107,6 +92,7 @@ function rgb(r,g,b) {
 	return "rgb("+r+","+g+","+b+")";
 }
 
+/*
 function changeCanvasColor(rTo,gTo,bTo,ticks) {
 	//this function relies on global variables rCanvas, gCanvas, bCanvas, rDelta, gDelta, bDelta, startChangeCanvasColor,finishedChangeCanvasColor
 	//do the following to start a transition to new background color: 
@@ -138,6 +124,7 @@ function changeCanvasColor(rTo,gTo,bTo,ticks) {
 	canvas.style.backgroundColor=rgb(rCanvas,gCanvas,bCanvas);
 	finishedChangeCanvasColor=finished;
 }
+*/
 
 function init() {
 	console.log("Boel game starting at "+Date());
@@ -148,7 +135,7 @@ function init() {
 	document.getElementById("loader").className = "loader";
 	// create stage and point it to the canvas:
 	canvas = document.getElementById("myCanvas");		
-	canvas.style.backgroundColor=rgb(rCanvas,gCanvas,bCanvas);	
+	canvas.style.backgroundColor=rgb(0,0,0); //xxx behövs detta	
 
 	//check to see if we are running in a browser with touch support
 	stage = new createjs.Stage(canvas);
@@ -166,6 +153,43 @@ function init() {
 	background.alpha=0.05;
 	background.name = "background";
 	stage.addChild(background);
+
+
+	//XXXXXXXXXXX
+	//some color changing backgrounds
+	ballBackground = new createjs.Shape();
+	ballBackground.graphics.beginFill("#FFFF00").drawRect(0, 0, canvas.width, canvas.height);
+	ballBackground.x = 0;//canvas.width/2|0;
+	ballBackground.y = 0;//canvas.height/2|0;
+	ballBackground.alpha=0.0;
+	ballBackground.name = "ballBackground";
+	stage.addChild(ballBackground);
+
+	splashScreenBackground = new createjs.Shape();
+	splashScreenBackground.graphics.beginFill("#86DBD5").drawRect(0, 0, canvas.width, canvas.height);
+	splashScreenBackground.x = 0;//canvas.width/2|0;
+	splashScreenBackground.y = 0;//canvas.height/2|0;
+	splashScreenBackground.alpha=1.0;
+	splashScreenBackground.name = "splashScreenBackground";
+	stage.addChild(splashScreenBackground);
+	
+	tableBackground = new createjs.Shape();
+	tableBackground.graphics.beginFill("#FF95CB").drawRect(0, 0, canvas.width, canvas.height);
+	tableBackground.x = 0;//canvas.width/2|0;
+	tableBackground.y = 0;//canvas.height/2|0;
+	tableBackground.alpha=0.0;
+	tableBackground.name = "tableBackground";
+	stage.addChild(tableBackground);
+
+
+
+/*
+=134; 86DBD5
+var gCanvasStart=219;
+var bCanvasStart=213
+*/
+
+
 
 	//loading assets
 	queue=new createjs.LoadQueue(false);
@@ -266,8 +290,8 @@ function init() {
 function handleBackgroundTouch(event) {
 	console.log("background touch",event.stageX,event.stageY);
 	printDebug(createjs.Tween.hasActiveTweens()+" ");
-	newX=event.stageX;
-	newY=event.stageY;
+	background.touchX=event.stageX;
+	background.touchY=event.stageY;
 	
 	stage.update();
 }
@@ -347,7 +371,7 @@ function handleTick(event) {
 			var randomIndex=Math.floor(Math.random()*movedAndNotSmashed.length);
 			var randomPiece=movedAndNotSmashed[randomIndex];
 			//console.log("smashar snart bit ",randomPiece);
-			bounceTo(randomPiece);
+			bounceToTable(randomPiece);
 		}
 		//nextSmash=-1;
 		nextSmash=randomFutureTicks(30,30.01);
@@ -379,39 +403,43 @@ function handleTick(event) {
 	
 	
 	
-	
+/*	
 	if (startChangeCanvasColor || !finishedChangeCanvasColor) {
-		changeCanvasColor(rCanvasNew,gCanvasNew,bCanvasNew,10);
+		changeCanvasColorXXX(rCanvasNew,gCanvasNew,bCanvasNew,10);
 		//printDebug("("+rCanvas.toFixed(2) +","+gCanvas.toFixed(2)+","+bCanvas.toFixed(2)+")");
 	}
+	*/
 	
+
 	
 	if (update) {		
-	    if (touchedBallTween.hasOwnProperty("target")) {
-			var ball=touchedBallTween.target;
-			if (detectBallCollision(ball)) {
-				console.log(ball.name+" collided into "+ball.obstacle.name);
-			
-				//xxx detectBallCollision måste signalera med vilken boll som den krockat.	
-				hitAngle=Math.atan2(ball.y-ball.obstacle.y,ball.x-ball.obstacle.x);
-	        	console.log("-hitAngle:",-hitAngle*180/Math.PI);
+	    if (ballTween.hasOwnProperty("target")) {
+			var ball=ballTween.target;
+			if (detectBallCollision(ball,0)) {
+				console.log(ball.name+" collided into "+ball.obstacleBall.name);
 
+				if (isRunning(ballTween)) {  
+					ballTween.setPaused(true); //funkar nog bäst
+					
+					//xxxxxxxxxxxxxxxx current
+					var centerToCenterAngle=Math.atan2(ball.y-ball.obstacleBall.y,ball.x-ball.obstacleBall.x);
+	        		console.log("-centerToCenterAngle:",-centerToCenterAngle*180/Math.PI)
 	
-				outAngle=2*hitAngle-Math.PI-startAngle;
-				console.log("-outAngle:",-outAngle*180/Math.PI)
+	
+	
+					ball.bounceAngle=2*centerToCenterAngle-Math.PI-ball.startAngle;
+					console.log("-bounceAngle:",-ball.bounceAngle*180/Math.PI)
 
-				var deltaX=200*Math.cos(outAngle);
-				var deltaY=200*Math.sin(outAngle);
-				finalX=ball.x+deltaX;
-				finalY=ball.y+deltaY;
-				
+					var deltaX=2000*Math.cos(ball.bounceAngle);
+					var deltaY=2000*Math.sin(ball.bounceAngle);
+					var finalX=ball.x+deltaX;
+					var finalY=ball.y+deltaY;
 
-				//annorlunda beteende med 051 och next. 
-				//if (createjs.Tween.hasActiveTweens(blueBall)) {
-				if (isRunning(touchedBallTween)) {  
-					touchedBallTween.setPaused(true); //funkar nog bäst
-					tweenStop();
-					createjs.Tween.get(ball).to({x:finalX,y:finalY}, 500, createjs.Ease.linear);
+
+
+					//createjs.Tween.get(ball).to({x:finalX,y:finalY}, 500, createjs.Ease.linear);
+					ballTween=makeBallTween(ball,finalX,finalY,0.5);
+
 				}
 			
 			}
@@ -421,6 +449,14 @@ function handleTick(event) {
 	
 	update=createjs.Tween.hasActiveTweens();
 	
+}
+
+function makeBallTween(ball,x,y,speed) {
+	//speed in pixels per millisecond
+	var distance=Math.sqrt((x-ball.x)*(x-ball.x)+(y-ball.y)*(y-ball.y));
+	var time=Math.floor(distance/speed);
+	ball.startAngle=Math.atan2(y-ball.y,x-ball.x);
+	return createjs.Tween.get(ball).to({x:x,y:y},time, createjs.Ease.linear);
 }
 
 function isRunning(tween) {
@@ -458,12 +494,17 @@ function handleBallTouch(event) {
 	  createjs.Tween.get(greenBall).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
 
 
-	  
+      createjs.Tween.get(ballBackground).to({alpha:1.0},400, createjs.Ease.linear);
+	  createjs.Tween.get(splashScreenBackground).to({alpha:0.0},400, createjs.Ease.linear);
+
+
+	  /*
 	  startChangeCanvasColor=true;
 	  finishedChangeCanvasColor=false;
 	  rCanvasNew=255;
 	  gCanvasNew=255;
 	  bCanvasNew=0;
+  		*/
   
 	  ball.focus=true;
 	  //update=true;
@@ -487,11 +528,17 @@ function handleCakeTouch(event) {
 	  tweenStart();
 	  createjs.Tween.get(boelSplashScreen).to({alpha:0.0}, 200, createjs.Ease.linear).call(tweenStop);
   
+  /*
 	  startChangeCanvasColor=true;
 	  finishedChangeCanvasColor=false;
 	  rCanvasNew=255;
 	  gCanvasNew=149;
 	  bCanvasNew=203;
+ 	*/
+      createjs.Tween.get(tableBackground).to({alpha:1.0},400, createjs.Ease.linear);
+	  createjs.Tween.get(splashScreenBackground).to({alpha:0.0},400, createjs.Ease.linear);
+	 
+  
   
 	  cake.focus=true;
 	  //update=true;
@@ -501,11 +548,6 @@ function handleCakeTouch(event) {
 function handleButtonTouch(event) {
 	restoreBall();
 	restoreCake();
-	startChangeCanvasColor=true;
-	finishedChangeCanvasColor=false;
-	rCanvasNew=rCanvasStart;
-	gCanvasNew=gCanvasStart;
-	bCanvasNew=bCanvasStart;
 
 	//update=true;
 }
@@ -626,33 +668,55 @@ function addBall() {
 function setRandomPosition(ball) {
 	var minBorderDistance=200; //from center of ball
 	var free=false;
+	var forceField=40; //if forcefield close to 100, the balls won't fit and the script will freeze
 	while (!free) { //a for me rare occasion where I would consider repeat instead...
 		ball.x=Math.floor(Math.random()*(canvas.width-minBorderDistance*2)+minBorderDistance);
 		ball.y=Math.floor(Math.random()*(canvas.height-minBorderDistance*2)+minBorderDistance);
-		free=!detectBallCollision(ball);
+		free=!detectBallCollision(ball,forceField);
 	}
 }
 
-function collides(ball1,ball2) {
-	var distanceSquare=(ball1.x-ball2.x)*(ball1.x-ball2.x)+(ball1.y-ball2.y)*(ball1.y-ball2.y);	
-	if (distanceSquare<(ball1.radius+ball2.radius)*(ball1.radius+ball2.radius)) {
-		return true;
-	} else {
-		return false;
-	}
+function collides(ball1,ball2,forceField) {
+	var cathX=ball1.x-ball2.x; //horizontal catheter
+	var cathY=ball1.y-ball2.y;
+	
+	var distanceSquare=cathX*cathX+cathY*cathY;
+	var centerDist=ball1.radius+ball2.radius+forceField;
+	var centerDistSquare=centerDist*centerDist;
+	return (distanceSquare<centerDistSquare);
 }
 	
+function findRandomBall(thisBall) {
+	//find random ball *other* than ball
+	
+	allBallsButThis=[];
+	for (var i=0;i<allBalls.length;i++) {	
+		if (allBalls[i]!=thisBall) {
+			console.log("pushing");
+			allBallsButThis.push(allBalls[i]);
+		}
+	}
+	var randomIndex=Math.floor(Math.random()*allBallsButThis.length);
 
-function detectBallCollision(thisBall) {
+	var other=allBallsButThis[randomIndex];
+	console.log("random ball",other.name);
+	return other;
+	
+	
+}
+
+
+
+function detectBallCollision(thisBall,forceField) {
 	//klumpigt kanske, men funkar för bara fyra bollar.
 	var collision=false;
 	var otherBall=new Object;
 	for (var i=0;i<allBalls.length && !collision;i++) {
 		if (allBalls[i]!=thisBall) {
 			otherBall=allBalls[i];
-			collision=collides(thisBall,otherBall);
+			collision=collides(thisBall,otherBall,forceField);
 			if (collision) {
-				thisBall.obstacle=otherBall;
+				thisBall.obstacleBall=otherBall;
 			}
 		}
 	}
@@ -664,25 +728,14 @@ function handlePlayBallTouch(event) {
 	
 	var ball=event.target;
 	
-//	bounceToNextBall starta bounce mot slumpvis boll, studsa sedan i rätt riktning tills utanför ram. spiral om fel boll
+	//xxx först kolla att det är rätt boll
 	
-	//var newX=redBall.x+100;
-	//var newY=redBall.y+100;
 	
-	startAngle=Math.atan2(newY-ball.y,newX-ball.x);
-	console.log("-startAngle:",-startAngle*180/Math.PI);
+	//om det är rätt boll
+	var otherBall=findRandomBall(ball);
+	ballTween=makeBallTween(ball,otherBall.x+70,otherBall.y+70,0.5);
+	
 
-	touchedBallTween=createjs.Tween.get(ball).to({x:newX,y:newY},400, createjs.Ease.linear);
-
-/*
-	if (event.target.color=="blue") {		
-		tweenStart();
-	  	createjs.Tween.get(blueBall).to({alpha:0.1}, 2000, createjs.Ease.linear).call(tweenStop);
-
-		tweenStart();
-		touchedBallTween=createjs.Tween.get(blueBall).to({x:0,y:0}, 10000, createjs.Ease.linear).call(tweenStop);
-	}
-	*/
 }
 
 function restoreBall() {
@@ -692,6 +745,11 @@ function restoreBall() {
 		createjs.Tween.get(ball).to({x:ball.xStart, y: ball.yStart, scaleX:ball.scaleStart, scaleY:ball.scaleStart}, 400, createjs.Ease.linear).call(tweenStop);
 		tweenStart();
 		createjs.Tween.get(boelSplashScreen).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
+		
+	    createjs.Tween.get(ballBackground).to({alpha:0.0},400, createjs.Ease.linear);
+	    createjs.Tween.get(splashScreenBackground).to({alpha:1.0},400, createjs.Ease.linear);
+
+		
 		
 		blueBall.alpha=0.0;
 		redBall.alpha=0.0;
@@ -984,6 +1042,11 @@ function restoreCake() {
 		createjs.Tween.get(table).to({alpha:0.0}, 400, createjs.Ease.linear).call(tweenStop);
 		tweenStart();
 		createjs.Tween.get(boelSplashScreen).to({alpha:1.0}, 400, createjs.Ease.linear).call(tweenStop);
+		createjs.Tween.get(tableBackground).to({alpha:0.0},400, createjs.Ease.linear);
+	    createjs.Tween.get(splashScreenBackground).to({alpha:1.0},400, createjs.Ease.linear);
+
+		
+		
 		cake.focus=false;
 		ball.alpha=1;
 	}
@@ -1221,7 +1284,7 @@ function randomFutureTicks(minsec,maxsec) {
 
 }
 
-function bounceTo(piecenumber) {
+function bounceToTable(piecenumber) {
 	var time = 1500.0;
 	
 	var startX=ball.x;
