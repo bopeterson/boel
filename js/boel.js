@@ -1,12 +1,7 @@
 /* Boel och Tore - da game */
-/*
-xxx tableBall måste in i addTable, och antagligen fler tableBall-fix. 
 
-Och bara ball borde byta namn till menuBall
-
-åsså en menuCake...
-*/
-
+var debug=true;
+var debugAlwaysUpdate=false;
 
 var ballTween=new Object();
 
@@ -39,7 +34,8 @@ var background;
 var queue;
 var offset;
 var update = false;
-var menuBall,boel,cake;
+var menuBall,menuCake;
+var boel,cake;
 
 var blueBall,redBall,yellowBall,greenBall;
 var allBalls;
@@ -48,6 +44,8 @@ var pieceParts,cakepieces;
 
 var cakefiles;
 
+var cake_ball;
+
 var table;
 var tableBoel=new Object();
 var tableMom=new Object();
@@ -55,7 +53,6 @@ var tableGrandDad=new Object();
 var tableDad=new Object();
 var tableTore=new Object();
 var tableDog=new Object();
-var tableBall;
 var tableTable;
 
 var numbers=new Array();
@@ -79,6 +76,13 @@ var pieceNumberToSmash=-1;
 
 var minSecSelectName=10; //min random time before voice: "x vill ha tårta, var är x"
 var maxSecSelectName=15; //max random time...
+
+
+var nextBall;
+var nextBallTime=-1;
+
+var minSecNextBall=4;
+var maxSecNextBall=4.1;
 
 //xx these two are initiated also in restoreCake, must only be done in one place
 var selectedNameNumber=-1;
@@ -179,18 +183,39 @@ function init() {
 		{id:"torevill_",src:"assets/torevill_.mp3"},
 		{id:"tredjetaartbiten",src:"assets/tredjetaartbiten.mp3"},
 		{id:"tyst1000",src:"assets/tyst1000.mp3"},
-		{id:"cakebounce",src:"assets/cakebounce.mp3"}];
+		{id:"cakebounce",src:"assets/cakebounce.mp3"},
+		{id:"detjublue",src:"assets/detjublue.mp3"},
+		{id:"detjuyellow",src:"assets/detjuyellow.mp3"},
+		{id:"detjugreen",src:"assets/detjugreen.mp3"},
+		{id:"detjured",src:"assets/detjured.mp3"},
+		{id:"nejinteyellow",src:"assets/nejinteyellow.mp3"},
+		{id:"nejintegreen",src:"assets/nejintegreen.mp3"},
+		{id:"nejinteblue",src:"assets/nejinteblue.mp3"},
+		{id:"nejintered",src:"assets/nejintered.mp3"},
+		{id:"jagreen",src:"assets/jagreen.mp3"},
+		{id:"jablue",src:"assets/jablue.mp3"},
+		{id:"jared",src:"assets/jared.mp3"},
+		{id:"jayellow",src:"assets/jayellow.mp3"},
+		{id:"vargreen",src:"assets/vargreen.mp3"},
+		{id:"varblue",src:"assets/varblue.mp3"},
+		{id:"varyellow",src:"assets/varyellow.mp3"},
+		{id:"varred",src:"assets/varred.mp3"}];
+				
+		
+		
 		
 	var simpleimagefiles=[
 		{id:"boelSplashScreen", src:"assets/boelsplashscreen.png"},
 		{id:"menuBall", src:"assets/menuball.png"},
+		{id:"menuCake", src:"assets/menucake.png"},
 		{id:"dog", src:"assets/dog.png"},
 		{id:"button", src:"assets/button.png"},
 		{id:"cake_plate", src:"assets/cake_plate.png"},
 		{id:"blueball", src:"assets/blueball.png"},
 		{id:"redball", src:"assets/redball.png"},
 		{id:"yellowball", src:"assets/yellowball.png"},
-		{id:"greenball", src:"assets/greenball.png"}		
+		{id:"greenball", src:"assets/greenball.png"},
+		{id:"cake_ball", src:"assets/cake_ball.png"}	
 		];
 		
 	var numberfiles=new Array();
@@ -222,7 +247,6 @@ function init() {
 				{id:"tableDogSad",src:"assets/tabledogsad.png"},
 				{id:"tableBoelHand",src:"assets/tableboelhand.png"},
 				{id:"tableGrandDadHand",src:"assets/tablegranddadhand.png"},
-				{id:"tableBall", src:"assets/tableball.png"}
 				];
 	
 	var files=simpleimagefiles.concat(cakefiles,numberfiles,tablefiles,soundfiles);
@@ -237,7 +261,7 @@ function handleBackgroundTouch(event) {
 	printDebug(createjs.Tween.hasActiveTweens()+" ");
 	background.touchX=event.stageX;
 	background.touchY=event.stageY;
-	
+	debugAlwaysUpdate=false;
 	stage.update();
 }
 
@@ -324,9 +348,21 @@ function handleTick(event) {
 			bounceToTable(randomPiece);
 		}
 		//nextSmash=-1;
-		nextSmash=randomFutureTicks(30,30.01);
+		nextSmash=randomFutureTicks(10,10.01);//important that min time is greater than total boal bounce time
+		
 		//console.log("next smash om ", (nextSmash-now)/fps," s");
 
+	}
+	
+	
+	//tell which ball to touch
+	//xxx move to function
+	if (now>nextBallTime && nextBallTime>0) {
+		
+		nextBall=findRandomBall();
+		printDebug("var är den "+nextBall.name + "en");
+		extendAndPlayQueue("var"+nextBall.color);
+		nextBallTime=-1	
 	}
 	
 	//xxx move to function
@@ -351,34 +387,58 @@ function handleTick(event) {
 		nextRandomCheck=-1;
 	}
 	
-	if (update) {	
+	if (update || debugAlwaysUpdate) {	
 	    if (ballTween.hasOwnProperty("target")) {
+					
 			var ball=ballTween.target;
 			
 			//kolla om ball utanför canvas
 			//plocka då bort den så att den inte kan studsas mot
+			var inside=(ball.x-ball.radius)<canvas.width && (ball.y-ball.radius)<canvas.height && (ball.x+ball.radius)>0 && (ball.y+ball.radius)>0;
+			if (!inside) {
+				ball.inside=false;
+				ballTween.setPaused(true);
+			}
 			
 			
 			//flytta mycket av detta till funktion, kanske tom if-satsen ovan. 
 			if (detectBallCollision(ball,0)) {
 				console.log(ball.name+" collided into "+ball.obstacleBall.name);
+	var xxx;
+	if (ball.hasOwnProperty("obstacleBall")) {
+		xxx="ball.obstacleBall.name "+ball.obstacleBall.name;
+	} else {
+		xxx="ball.obstacleBall.name "+"---unknown";
+	}
+	var xxxx;
+	if (ball.hasOwnProperty("lastObstacleBall")) {
+		console.log(ball.lastObstacleBall);
+		xxxx="ball.lastObstacleBall.name "+ball.lastObstacleBall.name;
+	} else {
+		xxxx="ball.lastObstacleBall.name "+"---unknown";
+	}
+	
+	console.log(ball.name," collided",xxx,xxxx);
 
-				if (isRunning(ballTween)) {  
-					ballTween.setPaused(true); //funkar nog bäst
+
+				if (ball.obstacleBall!=ball.lastObstacleBall) {
+					if (isRunning(ballTween)) {
+						ballTween.setPaused(true); //funkar nog bäst
+					}
 					
 					var centerToCenterAngle=Math.atan2(ball.y-ball.obstacleBall.y,ball.x-ball.obstacleBall.x);
-	        		console.log("-centerToCenterAngle:",-centerToCenterAngle*180/Math.PI)
+	        		
 	
 					ball.bounceAngle=2*centerToCenterAngle-Math.PI-ball.startAngle;
-					console.log("-bounceAngle:",-ball.bounceAngle*180/Math.PI)
-
 					var deltaX=2000*Math.cos(ball.bounceAngle);
 					var deltaY=2000*Math.sin(ball.bounceAngle);
 					var finalX=ball.x+deltaX;
 					var finalY=ball.y+deltaY;
-
+					
+					
+					
 					//createjs.Tween.get(ball).to({x:finalX,y:finalY}, 500, createjs.Ease.linear);
-					ballTween=makeBallTween(ball,finalX,finalY,0.5);
+					ballTween=makeBallTween(ball,finalX,finalY,0.5);//xxx 0.5 trimvariabel
 
 				}
 			
@@ -400,7 +460,13 @@ function makeBallTween(ball,x,y,speed) {
 }
 
 function isRunning(tween) {
-	return !tween._paused; //getting a "private" property
+		//old way: doesn't work, _paused not definded for running tween	
+		//return !tween._paused; //getting a "private" property
+
+		//new way: NOTE xxx doesn't check tween, but *ALL* running tweens
+		//possibly somtehing like createjs.Tween.hasActiveTweens(tween.target???) might work, but 
+		//due to bug in 0.5.1 it is not safe. Seems to work in NEXT version though. 
+		return createjs.Tween.hasActiveTweens();
 }
 
 function handleCharacterTouch(event) {
@@ -416,57 +482,62 @@ function handleCakePieceTouch(event) {
 }
 
 function handleMenuBallTouch(event) {
-	if (!cake.focus  && !menuBall.focus) { //xxx quickfix
-	  restoreCake();
-	  cake.alpha=0.1;
-	  
-	  createjs.Tween.get(menuBall).to({alpha:0.0},400,createjs.Ease.linear);
-	  
+	if (!menuCake.focus  && !menuBall.focus) { //xxx quickfix
+	  extendAndPlayQueue(["tyst1000"]);//xxx very weird. this sound is needed for first sound to play on iphone.
+	  nextBallTime=randomFutureTicks(minSecNextBall,maxSecNextBall);
+
+	  menuBall.focus=true;
+  	  
+	  setRandomPosition(blueBall);
+	  setRandomPosition(redBall);
+	  setRandomPosition(yellowBall);
+	  setRandomPosition(greenBall);
+  
+	  //xxxxxxxxxx
+	  //hide-exactly same as handlemenucaketouch
+	  createjs.Tween.get(menuCake).to({alpha:0.0}, 400, createjs.Ease.linear);
+	  createjs.Tween.get(menuBall).to({alpha:0.0},400,createjs.Ease.linear);  
 	  createjs.Tween.get(boelSplashScreen).to({alpha:0.0}, 200, createjs.Ease.linear);
-
-	  
-	  createjs.Tween.get(blueBall).to({alpha:1.0}, 400, createjs.Ease.linear);
-	  
-	  createjs.Tween.get(redBall).to({alpha:1.0}, 400, createjs.Ease.linear);
-	  
-	  createjs.Tween.get(yellowBall).to({alpha:1.0}, 400, createjs.Ease.linear);
-	  
-	  createjs.Tween.get(greenBall).to({alpha:1.0}, 400, createjs.Ease.linear);
-
-
-      createjs.Tween.get(ballBackground).to({alpha:1.0},400, createjs.Ease.linear);
 	  createjs.Tween.get(splashScreenBackground).to({alpha:0.0},400, createjs.Ease.linear);
   
-	  menuBall.focus=true;
+	  //show unique to handlemenuballtouch
+	  createjs.Tween.get(blueBall).to({alpha:1.0}, 400, createjs.Ease.linear);
+	  createjs.Tween.get(redBall).to({alpha:1.0}, 400, createjs.Ease.linear);
+	  createjs.Tween.get(yellowBall).to({alpha:1.0}, 400, createjs.Ease.linear);
+	  createjs.Tween.get(greenBall).to({alpha:1.0}, 400, createjs.Ease.linear);
+      createjs.Tween.get(ballBackground).to({alpha:1.0},400, createjs.Ease.linear);
+  
 	}
 }
 
-function handleCakeTouch(event) {
+function handleMenuCakeTouch(event) {
 	
-	
-	//alert('caketouch');
-	if (!menuBall.focus && !cake.focus) { //xxx quickfix
+	if (!menuBall.focus && !menuCake.focus) { //xxx quickfix
 	  extendAndPlayQueue(["tyst1000"]);//xxx very weird. this sound is needed for first sound to play on iphone.
 	  nextRandomCheck=randomFutureTicks(minSecSelectName,maxSecSelectName);
-	  restoreMenuBall();
-	  	  
-	  createjs.Tween.get(cake).to({x:canvas.width/2+20, y: canvas.height/2+50, scaleX:0.50, scaleY:0.50}, 400, createjs.Ease.linear);
-	  
-	  createjs.Tween.get(table).to({alpha:1.0}, 400, createjs.Ease.linear);
-	  
-	  createjs.Tween.get(boelSplashScreen).to({alpha:0.0}, 200, createjs.Ease.linear);
+	  menuCake.focus=true;
   
-      createjs.Tween.get(tableBackground).to({alpha:1.0},400, createjs.Ease.linear);
+	  //xxxxxxxxxx
+	  //hide
+	  createjs.Tween.get(menuCake).to({alpha:0.0}, 400, createjs.Ease.linear);  
+	  createjs.Tween.get(menuBall).to({alpha:0.0}, 400, createjs.Ease.linear);  
+	  createjs.Tween.get(boelSplashScreen).to({alpha:0.0}, 200, createjs.Ease.linear);
 	  createjs.Tween.get(splashScreenBackground).to({alpha:0.0},400, createjs.Ease.linear);
+	  //show
+	  createjs.Tween.get(cake).to({alpha:1.0}, 400, createjs.Ease.linear);
+	  createjs.Tween.get(table).to({alpha:1.0}, 400, createjs.Ease.linear);
+      createjs.Tween.get(tableBackground).to({alpha:1.0},400, createjs.Ease.linear);
 
-	  cake.focus=true;
 
 	}
 }
 
 function handleButtonTouch(event) {
-	restoreMenuBall();
-	restoreCake();
+	if (menuBall.focus) {
+		restoreMenuBall();
+	} else if (menuCake.focus) {
+		restoreMenuCake();
+	}
 }
 
 function addDebugText() {
@@ -494,8 +565,8 @@ function addNumbers() {
 		var number=new createjs.Bitmap(queue.getResult(i+""));
 		number.x=canvas.width-200;
 		number.y=0;
-		number.scaleX=0.5;
-		number.scaleY=0.5;
+		number.scaleX=1.0;
+		number.scaleY=1.0;
 		number.visible=false;
 		numbers.push(number);
 		stage.addChild(numbers[i]);
@@ -504,21 +575,23 @@ function addNumbers() {
 
 
 function addBall() {
+	
 	menuBall=new createjs.Bitmap(queue.getResult("menuBall"));
 	stage.addChild(menuBall);
-	menuBall.scaleStart=0.25;
-	menuBall.scaleX = menuBall.scaleY = menuBall.scale = menuBall.scaleStart;
-
-	menuBall.xStart=canvas.width-menuBall.scale*menuBall.image.width/2-20;
-	menuBall.yStart=menuBall.scale*menuBall.image.height/2+20;
+	
+	//these parameters won't change
+	menuBall.xStart=canvas.width-menuBall.image.width/2-20;
+	menuBall.yStart=menuBall.image.height/2+20;
 	menuBall.x = menuBall.xStart;
 	menuBall.y = menuBall.yStart;
-	menuBall.rotation = 0;
 	menuBall.regX = menuBall.image.width/2|0;
 	menuBall.regY = menuBall.image.height/2|0;
 	menuBall.name = "menuBall";
 	
+	//these will change
+	menuBall.alpha = 1.0;
 	menuBall.focus=false;
+	
 	menuBall.addEventListener("mousedown", handleMenuBallTouch);
 	
 	//here are balls of different colors used in the ball game. 
@@ -542,7 +615,6 @@ function addBall() {
 	redBall.alpha=0.0;
 	redBall.radius=redBall.regX;
 
-
 	yellowBall=new createjs.Bitmap(queue.getResult("yellowball"));
 	stage.addChild(yellowBall);
 	yellowBall.regX=yellowBall.image.width/2|0;
@@ -565,11 +637,13 @@ function addBall() {
 
 	allBalls=[blueBall,redBall,yellowBall,greenBall];
 
+
+	//xxxxxxxxxx this is also done in handlemenuballtouch
+	
 	setRandomPosition(blueBall);
 	setRandomPosition(redBall);
 	setRandomPosition(yellowBall);
 	setRandomPosition(greenBall);
-	
 }
 
 
@@ -582,6 +656,9 @@ function setRandomPosition(ball) {
 		ball.y=Math.floor(Math.random()*(canvas.height-minBorderDistance*2)+minBorderDistance);
 		free=!detectBallCollision(ball,forceField);
 	}
+	ball.inside=true;
+	delete ball.obstacleBall;
+	delete ball.lastObstacleBall;
 }
 
 function collides(ball1,ball2,forceField) {
@@ -598,17 +675,18 @@ function findRandomBall(thisBall) {
 	//find random ball *other* than ball
 	
 	allBallsButThis=[];
-	for (var i=0;i<allBalls.length;i++) {	
-		if (allBalls[i]!=thisBall) {
-			console.log("pushing");
+	for (var i=0;i<allBalls.length;i++) {
+		if (allBalls[i]!=thisBall && allBalls[i].inside) {
 			allBallsButThis.push(allBalls[i]);
 		}
 	}
 	var randomIndex=Math.floor(Math.random()*allBallsButThis.length);
 
-	var other=allBallsButThis[randomIndex];
-	console.log("random ball",other.name);
-	return other;
+	if (allBallsButThis.length>0) {
+		return allBallsButThis[randomIndex];
+	}else {
+		return null;
+	}
 	
 	
 }
@@ -620,11 +698,14 @@ function detectBallCollision(thisBall,forceField) {
 	var collision=false;
 	var otherBall=new Object;
 	for (var i=0;i<allBalls.length && !collision;i++) {
-		if (allBalls[i]!=thisBall) {
+		if (allBalls[i]!=thisBall  && allBalls[i].inside) {
 			otherBall=allBalls[i];
 			collision=collides(thisBall,otherBall,forceField);
 			if (collision) {
-				thisBall.obstacleBall=otherBall;
+				if (thisBall.hasOwnProperty("obstacleBall")) {
+					thisBall.lastObstacleBall=thisBall.obstacleBall;
+				}
+				thisBall.obstacleBall=otherBall;			
 			}
 		}
 	}
@@ -632,56 +713,72 @@ function detectBallCollision(thisBall,forceField) {
 }
 
 function handlePlayBallTouch(event) {
-	console.log(event.target.name," touched");
-	
 	var ball=event.target;
 	
-	//xxx först kolla att det är rätt boll
-	
-	
 	//om det är rätt boll
-	var otherBall=findRandomBall(ball);
-	ballTween=makeBallTween(ball,otherBall.x+70,otherBall.y+70,0.5);
 	
-
+	
+	
+	if (!isRunning(ballTween)) {
+	  if (ball==nextBall) {
+		  //correct ball is touched
+		  extendAndPlayQueue("ja"+ball.color);
+		  var otherBall=findRandomBall(ball);
+		  if (otherBall!=null) {
+			  ballTween=makeBallTween(ball,otherBall.x+70,otherBall.y+70,0.5);//xxx 0.5 här ska flyttas till "trimvariabel"
+			  nextBall=null;
+			  nextBallTime=randomFutureTicks(minSecNextBall,maxSecNextBall);
+		  } else {
+			  //random direction for last ball
+			  var angle=Math.random()*2*Math.PI;
+			  var x=2000*Math.cos(angle);
+			  var y=2000*Math.sin(angle);
+			  ballTween=makeBallTween(ball,x,y,0.5);
+			  //xxx some kind of automatic restart of the ball game here...
+		  }
+	  } else {
+		//wrong ball is touched
+		createjs.Tween.get(ball).to({rotation:720}, 1000,createjs.Ease.linear);
+		extendAndPlayQueue(["nejinte"+nextBall.color,"detju"+ball.color]);  
+	  }
+	}
 }
 
 function restoreMenuBall() {
 	if (menuBall.focus) {
-		createjs.Tween.get(menuBall).to({alpha:1.0}, 400, createjs.Ease.linear);
+	  nextBallTime=-1;
+	  nextBall=null;
 		
-		createjs.Tween.get(boelSplashScreen).to({alpha:1.0}, 400, createjs.Ease.linear);
-		
-	    createjs.Tween.get(ballBackground).to({alpha:0.0},400, createjs.Ease.linear);
-	    createjs.Tween.get(splashScreenBackground).to({alpha:1.0},400, createjs.Ease.linear);
-
-		
-		
-		blueBall.alpha=0.0;
-		redBall.alpha=0.0;
-
-
-		yellowBall.alpha=0.0;
-		greenBall.alpha=0.0;
-		
-		setRandomPosition(blueBall);
-		setRandomPosition(redBall);
-
-		setRandomPosition(yellowBall);
-		setRandomPosition(greenBall);
-	
-		menuBall.focus=false;
-		cake.alpha=1;
-
+	  createjs.Tween.removeTweens(blueBall);
+	  createjs.Tween.removeTweens(redBall);
+	  createjs.Tween.removeTweens(yellowBall);
+	  createjs.Tween.removeTweens(greenBall);
+	  
+	  menuBall.focus=false;
 	}
+	//xxxxxxxxxx
+	//show
+	createjs.Tween.get(menuCake).to({alpha:1.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(menuBall).to({alpha:1.0},400,createjs.Ease.linear);  
+	createjs.Tween.get(boelSplashScreen).to({alpha:1.0}, 200, createjs.Ease.linear);
+	createjs.Tween.get(splashScreenBackground).to({alpha:1.0},400, createjs.Ease.linear);
+
+	//hide
+	createjs.Tween.get(blueBall).to({alpha:0.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(redBall).to({alpha:0.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(yellowBall).to({alpha:0.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(greenBall).to({alpha:0.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(ballBackground).to({alpha:0.0},400, createjs.Ease.linear);
 }
 
 function addTable() {
+	
+	
 	table=new createjs.Container();
 	
 	tableMom.pieceNumber=4;
-	tableMom.pieceDeltaX=-150;
-	tableMom.pieceDeltaY=-110;
+	tableMom.pieceDeltaX=-95;
+	tableMom.pieceDeltaY=-55;
 	tableMom.happyPic=new createjs.Bitmap(queue.getResult("tableMom"));
 	tableMom.happyPic.character=tableMom; 
 	//will this circular reference cause garbage? 
@@ -693,8 +790,8 @@ function addTable() {
 	tableMom.name="Mamma"; 
 
 	tableGrandDad.pieceNumber=3;
-	tableGrandDad.pieceDeltaX=200;
-	tableGrandDad.pieceDeltaY=-180;
+	tableGrandDad.pieceDeltaX=80;
+	tableGrandDad.pieceDeltaY=-90;
 	tableGrandDad.happyPic=new createjs.Bitmap(queue.getResult("tableGrandDad"));
 	tableGrandDad.happyPic.character=tableGrandDad;
 	tableGrandDad.sadPic=new createjs.Bitmap(queue.getResult("tableGrandDadSad"));
@@ -703,8 +800,8 @@ function addTable() {
 	tableGrandDad.name="Morfar";
 	
 	tableBoel.pieceNumber=5;
-	tableBoel.pieceDeltaX=-200;
-	tableBoel.pieceDeltaY=70;
+	tableBoel.pieceDeltaX=-120;
+	tableBoel.pieceDeltaY=35;
 	tableBoel.happyPic=new createjs.Bitmap(queue.getResult("tableBoel"));
 	tableBoel.happyPic.character=tableBoel;
 	tableBoel.sadPic=new createjs.Bitmap(queue.getResult("tableBoelSad"));
@@ -713,8 +810,8 @@ function addTable() {
 	tableBoel.name="Boel"; 
 
 	tableDad.pieceNumber=2;
-	tableDad.pieceDeltaX=250;
-	tableDad.pieceDeltaY=-135;
+	tableDad.pieceDeltaX=104;
+	tableDad.pieceDeltaY=-68;
 	tableDad.happyPic=new createjs.Bitmap(queue.getResult("tableDad"));
 	tableDad.happyPic.character=tableDad;
 	tableDad.sadPic=new createjs.Bitmap(queue.getResult("tableDadSad"));
@@ -723,8 +820,8 @@ function addTable() {
 	tableDad.name="Pappa"; 
 
 	tableTore.pieceNumber=1;
-	tableTore.pieceDeltaX=270;
-	tableTore.pieceDeltaY=200;
+	tableTore.pieceDeltaX=115;
+	tableTore.pieceDeltaY=100;
 	tableTore.happyPic=new createjs.Bitmap(queue.getResult("tableTore"));
 	tableTore.happyPic.character=tableTore;
 	tableTore.sadPic=new createjs.Bitmap(queue.getResult("tableToreSad"));
@@ -733,20 +830,14 @@ function addTable() {
 	tableTore.name="Tore"; 
 
 	tableDog.pieceNumber=0;
-	tableDog.pieceDeltaX=-80;
-	tableDog.pieceDeltaY=280;
+	tableDog.pieceDeltaX=-60;
+	tableDog.pieceDeltaY=140;
 	tableDog.happyPic=new createjs.Bitmap(queue.getResult("tableDog"));
 	tableDog.happyPic.character=tableDog;
 	tableDog.sadPic=new createjs.Bitmap(queue.getResult("tableDogSad"));
 	tableDog.sadPic.character=tableDog;
 	tableDog.handPic=new createjs.Bitmap(queue.getResult("tableDogHand"));
 	tableDog.name="Hunden"; 
-
-	tableBall=new createjs.Bitmap(queue.getResult("tableBall"));
-	tableBall.x=canvas.width+200; //start to the right of canvas
-	tableBall.y=200;
-	tableBall.regX=tableBall.image.width/2|0;
-	tableBall.regY=tableBall.image.height/2|0;
 
 	tableTable=new createjs.Bitmap(queue.getResult("tableTable"));
 
@@ -767,11 +858,10 @@ function addTable() {
 					tableGrandDad.handPic,
 					tableBoel.handPic,
 					tableDad.handPic,
-					tableTore.handPic,
-					tableBall);
+					tableTore.handPic);
 					
 	table.x=100;
-	table.y=50; //80;
+	table.y=50;
 	table.alpha=0.0;
 	table.scaleX=table.scaleY=1.0;
 	
@@ -844,7 +934,24 @@ function makeCharacterSad(character) {
 
 
 function addCake(pieceParts,cakepieces,cakefiles) {
-	
+	//these won't change
+	menuCake=new createjs.Bitmap(queue.getResult("menuCake"));
+	stage.addChild(menuCake);
+	menuCake.xStart=(menuCake.image.width/2|0)+20;
+	menuCake.yStart=(menuCake.image.height/2|0)+20;
+	menuCake.x = menuCake.xStart;
+	menuCake.y = menuCake.yStart;
+	menuCake.regX = menuCake.image.width/2|0;
+	menuCake.regY = menuCake.image.height/2|0;
+	menuCake.name = "menuCake";
+
+	//these will change
+	menuCake.alpha = 1;
+	menuCake.focus=false;
+
+	menuCake.addEventListener("mousedown", handleMenuCakeTouch);
+
+
 	cake = new createjs.Container();
 	
 	//alltså, behöver en cake som är en multidimensionell array, som dels består av alla bitar och varje bit av 5? delar
@@ -888,34 +995,53 @@ function addCake(pieceParts,cakepieces,cakefiles) {
 		}
 	}
 		
+		
+		
+		
+		
 	//ok, hyfsat, men skulle behöva samla kakkonstruktion istället för att ha det så utspritt. 
-	
-	
-			
+				
+				
+				
+				
+				
+				
 	stage.addChild(cake);
-	cake.scaleStart=0.25;
+	cake.scaleStart=1.0;
 	cake.scaleX = cake.scaleY = cake.scale = cake.scaleStart;
 	
 	cake.width=cakeComplete[0][0].image.width;
 	cake.height=cakeComplete[0][0].image.height;
-	
-	cake.xStart=cake.scale*cake.width/2+20;
-	cake.yStart=cake.scale*cake.height/2+20;
+	cake.xStart=table.x+450; //550
+	cake.yStart=table.y+380;  //  430;
 	cake.x = cake.xStart;
 	cake.y = cake.yStart;
 	cake.rotation = 0;
 	cake.regX = cake.width/2;
 	cake.regY = cake.height/2;
 	cake.name = "Tårta";
-	cake.focus=false;
-	cake.addEventListener("mousedown", handleCakeTouch);
+
+
+		
+	cake_ball=new createjs.Bitmap(queue.getResult("cake_ball"));
+	cake_ball.x=canvas.width+100; //start to the right of canvas
+	cake_ball.y=100;
+	cake_ball.regX=cake_ball.image.width/2|0;
+	cake_ball.regY=cake_ball.image.height/2|0;
+
+		
+	stage.addChild(cake_ball);
+
+
+	cake.alpha=0.0;
+
 	
 
 }
 
-function restoreCake() {
+function restoreMenuCake() {
 	
-	if (cake.focus) {
+	if (menuCake.focus) {
 		soundQueue=[];
 		nextRandomCheck=-1;
 		selectedNameNumber=-1
@@ -945,24 +1071,22 @@ function restoreCake() {
 			moveCakePiece(i,0,0,"restore");
 		}
 		
-		
-		
-		
-		
-		createjs.Tween.get(cake).to({x:cake.xStart, y: cake.yStart, scaleX:cake.scaleStart, scaleY:cake.scaleStart}, 400, createjs.Ease.linear);
-		
-		createjs.Tween.get(table).to({alpha:0.0}, 400, createjs.Ease.linear);
-		
-		createjs.Tween.get(boelSplashScreen).to({alpha:1.0}, 400, createjs.Ease.linear);
-		createjs.Tween.get(tableBackground).to({alpha:0.0},400, createjs.Ease.linear);
-	    createjs.Tween.get(splashScreenBackground).to({alpha:1.0},400, createjs.Ease.linear);
+		menuCake.focus=false;
 
-		
-		
-		cake.focus=false;
-		menuBall.alpha=1;
 	}
 	
+	//detta kan paketeras i en funktion XXXXXXXXXX. I guess these are the same as in handlemenucaketouch but show<->hide
+	//show
+	createjs.Tween.get(menuCake).to({alpha:1.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(menuBall).to({alpha:1.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(splashScreenBackground).to({alpha:1.0},400, createjs.Ease.linear);
+	createjs.Tween.get(boelSplashScreen).to({alpha:1.0}, 400, createjs.Ease.linear);
+
+	//hide
+	createjs.Tween.get(cake).to({alpha:0.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(table).to({alpha:0.0}, 400, createjs.Ease.linear);
+	createjs.Tween.get(tableBackground).to({alpha:0.0},400, createjs.Ease.linear);
+
 }
 
 
@@ -1013,7 +1137,7 @@ function moveCakePiece(piecenumber,x,y,action) {
 	//denna skulle bli mycket enklare om återställningen sköts av egen funktion, restore piece
 	
 	var movePerformed=false;
-	if (cake.focus  && soundQueue.length==0) {
+	if (menuCake.focus  && soundQueue.length==0) {
 		var piece=cakeComplete[piecenumber];
 	
 		if ((x!=0 || y!=0) && !piece.moved) {
@@ -1161,7 +1285,7 @@ function showNumber(number) {
 	n.scaleX=n.scaleY=1.0;
 	n.visible=true;
 	
-	createjs.Tween.get(n).to({x:canvas.width-200, y: 0, scaleX:0.5, scaleY:0.5}, 400, createjs.Ease.linear);
+	createjs.Tween.get(n).to({x:canvas.width-200, y:0}, 400, createjs.Ease.linear);
 	
 	
 }
@@ -1177,13 +1301,13 @@ function randomFutureTicks(minsec,maxsec) {
 function bounceToTable(piecenumber) {
 	var time = 1500.0;
 	
-	var startX=tableBall.x;
-	var startY=tableBall.y;
+	var startX=cake_ball.x;
+	var startY=cake_ball.y;
 	
 	//console.log("startX",startX,"startY",startY);
 	
-	var smashX=cake.x+cake.scaleX*cakeComplete[piecenumber][0].x;
-	var smashY=cake.y+cake.scaleY*cakeComplete[piecenumber][0].y;
+	var smashX=cake.x+cakeComplete[piecenumber][0].x;
+	var smashY=cake.y+cakeComplete[piecenumber][0].y;
 	
 	//antag startX=10, smashX=40. då ska endX bli 70
 	
@@ -1196,11 +1320,11 @@ function bounceToTable(piecenumber) {
 	pieceNumberToSmash=piecenumber;
 	
 	
-	createjs.Tween.get(tableBall).to({
+	createjs.Tween.get(cake_ball).to({
 		x: endX
 	}, 3.9 * time, createjs.Ease.linear);
 	
-	createjs.Tween.get(tableBall).to({
+	createjs.Tween.get(cake_ball).to({
 		y: smashY
 	}, time, createjs.Ease.getPowIn(2)).call(smashPiece).to({
 		y: startY
@@ -1212,10 +1336,10 @@ function bounceToTable(piecenumber) {
 }
 
 function handleBounceComplete() {
-	if (tableBall.x>canvas.width+100) {
-		tableBall.x=canvas.width+100;
-	} else if (tableBall.x<-100) {
-		tableBall.x=-100;
+	if (cake_ball.x>canvas.width+100) {
+		cake_ball.x=canvas.width+100;
+	} else if (cake_ball.x<-100) {
+		cake_ball.x=-100;
 	}
 }
 
