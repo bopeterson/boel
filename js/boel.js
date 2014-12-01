@@ -1218,7 +1218,6 @@ function bounceToTable(piecenumber) {
 }
 
 function restoreCakeBall() {
-	console.log("restore cake ball");
 	if (cakeBall.x>canvas.width+100) {
 		cakeBall.x=canvas.width+100;
 		cakeBall.y=100;
@@ -1263,14 +1262,12 @@ function getCharacter(pieceNumber) {
 	return character;
 }
 
-	
 function pulsate(bitmap,pulsetime) {
 	console.log("bitmap",bitmap,"pulsetime",pulsetime);
 	var partTime=Math.floor(pulsetime/4);
 	createjs.Tween.get(bitmap).to({scaleX:1.1,scaleY:1.1},partTime,createjs.Ease.sineInOut).to({scaleX:1.0,scaleY:1.0},partTime,createjs.Ease.sineInOut).to({scaleX:1.1,scaleY:1.1},partTime,createjs.Ease.sineInOut).to({scaleX:1.0,scaleY:1.0},partTime,createjs.Ease.sineInOut);
 }
 
-	
 function Ball(imageid,name,color) {	
 	//constructor for ball
 	createjs.Bitmap.call(this,queue.getResult(imageid));
@@ -1322,5 +1319,3 @@ function Character(pieceNumber,pieceDeltaX,pieceDeltaY,happyPic,hasSadPic,hasHan
 	addCharacterEventListener(this);
 	makeCharacterHappy(this);
 }
-
-
