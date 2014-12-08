@@ -1,5 +1,9 @@
 /* Boel och Tore - da game */
 
+
+var files; //xxx should b elocal
+var xxxxx;
+
 //debug settings
 var debug=true;
 var debugAlwaysUpdate=false;
@@ -8,6 +12,7 @@ var debugAlwaysUpdate=false;
 Ball.prototype=Object.create(createjs.Bitmap.prototype);
 
 //setup parameters
+var returnSpeed=0.5; //pixels per millisecond
 var timeToNewBallGame=1500; //ms
 var ballBounceSpeed=0.4;//pixels per millisecond
 var minSecSelectFirstName=1.5; //min random time before voice "x vill ha tårta, var är x" for first character after start. 
@@ -32,6 +37,9 @@ var numberY=100; //0;
 var numberTransitionTime=1000;
 var startBallGameRotationTime=2000;
 var startBallGameNoOfTurns=2;
+
+var menuClothesX=20
+var menuClothesY=350;
 var menuCakeX=20; //was (menuCake.image.width/2|0)+20; 
 var menuCakeY=450; //was (menuCake.image.height/2|0)+20;
 var menuBallX=20; //was canvas.width-menuBall.image.width/2-20;
@@ -44,6 +52,20 @@ var wrongBallNumberOfTurns=4;
 var wrongBallTurnTime=2000; //must be at least as long as the sound "det var ju blåa bollen", otherwise there might be an error if wrong ball is touched
 var tableX=100;
 var tableY=50;
+var clothesX=(1024-768); //    /2 för centrering
+var clothesY=0;
+var shirtX=592;
+var shirtY=210;
+
+var sock1X=314;
+var sock1Y=136;
+var sock2X=426;
+var sock2Y=150;
+
+var toreX=50;
+var toreY=530;
+
+
 var pieceMoveTime=1000;
 var ballPulsateTime=1000;
 var characterPulsateTime=1000;
@@ -51,6 +73,8 @@ var cakeBallNoOfTurns=6; //xxxx was 4
 //xxx possibly put setup parameters in a setup object:
 //var setup={timeToNewBallGame:1500,ballBounceSpeed:0.4};
 
+
+147,212,242
 var ballTween=new Object();
 
 var characters=new Object(); //to find character connected to piece through getCharacter function
@@ -90,6 +114,12 @@ var pieceParts,numberOfCakePieces;
 var cakeFiles;
 var cakeBall;
 var table;
+var clothes;
+var line;
+var shirt;
+var sock1;
+var sock2;
+var tore;
 var tableBoel=new Object();
 var tableMom=new Object();
 var tableGrandDad=new Object();
@@ -104,7 +134,8 @@ var loadedFiles;
 var filesToLoad;
 var ballBackground;
 var splashScreenBackground;
-var tableBackground
+var tableBackground;
+var clothesBackground;
 var nowMillis;
 var nextSmash;
 var nextRandomCheck;
@@ -114,6 +145,7 @@ var nextBallTime;
 var selectedNameNumber;
 var selectedName; 
 var soundQueue=[];
+
 
 function init() {
 	console.log("Boel game starting at "+Date());
@@ -150,11 +182,13 @@ function init() {
 	splashScreenBackground=createBackground("#86DBD5",1.0);
 	ballBackground=createBackground("#FFFF00",0.0);
 	tableBackground=createBackground("#FF95CB",0.0);
+	clothesBackground=createBackground("#93D4F2",0,0);
 	
 	stage.addChild(background);
 	stage.addChild(splashScreenBackground);
 	stage.addChild(ballBackground);
 	stage.addChild(tableBackground);
+	stage.addChild(clothesBackground);
 
 	addProgressBar();
 
@@ -223,13 +257,20 @@ function init() {
 		{id:"boelSplashScreen", src:"assets/boelsplashscreen.png"},
 		{id:"menuBall", src:"assets/menuball.png"},
 		{id:"menuCake", src:"assets/menucake.png"},
+		{id:"menuClothes", src:"assets/menuclothes.png"},		
 		{id:"dog", src:"assets/dog.png"},
 		{id:"button", src:"assets/button.png"},
 		{id:"cakePlate", src:"assets/cake_plate.png"},
-		{id:"blueball", src:"assets/blueball.png"},
-		{id:"redball", src:"assets/redball.png"},
-		{id:"yellowball", src:"assets/yellowball.png"},
-		{id:"greenball", src:"assets/greenball.png"},
+		{id:"line", src:"assets/line.png"},
+		{id:"shirtLine", src:"assets/shirtline.png"},
+		{id:"shirtWear", src:"assets/shirtwear.png"},		
+		{id:"sock1", src:"assets/sock1.png"},
+		{id:"sock2", src:"assets/sock2.png"},
+		{id:"tore", src:"assets/tore.png"},
+		{id:"blueBall", src:"assets/blueball.png"},
+		{id:"redBall", src:"assets/redball.png"},
+		{id:"yellowBall", src:"assets/yellowball.png"},
+		{id:"greenBall", src:"assets/greenball.png"},
 		{id:"cakeBall", src:"assets/cake_ball.png"}	
 		];
 		
@@ -263,8 +304,13 @@ function init() {
 				{id:"tableBoelHand",src:"assets/tableboelhand.png"},
 				{id:"tableGrandDadHand",src:"assets/tablegranddadhand.png"},
 				];
+	///xxx files should be local, temporarily global
+	//var files=simpleImageFiles.concat(cakeFiles,numberFiles,tableFiles,soundFiles);	
 	
-	var files=simpleImageFiles.concat(cakeFiles,numberFiles,tableFiles,soundFiles);	
+	files=simpleImageFiles.concat(cakeFiles,numberFiles,tableFiles,soundFiles);	
+
+
+
 	queue.loadManifest(files);
 	filesToLoad=files.length;
 } //init
@@ -310,6 +356,10 @@ function handleFileError(event) {
 }
 	
 function handleFileLoad(event) {
+
+	console.log("loading "+files[loadedFiles].src);
+	xxxxx=files[loadedFiles].src;
+	
 	loadedFiles++;
 	var progress=loadedFiles/filesToLoad;
 	updateProgressBar(progress);
@@ -348,9 +398,14 @@ function handleComplete(event) {
 	addTable();
 	addCake(pieceParts,numberOfCakePieces,cakeFiles);
 	addBall();
+	addClothes();
 	addButton();
 	addNumbers();
 	addDebugText();
+	
+//xxxxxxxxxxxxx
+printDebug(xxxxx);
+	
 	
 	//setup almost complete, start the ticker
 	background.addEventListener("mousedown", handleBackgroundTouch);
@@ -393,11 +448,11 @@ function handleTick(event) {
 		}
 	}
 	
-	//things to do only when a tween is running
+	//things to do only when a tween is running or something is dragged
 	if (update || debugAlwaysUpdate) {
 		if (menuBall.focus)  {
 			checkBallOutsideAndBallBounce();
-		}	
+		}
 		stage.update(event); //pass event to make sure for example sprite animation works
 	}
 	update=createjs.Tween.hasActiveTweens();
@@ -528,6 +583,7 @@ function handleCakePieceTouch(event) {
 function changeSplashScreen(alpha) {
 	createjs.Tween.get(menuCake).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
 	createjs.Tween.get(menuBall).to({alpha:alpha},gameTransitionTime,createjs.Ease.linear);  
+	createjs.Tween.get(menuClothes).to({alpha:alpha},gameTransitionTime,createjs.Ease.linear);  
 	createjs.Tween.get(boelSplashScreen).to({alpha:alpha},gameTransitionTime/2, createjs.Ease.linear);
 	createjs.Tween.get(splashScreenBackground).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
 }
@@ -560,6 +616,8 @@ function handleButtonTouch(event) {
 		restoreMenuBall();
 	} else if (menuCake.focus) {
 		restoreMenuCake();
+	} else if (menuClothes.focus) {
+		restoreMenuClothes();
 	}
 }
 
@@ -604,8 +662,152 @@ function handleMenuBallTouch(event) {
 }
 
 function noGameRunning() {
-	return (!menuBall.focus && !menuCake.focus);
+	return (!menuBall.focus && !menuCake.focus && !menuClothes.focus);
 }
+
+function addClothes() {
+	
+	menuClothes=new createjs.Bitmap(queue.getResult("menuClothes"));
+	stage.addChild(menuClothes);
+	
+	//these parameters won't change
+	menuClothes.x = menuClothesX;
+	menuClothes.y = menuClothesY;
+	menuClothes.name = "menuClothes";
+	
+	//these will change
+	menuClothes.alpha = 1.0;
+	menuClothes.focus=false;
+	
+	menuClothes.addEventListener("mousedown", handleMenuClothesTouch);
+	
+	//xxxxxxxxxx temp pic
+	//xxxxx clothes ska nog vara container
+	clothes=new createjs.Container();
+	clothes.x=clothesX;
+	clothes.y=clothesY;
+	clothes.alpha=0.0;
+	
+	tore=new createjs.Bitmap(queue.getResult("tore"));
+	tore.startX=tore.x=toreX;
+	tore.startY=tore.y=toreY;
+	tore.regX=tore.image.width/2|0;
+	tore.regY=tore.image.height/2|0;
+	tore.rotation=0;
+
+	
+	shirt=new Clothes("shirtLine","shirtWear","shirt",shirtX,shirtY,true)
+	/*
+	shirt=new createjs.Bitmap(queue.getResult("shirt"));
+	shirt.startX=shirt.x=shirtX;
+	shirt.startY=shirt.y=shirtY;
+	shirt.regX=shirt.image.width/2|0;
+	shirt.regY=shirt.image.height/2|0;
+	shirt.rotation=0;
+	shirt.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
+*/
+	sock1=new createjs.Bitmap(queue.getResult("sock1"));
+	sock1.startX=sock1.x=sock1X;
+	sock1.startY=sock1.y=sock1Y;
+	sock1.regX=sock1.image.width/2|0;
+	sock1.regY=sock1.image.height/2|0;
+	sock1.rotation=0;
+	sock1.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
+
+	sock2=new createjs.Bitmap(queue.getResult("sock2"));
+	sock2.startX=sock2.x=sock2X;
+	sock2.startY=sock2.y=sock2Y;
+	sock2.regX=sock2.image.width/2|0;
+	sock2.regY=sock2.image.height/2|0;
+	sock2.rotation=0;
+	sock2.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
+
+	
+	line=new createjs.Bitmap(queue.getResult("line"));
+
+	clothes.addChild(tore);
+	clothes.addChild(shirt.linePic);
+	clothes.addChild(shirt.wearPic);
+	clothes.addChild(sock1);
+	clothes.addChild(sock2);
+	clothes.addChild(line);
+	stage.addChild(clothes);
+	
+
+	sock1.addEventListener("mousedown",handlePrePressmoveMousedown);
+	sock1.addEventListener("pressmove",handlePressmove);
+	sock1.addEventListener("pressup",handlePostPressmovePressup);
+	
+	sock2.addEventListener("mousedown",handlePrePressmoveMousedown);
+	sock2.addEventListener("pressmove",handlePressmove);
+	sock2.addEventListener("pressup",handlePostPressmovePressup);
+	
+
+
+	//xxxx
+	//here are balls of different colors used in the ball game. 
+	/*
+	blueBall=new Ball("blueBall","Blå boll","blue");
+	redBall=new Ball("redball","Röd boll","red");
+	yellowBall=new Ball("yellowball","Gul boll","yellow");
+	greenBall=new Ball("greenball","Grön boll","green");
+	allBalls=[blueBall,redBall,yellowBall,greenBall];
+	*/
+}
+
+function handleMenuClothesTouch(event) {
+	if (noGameRunning()) {
+		menuClothes.focus=true;
+		extendAndPlayQueue(["tyst1000"]);//very weird. this sound is needed for first sound to play on iphone.
+		hideSplashScreen();
+		//xxxxxxxx
+		showClothesGame();
+		startClothesGame(0);
+	}
+}
+
+function startClothesGame(delay) {
+	
+	//xxx mpste snyggas till, detta är quick and dirty
+	shirt.linePic.rotation=0;
+	shirt.wearPic.rotation=-180;
+	shirt.onBody=false;
+	shirt.linePic.x=shirt.linePic.startX;
+	shirt.linePic.y=shirt.linePic.startY;
+	line.alpha=1.0;
+	shirt.linePic.alpha=1.0;
+	shirt.wearPic.alpha=0;
+	sock1.alpha=1.0;
+	sock2.alpha=1.0;
+	tore.alpha=1.0;
+
+	createjs.Tween.get(clothes).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);	
+
+}
+
+function restoreMenuClothes() {
+	//xxxxxxx
+	menuClothes.focus=false;
+ 	/*
+	nextBallTime=-1;
+	for (i=0;i<allBalls.length;i++) {	
+		createjs.Tween.removeTweens(allBalls[i]);
+	}
+	*/
+	showSplashScreen();
+	hideClothes();
+}
+
+
+function hideClothes() {
+	createjs.Tween.get(clothes).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+	createjs.Tween.get(clothesBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+}
+
+function showClothesGame() {
+	 createjs.Tween.get(clothesBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);	
+}
+
 
 function showBallGame() {
 	 createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);	
@@ -631,6 +833,7 @@ function restoreMenuBall() {
 	hideBalls();
 }
 
+
 function addBall() {
 	menuBall=new createjs.Bitmap(queue.getResult("menuBall"));
 	stage.addChild(menuBall);
@@ -647,10 +850,10 @@ function addBall() {
 	menuBall.addEventListener("mousedown", handleMenuBallTouch);
 	
 	//here are balls of different colors used in the ball game. 
-	blueBall=new Ball("blueball","Blå boll","blue");
-	redBall=new Ball("redball","Röd boll","red");
-	yellowBall=new Ball("yellowball","Gul boll","yellow");
-	greenBall=new Ball("greenball","Grön boll","green");
+	blueBall=new Ball("blueBall","Blå boll","blue");
+	redBall=new Ball("redBall","Röd boll","red");
+	yellowBall=new Ball("yellowBall","Gul boll","yellow");
+	greenBall=new Ball("greenBall","Grön boll","green");
 	allBalls=[blueBall,redBall,yellowBall,greenBall];
 }
 
@@ -934,7 +1137,54 @@ function addCake(pieceParts,numberOfCakePieces,cakeFiles) {
 	
 	stage.addChild(cakeBall);
 
+}
 
+function handlePrePressmoveMousedown(evt) {
+	console.log("handlePrePressmoveMousedown",evt);
+	if (!evt.target.tweening) {
+		evt.target.mousedownOffset={x:evt.stageX-evt.target.x,y:evt.stageY-evt.target.y};
+	}
+}
+
+function handlePressmove(evt) {
+	var t=evt.target;
+	if (!t.tweening) {
+ 		t.x = evt.stageX-t.mousedownOffset.x;
+		t.y = evt.stageY-t.mousedownOffset.y;
+		
+		printDebug("x"+Math.floor(t.x)+"y"+Math.floor(t.y)+" ");
+		
+		if (t.x>tore.x-100 && t.x<tore.x+100 && t.y>tore.y-100 && t.y<tore.y+100 && !t.clothes.onBody) {
+			//t.alpha=0.0;
+			
+			t.clothes.wearPic.x=t.x;
+			t.clothes.wearPic.y=t.y;
+			
+			//t.clothes.wearPic.alpha=1.0;
+			
+			createjs.Tween.get(t.clothes.linePic).to({x:tore.x,y:tore.y,rotation:180,alpha:0.0},400,createjs.Ease.linear);
+
+			createjs.Tween.get(t.clothes.wearPic).to({x:tore.x,y:tore.y,rotation:0,alpha:1.0},400,createjs.Ease.linear);
+			
+			
+			
+			t.clothes.onBody=true;
+		}
+		
+		update=true;
+	}
+}
+
+function handlePostPressmovePressup(evt) {
+	t=evt.target;
+	if (!t.tweening && !t.clothes.onBody) {
+		t.tweening=true;
+		var distance=Math.sqrt((t.x-t.startX)*(t.x-t.startX)+(t.y-t.startY)*(t.y-t.startY));
+		var time=distance/returnSpeed;
+		console.log("time",Math.round(time));
+		createjs.Tween.get(t).to({x:t.startX,y:t.startY},time,createjs.Ease.sineInOut).call(function(evt) {evt.target.tweening=false});
+		//xxx måste gå tillbaka snabbare om närmre
+	}
 }
 
 function restoreMenuCake() {
@@ -1280,6 +1530,35 @@ function Ball(imageid,name,color) {
 	this.alpha=0.0;
 	this.radius=this.regX;
 	this.last=false;
+}
+
+function Clothes(linePicId,wearPicId,name,startX,startY,movable) {
+
+	this.linePic=new createjs.Bitmap(queue.getResult(linePicId));
+	this.linePic.clothes=this;
+	this.wearPic=new createjs.Bitmap(queue.getResult(wearPicId));
+	this.wearPic.clothes=this;
+	this.linePic.alpha=1.0;
+	this.wearPic.alpha=0.0;
+	
+	this.linePic.startX=this.linePic.x=startX;
+	this.linePic.startY=this.linePic.y=startY;
+	this.linePic.regX=this.linePic.image.width/2|0;
+	this.linePic.regY=this.linePic.image.height/2|0;
+	this.linePic.rotation=0;
+	this.linePic.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
+
+	this.wearPic.regX=this.wearPic.image.width/2|0;
+	this.wearPic.regY=this.wearPic.image.height/2|0;
+	this.wearPic.rotation=-180;
+
+
+
+	if (movable) {
+		this.linePic.addEventListener("mousedown",handlePrePressmoveMousedown);
+		this.linePic.addEventListener("pressmove",handlePressmove);
+		this.linePic.addEventListener("pressup",handlePostPressmovePressup);
+	}
 }
 
 function Character(pieceNumber,pieceDeltaX,pieceDeltaY,happyPic,hasSadPic,hasHandPic,name,regX,regY) {
