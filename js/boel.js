@@ -1,11 +1,7 @@
 /* Boel och Tore - da game */
 
-
-var files; //xxx should b elocal
-var xxxxx;
-
 //debug settings
-var debug=true;
+var debug=false;
 var debugAlwaysUpdate=false;
 
 //prototypes for subclasses
@@ -57,10 +53,10 @@ var clothesY=0;
 var shirtX=592;
 var shirtY=210;
 
-var sock1X=314;
-var sock1Y=136;
-var sock2X=426;
-var sock2Y=150;
+var sockRightX=314;
+var sockRightY=136;
+var sockLeftX=426;
+var sockLeftY=150;
 
 var toreX=50;
 var toreY=530;
@@ -73,8 +69,6 @@ var cakeBallNoOfTurns=6; //xxxx was 4
 //xxx possibly put setup parameters in a setup object:
 //var setup={timeToNewBallGame:1500,ballBounceSpeed:0.4};
 
-
-147,212,242
 var ballTween=new Object();
 
 var characters=new Object(); //to find character connected to piece through getCharacter function
@@ -117,8 +111,8 @@ var table;
 var clothes;
 var line;
 var shirt;
-var sock1;
-var sock2;
+var sockRight;
+var sockLeft;
 var tore;
 var tableBoel=new Object();
 var tableMom=new Object();
@@ -193,11 +187,6 @@ function init() {
 	addProgressBar();
 
 	//loading assets
-	queue=new createjs.LoadQueue(false);
-	queue.installPlugin(createjs.Sound);
-	queue.addEventListener("complete",handleComplete);
-	queue.addEventListener("error", handleFileError);
-	queue.addEventListener("fileload", handleFileLoad);
 
 	//xxx must include ogg as well. Please use the new alternateExtensions property.
 	//se http://www.createjs.com/tutorials/SoundJS%20and%20PreloadJS/. Gör olika testljud med ogg och mp3 för att testa
@@ -264,8 +253,8 @@ function init() {
 		{id:"line", src:"assets/line.png"},
 		{id:"shirtLine", src:"assets/shirtline.png"},
 		{id:"shirtWear", src:"assets/shirtwear.png"},		
-		{id:"sock1", src:"assets/sock1.png"},
-		{id:"sock2", src:"assets/sock2.png"},
+		{id:"sockRight", src:"assets/sockright.png"},
+		{id:"sockLeft", src:"assets/sockleft.png"},
 		{id:"tore", src:"assets/tore.png"},
 		{id:"blueBall", src:"assets/blueball.png"},
 		{id:"redBall", src:"assets/redball.png"},
@@ -304,12 +293,16 @@ function init() {
 				{id:"tableBoelHand",src:"assets/tableboelhand.png"},
 				{id:"tableGrandDadHand",src:"assets/tablegranddadhand.png"},
 				];
-	///xxx files should be local, temporarily global
-	//var files=simpleImageFiles.concat(cakeFiles,numberFiles,tableFiles,soundFiles);	
-	
-	files=simpleImageFiles.concat(cakeFiles,numberFiles,tableFiles,soundFiles);	
+
+	var files=simpleImageFiles.concat(cakeFiles,numberFiles,tableFiles,soundFiles);	
 
 
+	queue=new createjs.LoadQueue(false);
+	createjs.Sound.alternateExtensions = ["ogg"];
+	queue.installPlugin(createjs.Sound);
+	queue.addEventListener("complete",handleComplete);
+	queue.addEventListener("error", handleFileError);
+	queue.addEventListener("fileload", handleFileLoad);
 
 	queue.loadManifest(files);
 	filesToLoad=files.length;
@@ -356,16 +349,12 @@ function handleFileError(event) {
 }
 	
 function handleFileLoad(event) {
-
-	console.log("loading "+files[loadedFiles].src);
-	xxxxx=files[loadedFiles].src;
-	
 	loadedFiles++;
 	var progress=loadedFiles/filesToLoad;
 	updateProgressBar(progress);
 	//xxx the loader div is only for debugging and should be deleted
 	//var div = document.getElementById("loader");
-	//div.innerHTML = "loaded resources: "+loadedFiles;
+	//div.innerHTML = xxxxx;
 }
 
 function updateProgressBar(progress) {
@@ -402,10 +391,6 @@ function handleComplete(event) {
 	addButton();
 	addNumbers();
 	addDebugText();
-	
-//xxxxxxxxxxxxx
-printDebug(xxxxx);
-	
 	
 	//setup almost complete, start the ticker
 	background.addEventListener("mousedown", handleBackgroundTouch);
@@ -696,31 +681,9 @@ function addClothes() {
 	tore.rotation=0;
 
 	
-	shirt=new Clothes("shirtLine","shirtWear","shirt",shirtX,shirtY,true)
-	/*
-	shirt=new createjs.Bitmap(queue.getResult("shirt"));
-	shirt.startX=shirt.x=shirtX;
-	shirt.startY=shirt.y=shirtY;
-	shirt.regX=shirt.image.width/2|0;
-	shirt.regY=shirt.image.height/2|0;
-	shirt.rotation=0;
-	shirt.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
-*/
-	sock1=new createjs.Bitmap(queue.getResult("sock1"));
-	sock1.startX=sock1.x=sock1X;
-	sock1.startY=sock1.y=sock1Y;
-	sock1.regX=sock1.image.width/2|0;
-	sock1.regY=sock1.image.height/2|0;
-	sock1.rotation=0;
-	sock1.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
-
-	sock2=new createjs.Bitmap(queue.getResult("sock2"));
-	sock2.startX=sock2.x=sock2X;
-	sock2.startY=sock2.y=sock2Y;
-	sock2.regX=sock2.image.width/2|0;
-	sock2.regY=sock2.image.height/2|0;
-	sock2.rotation=0;
-	sock2.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
+	shirt=new Clothes("shirtLine","shirtWear","shirt",shirtX,shirtY,true);
+	sockRight=new Clothes("sockRight","sockRight","sockRight",sockRightX,sockRightY,true);
+	sockLeft=new Clothes("sockLeft","sockLeft","sockLeft",sockLeftX,sockLeftY,true);
 
 	
 	line=new createjs.Bitmap(queue.getResult("line"));
@@ -728,31 +691,12 @@ function addClothes() {
 	clothes.addChild(tore);
 	clothes.addChild(shirt.linePic);
 	clothes.addChild(shirt.wearPic);
-	clothes.addChild(sock1);
-	clothes.addChild(sock2);
+	clothes.addChild(sockRight.linePic);
+	clothes.addChild(sockRight.wearPic);
+	clothes.addChild(sockLeft.linePic);
+	clothes.addChild(sockLeft.wearPic);	
 	clothes.addChild(line);
 	stage.addChild(clothes);
-	
-
-	sock1.addEventListener("mousedown",handlePrePressmoveMousedown);
-	sock1.addEventListener("pressmove",handlePressmove);
-	sock1.addEventListener("pressup",handlePostPressmovePressup);
-	
-	sock2.addEventListener("mousedown",handlePrePressmoveMousedown);
-	sock2.addEventListener("pressmove",handlePressmove);
-	sock2.addEventListener("pressup",handlePostPressmovePressup);
-	
-
-
-	//xxxx
-	//here are balls of different colors used in the ball game. 
-	/*
-	blueBall=new Ball("blueBall","Blå boll","blue");
-	redBall=new Ball("redball","Röd boll","red");
-	yellowBall=new Ball("yellowball","Gul boll","yellow");
-	greenBall=new Ball("greenball","Grön boll","green");
-	allBalls=[blueBall,redBall,yellowBall,greenBall];
-	*/
 }
 
 function handleMenuClothesTouch(event) {
@@ -769,20 +713,26 @@ function handleMenuClothesTouch(event) {
 function startClothesGame(delay) {
 	
 	//xxx mpste snyggas till, detta är quick and dirty
-	shirt.linePic.rotation=0;
-	shirt.wearPic.rotation=-180;
-	shirt.onBody=false;
-	shirt.linePic.x=shirt.linePic.startX;
-	shirt.linePic.y=shirt.linePic.startY;
+	
+	restorePieceOfClothes(shirt);
+	restorePieceOfClothes(sockLeft);
+	restorePieceOfClothes(sockRight);
+	
 	line.alpha=1.0;
-	shirt.linePic.alpha=1.0;
-	shirt.wearPic.alpha=0;
-	sock1.alpha=1.0;
-	sock2.alpha=1.0;
 	tore.alpha=1.0;
 
 	createjs.Tween.get(clothes).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);	
 
+}
+
+function restorePieceOfClothes(c) {
+	c.linePic.rotation=0;
+	c.wearPic.rotation=-180;
+	c.linePic.alpha=1.0;
+	c.wearPic.alpha=0;
+	c.linePic.x=c.linePic.startX;
+	c.linePic.y=c.linePic.startY;
+	c.onBody=false;
 }
 
 function restoreMenuClothes() {
@@ -1154,7 +1104,7 @@ function handlePressmove(evt) {
 		
 		printDebug("x"+Math.floor(t.x)+"y"+Math.floor(t.y)+" ");
 		
-		if (t.x>tore.x-100 && t.x<tore.x+100 && t.y>tore.y-100 && t.y<tore.y+100 && !t.clothes.onBody) {
+		if (t.x>tore.x-50 && t.x<tore.x+50 && t.y>tore.y-50 && t.y<tore.y+50 && !t.clothes.onBody) {
 			//t.alpha=0.0;
 			
 			t.clothes.wearPic.x=t.x;
