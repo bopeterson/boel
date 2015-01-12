@@ -919,8 +919,8 @@ function addTable() {
 	//anticlockwise around table
 	tableDog=new Character(0,-60,140,"tableDog",true,false,"Hunden",180,610);
 	tableTore=new Character(1,115,100,"tableTore",true,true,"Tore",730,500);
-	tableDad=new Character(2,104,-68,"tableDad",true,true,"Pappa",680,310);
-	tableGrandDad=new Character(3,80,-90,"tableGrandDad",true,true,"Morfar",460,210);
+	tableDad=new Character(2,118,-38,"tableDad",true,true,"Pappa",680,310);
+	tableGrandDad=new Character(3,100,-90,"tableGrandDad",true,true,"Morfar",460,210);
 	tableMom=new Character(4,-95,-55,"tableMom",true,true,"Mamma",210,320);
 	tableBoel=new Character(5,-120,35,"tableBoel",true,true,"Boel",170,470);
 
