@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EaselJS: Curve To Demo</title>
+    <link rel="stylesheet" href="css/style.css" media="screen" type="text/css">
+
+    <script src="js/easeljs-0.7.1.min.js"></script>
+    
+	<script src="js/tweenjs-0.5.1.min.js"></script>
+    <!--script src="js/tweenjs-NEXT.min.js"></script-->
+    
+	<script src="js/soundjs-0.5.2.min.js"></script>
+    <script src="js/preloadjs-0.4.1.min.js"></script>
+
+<script>
+//in boel
+var canvas, stage;
+
+//new
+var drawingCanvas;
+var oldPt;
+var oldMidPt;
+var title;
+var color;
+var stroke;
+var colors;
+var colorIndex;
+var crayons=new Array();
+var crayonsBackground;
+
+function init() {
+	
+	/*
+	
+	
+
+	ok, nu återstår att lägga till så att man märker om det ritas på dröjan. handle mouse vadå? 
+	
+	
+	
+	
+	*/
+	
+	
+	//in boel
+	if (window.top != window) {
+		document.getElementById("header").style.display = "none";
+	}
+
+	//check to see if we are running in a browser with touch support
+	canvas = document.getElementById("myCanvas");
+
+	stage = new createjs.Stage(canvas);
+	stage.enableDOMEvents(true);
+	createjs.Touch.enable(stage);
+	createjs.Ticker.setFPS(24);
+
+	//new
+	stage.autoClear = false;
+	colors = ["red", "green", "yellow"];
+	colorIndex=0;
+	color=colors[colorIndex];
+
+	crayonsBackground=new createjs.Shape();
+	stage.addChild(crayonsBackground);
+	crayonsBackground.graphics.beginFill("white").drawRect(0,0,120,200);
+	for (var i=0;i<colors.length;i++) {
+		crayons[i]=new createjs.Shape();
+		crayons[i].graphics.beginFill(colors[i]).beginStroke("black").drawRect(0, 0, 100,20);
+		crayons[i].index=i;
+		stage.addChild(crayons[i]);
+		crayons[i].addEventListener("mousedown",handleCrayonMouseDown);
+
+	}
+	
+	drawCrayons(colorIndex);
+
+	drawingCanvas = new createjs.Shape();
+
+	stage.addEventListener("stagemousedown", handleMouseDown);
+	stage.addEventListener("stagemouseup", handleMouseUp);
+
+	stage.addChild(drawingCanvas);
+	var testShirt=new createjs.Shape();
+	testShirt.graphics.beginFill("orange").drawRect(200,200,100,100);
+	testShirt.addEventListener("mouseover", handleMouseOver);
+	stage.addChild(testShirt);
+	
+	stage.update();
+
+	//stage.removeChild(testShirt); //otherwise you cant paint on top of it. 
+	testShirt.alpha=0.1; //possible to draw on shirt but 0.001 so low that subsequent updates don't draw nnew shirt on top of crayon
+	console.log("init ready");
+}
+
+function handleMouseOver() {
+	console.log("mouse over");
+}
+
+function drawCrayons(index) {
+	crayonsBackground.x=canvas.width-120;
+	crayonsBackground.y=100-25;
+	for (var i=0;i<crayons.length;i++) {
+		crayons[i].y=100+i*50;
+		if (i==index) {
+			console.log("yay");
+			crayons[i].x=canvas.width-100;
+		} else {
+			console.log("yo");
+			crayons[i].x=canvas.width-50;
+		}
+		console.log(crayons[i].x,crayons[i].y);
+	}
+}
+
+function handleCrayonMouseDown(evt) {
+	colorIndex=evt.target.index;
+	color=colors[colorIndex];
+	console.log(color);
+	drawCrayons(colorIndex);
+	stage.update();
+}
+
+
+function handleMouseDown(evt) {
+	console.log("handleMouseDown");
+	stroke = 10;
+	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
+	//oldMidPt = oldPt; //original faulty line
+	oldMidPt= new createjs.Point(stage.mouseX,stage.mouseY);
+	
+	stage.addEventListener("stagemousemove" , handleMouseMove);
+}
+
+function handleMouseMove(evt) {
+	console.log("handleMouseMove");
+	var midPt = new createjs.Point(oldPt.x + stage.mouseX>>1, oldPt.y+stage.mouseY>>1);
+
+	drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(color).
+	moveTo(midPt.x, midPt.y).
+	curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
+	
+	oldPt.x = stage.mouseX;
+	oldPt.y = stage.mouseY;
+
+	oldMidPt.x = midPt.x;
+	oldMidPt.y = midPt.y;
+
+	stage.update();
+}
+
+function handleMouseUp(evt) {
+	stage.removeEventListener("stagemousemove" , handleMouseMove);
+}
+
+
+
+
+
+</script>
+</head>
+<body onload="init();">
+
+<canvas id="myCanvas" width="960" height="400"></canvas>
+</body>
+</html>

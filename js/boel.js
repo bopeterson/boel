@@ -1,7 +1,24 @@
+xxx ska verkligen handlepressmove både sätta update till true och göra stage.update? 
+
 /* Boel och Tore - da game */
 
+//How the various images are produced:
+//tore's clothes:
+//originals for tore's clothes are found in toreclothes.psd
+//file->scripts->export layers to files, check Trim layers
+
+
+//line
+//original is found in line.psd
+//save for web->scale 50%
+//Note: clothes are also found in layers here, but they are not used and should be hidden
+
+//balls
+
+//table pics
+
 //debug settings
-var debug=false;
+var debug=true;
 var debugAlwaysUpdate=false;
 
 //prototypes for subclasses
@@ -9,7 +26,7 @@ Ball.prototype=Object.create(createjs.Bitmap.prototype);
 
 //setup parameters
 var returnSpeed=0.5; //pixels per millisecond
-var timeToNewBallGame=1500; //ms
+var timeToNewBallGame=5000; //ms
 var ballBounceSpeed=0.4;//pixels per millisecond
 var minSecSelectFirstName=1.5; //min random time before voice "x vill ha tårta, var är x" for first character after start. 
 var maxSecSelectFirstName=1.6;
@@ -50,24 +67,53 @@ var tableX=100;
 var tableY=50;
 var clothesX=(1024-768); //    /2 för centrering
 var clothesY=0;
-var shirtX=592;
-var shirtY=210;
-
-var sockRightX=314;
-var sockRightY=136;
-var sockLeftX=426;
-var sockLeftY=150;
-
-var toreX=50;
-var toreY=530;
-
 
 var pieceMoveTime=1000;
 var ballPulsateTime=1000;
 var characterPulsateTime=1000;
 var cakeBallNoOfTurns=6; //xxxx was 4
+
+var clothesTweenTime=600;
+var hitDistance=50;
+
+
 //xxx possibly put setup parameters in a setup object:
 //var setup={timeToNewBallGame:1500,ballBounceSpeed:0.4};
+
+//xxx the clothes parameters are not really setup parameters, but determined by size on position of clothes images. 
+//should be defined somewhere else....
+
+var toreX=47;
+var toreY=530;
+var lineX=0;
+var lineY=0;
+
+var shirtX=592; //start postion on line.
+var shirtY=210;
+var shirtWearX=2; //position relative to Tore when worn
+var shirtWearY=-3; 
+var shirtStartRotation=-180;
+var trousersX=167; //start postion on line.
+var trousersY=130;
+var trousersWearX=0; //position relative to Tore when worn
+var trousersWearY=106; 
+var trousersStartRotation=-157;
+
+
+
+
+var sockLeftX=309;
+var sockLeftY=127;
+var sockLeftStartRotation=20;
+var sockLeftWearX=-32;
+var sockLeftWearY=186;
+
+var sockRightX=425;
+var sockRightY=143;
+var sockRightStartRotation=30;
+var sockRightWearX=28;
+var sockRightWearY=186;
+
 
 var ballTween=new Object();
 
@@ -111,9 +157,11 @@ var table;
 var clothes;
 var line;
 var shirt;
+var trousers;
 var sockRight;
 var sockLeft;
 var tore;
+var star;
 var tableBoel=new Object();
 var tableMom=new Object();
 var tableGrandDad=new Object();
@@ -165,6 +213,10 @@ function init() {
 	//check to see if we are running in a browser with touch support
 	stage = new createjs.Stage(canvas);
 	stage.addEventListener("stagemousedown", handleStageMouseDown);
+
+
+
+stage.autoClear=false;//xxxxxxxxxxxx
 
 	stage.name="The Stage";
 	// enable touch interactions if supported on the current device:
@@ -238,7 +290,8 @@ function init() {
 		{id:"vargreen",src:"assets/vargreen.mp3"},
 		{id:"varblue",src:"assets/varblue.mp3"},
 		{id:"varyellow",src:"assets/varyellow.mp3"},
-		{id:"varred",src:"assets/varred.mp3"}];
+		{id:"varred",src:"assets/varred.mp3"},
+		{id:"tada",src:"assets/tada.mp3"}];
 				
 		
 	//simple as opposed to the more complex files making a cake and a table
@@ -253,9 +306,14 @@ function init() {
 		{id:"line", src:"assets/line.png"},
 		{id:"shirtLine", src:"assets/shirtline.png"},
 		{id:"shirtWear", src:"assets/shirtwear.png"},		
-		{id:"sockRight", src:"assets/sockright.png"},
-		{id:"sockLeft", src:"assets/sockleft.png"},
+		{id:"trousersLine", src:"assets/trousersline.png"},
+		{id:"trousersWear", src:"assets/trouserswear.png"},		
+		{id:"sockLeftLine", src:"assets/sockleftline.png"},
+		{id:"sockLeftWear", src:"assets/sockleftwear.png"},
+		{id:"sockRightLine", src:"assets/sockrightline.png"},
+		{id:"sockRightWear", src:"assets/sockrightwear.png"},
 		{id:"tore", src:"assets/tore.png"},
+		{id:"star", src:"assets/star.png"},
 		{id:"blueBall", src:"assets/blueball.png"},
 		{id:"redBall", src:"assets/redball.png"},
 		{id:"yellowBall", src:"assets/yellowball.png"},
@@ -391,6 +449,8 @@ function handleComplete(event) {
 	addButton();
 	addNumbers();
 	addDebugText();
+	addStar();
+	
 	
 	//setup almost complete, start the ticker
 	background.addEventListener("mousedown", handleBackgroundTouch);
@@ -455,6 +515,7 @@ function checkBallOutsideAndBallBounce() {
 			ballTween.setPaused(true);
 			if (ball.last) {
 				//restart game if it is the last ball
+				extendAndPlayQueue("tada");				
 				startBallGame(timeToNewBallGame);
 			}	
 		}		
@@ -606,6 +667,16 @@ function handleButtonTouch(event) {
 	}
 }
 
+function addStar() {
+	star=new createjs.Bitmap(queue.getResult("star"));
+	stage.addChild(star);
+	star.regX=star.image.width/2|0;
+	star.regY=star.image.height/2|0;
+	star.x=canvas.width/2|0;
+	star.y=canvas.height/2|0;
+	hideStar();
+}
+
 function addDebugText() {
 	debugText = new createjs.Text("", "24px Courier", "#000");
 	debugText.x=20;
@@ -666,8 +737,6 @@ function addClothes() {
 	
 	menuClothes.addEventListener("mousedown", handleMenuClothesTouch);
 	
-	//xxxxxxxxxx temp pic
-	//xxxxx clothes ska nog vara container
 	clothes=new createjs.Container();
 	clothes.x=clothesX;
 	clothes.y=clothesY;
@@ -681,20 +750,25 @@ function addClothes() {
 	tore.rotation=0;
 
 	
-	shirt=new Clothes("shirtLine","shirtWear","shirt",shirtX,shirtY,true);
-	sockRight=new Clothes("sockRight","sockRight","sockRight",sockRightX,sockRightY,true);
-	sockLeft=new Clothes("sockLeft","sockLeft","sockLeft",sockLeftX,sockLeftY,true);
+	sockRight=new Clothes("sockRightLine","sockRightWear","sockRight",sockRightStartRotation,sockRightX,sockRightY,sockRightWearX,sockRightWearY,true);
+	sockLeft=new Clothes("sockLeftLine","sockLeftWear","sockLeft",sockLeftStartRotation,sockLeftX,sockLeftY,sockLeftWearX,sockLeftWearY,true);
+	trousers=new Clothes("trousersLine","trousersWear","trousers",trousersStartRotation,trousersX,trousersY,trousersWearX,trousersWearY,true);
+	shirt=new Clothes("shirtLine","shirtWear","shirt",shirtStartRotation,shirtX,shirtY,shirtWearX,shirtWearY,true);
 
 	
 	line=new createjs.Bitmap(queue.getResult("line"));
-
+	line.x=lineX;
+	line.y=lineY;
+	
 	clothes.addChild(tore);
-	clothes.addChild(shirt.linePic);
-	clothes.addChild(shirt.wearPic);
 	clothes.addChild(sockRight.linePic);
 	clothes.addChild(sockRight.wearPic);
 	clothes.addChild(sockLeft.linePic);
 	clothes.addChild(sockLeft.wearPic);	
+	clothes.addChild(trousers.linePic);
+	clothes.addChild(trousers.wearPic);
+	clothes.addChild(shirt.linePic);
+	clothes.addChild(shirt.wearPic);
 	clothes.addChild(line);
 	stage.addChild(clothes);
 }
@@ -704,7 +778,6 @@ function handleMenuClothesTouch(event) {
 		menuClothes.focus=true;
 		extendAndPlayQueue(["tyst1000"]);//very weird. this sound is needed for first sound to play on iphone.
 		hideSplashScreen();
-		//xxxxxxxx
 		showClothesGame();
 		startClothesGame(0);
 	}
@@ -714,9 +787,6 @@ function startClothesGame(delay) {
 	
 	//xxx mpste snyggas till, detta är quick and dirty
 	
-	restorePieceOfClothes(shirt);
-	restorePieceOfClothes(sockLeft);
-	restorePieceOfClothes(sockRight);
 	
 	line.alpha=1.0;
 	tore.alpha=1.0;
@@ -726,8 +796,10 @@ function startClothesGame(delay) {
 }
 
 function restorePieceOfClothes(c) {
-	c.linePic.rotation=0;
-	c.wearPic.rotation=-180;
+	createjs.Tween.removeTweens(c.linePic);
+	createjs.Tween.removeTweens(c.wearPic);
+	c.linePic.rotation=c.linePic.startRotation;
+	c.wearPic.rotation=c.wearPic.startRotation;
 	c.linePic.alpha=1.0;
 	c.wearPic.alpha=0;
 	c.linePic.x=c.linePic.startX;
@@ -736,14 +808,11 @@ function restorePieceOfClothes(c) {
 }
 
 function restoreMenuClothes() {
-	//xxxxxxx
+	restorePieceOfClothes(shirt);
+	restorePieceOfClothes(trousers);
+	restorePieceOfClothes(sockLeft);
+	restorePieceOfClothes(sockRight);
 	menuClothes.focus=false;
- 	/*
-	nextBallTime=-1;
-	for (i=0;i<allBalls.length;i++) {	
-		createjs.Tween.removeTweens(allBalls[i]);
-	}
-	*/
 	showSplashScreen();
 	hideClothes();
 }
@@ -763,7 +832,8 @@ function showBallGame() {
 	 createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);	
 }
 
-function startBallGame(delay) {	
+function startBallGame(delay) {
+	hideStar();	
 	nextBallTime=delay+randomFutureMillis(minSecNextBall,maxSecNextBall);
 	nextBall=null; //decided att next ball time
 	allBalls.forEach(setRandomPosition);
@@ -1102,26 +1172,23 @@ function handlePressmove(evt) {
  		t.x = evt.stageX-t.mousedownOffset.x;
 		t.y = evt.stageY-t.mousedownOffset.y;
 		
-		printDebug("x"+Math.floor(t.x)+"y"+Math.floor(t.y)+" ");
-		
-		if (t.x>tore.x-50 && t.x<tore.x+50 && t.y>tore.y-50 && t.y<tore.y+50 && !t.clothes.onBody) {
-			//t.alpha=0.0;
-			
+		printDebug("x rel tore:"+Math.floor(t.x-tore.x)+",y rel tore:"+Math.floor(t.y-tore.y)+",x:"+Math.floor(t.x)+",y:"+Math.floor(t.y)+" ");
+
+		if (t.x>tore.x+t.wearX-hitDistance && t.x<tore.x+t.wearX+hitDistance && t.y>tore.y+t.wearY-hitDistance && t.y<tore.y+t.wearY+hitDistance && !t.clothes.onBody) {
+			t.clothes.onBody=true;
 			t.clothes.wearPic.x=t.x;
 			t.clothes.wearPic.y=t.y;
-			
-			//t.clothes.wearPic.alpha=1.0;
-			
-			createjs.Tween.get(t.clothes.linePic).to({x:tore.x,y:tore.y,rotation:180,alpha:0.0},400,createjs.Ease.linear);
-
-			createjs.Tween.get(t.clothes.wearPic).to({x:tore.x,y:tore.y,rotation:0,alpha:1.0},400,createjs.Ease.linear);
-			
-			
-			
-			t.clothes.onBody=true;
+			createjs.Tween.get(t.clothes.linePic).to({x:tore.x+t.wearX,y:tore.y+t.wearY,rotation:0,alpha:0.0},clothesTweenTime,createjs.Ease.linear);
+			createjs.Tween.get(t.clothes.wearPic).to({x:tore.x+t.wearX,y:tore.y+t.wearY,rotation:0,alpha:1.0},clothesTweenTime,createjs.Ease.linear).wait(500).call(checkIfAllClothesOn);
 		}
 		
 		update=true;
+	}
+}
+
+function checkIfAllClothesOn() {
+	if (shirt.onBody && trousers.onBody && sockLeft.onBody && sockRight.onBody) {
+		extendAndPlayQueue("tada");
 	}
 }
 
@@ -1133,7 +1200,6 @@ function handlePostPressmovePressup(evt) {
 		var time=distance/returnSpeed;
 		console.log("time",Math.round(time));
 		createjs.Tween.get(t).to({x:t.startX,y:t.startY},time,createjs.Ease.sineInOut).call(function(evt) {evt.target.tweening=false});
-		//xxx måste gå tillbaka snabbare om närmre
 	}
 }
 
@@ -1360,6 +1426,24 @@ function watchSound(s0) {
 		pulsate(nextBall,ballPulsateTime);
 
 	}
+	if (s0=="tada") {
+		showStar();
+	}
+}
+
+function showStar() {
+	createjs.Tween.get(star).
+				to({alpha:0.7,scaleX:2.3,scaleY:2.3},2000,createjs.Ease.getElasticOut(1,0.3)).
+				wait(1000).
+				to({alpha:0},1000).
+				to({scaleX:0.1,scaleY:0.1},10);
+}
+
+function hideStar() {
+	createjs.Tween.removeTweens(star);
+	star.alpha=0;
+	star.scaleX=0.1;
+	star.scaleY=0.1;
 }
 
 function hideAllNumbers() {
@@ -1482,8 +1566,8 @@ function Ball(imageid,name,color) {
 	this.last=false;
 }
 
-function Clothes(linePicId,wearPicId,name,startX,startY,movable) {
-
+function Clothes(linePicId,wearPicId,name,startRotation,startX,startY,wearX,wearY,movable) {
+	//note linepic and wearpic should have approximately the same size but must not be exact
 	this.linePic=new createjs.Bitmap(queue.getResult(linePicId));
 	this.linePic.clothes=this;
 	this.wearPic=new createjs.Bitmap(queue.getResult(wearPicId));
@@ -1495,14 +1579,16 @@ function Clothes(linePicId,wearPicId,name,startX,startY,movable) {
 	this.linePic.startY=this.linePic.y=startY;
 	this.linePic.regX=this.linePic.image.width/2|0;
 	this.linePic.regY=this.linePic.image.height/2|0;
-	this.linePic.rotation=0;
+	this.linePic.startRotation=this.linePic.rotation=startRotation;
 	this.linePic.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
-
+	this.linePic.wearX=wearX;
+	this.linePic.wearY=wearY;
+	
 	this.wearPic.regX=this.wearPic.image.width/2|0;
 	this.wearPic.regY=this.wearPic.image.height/2|0;
-	this.wearPic.rotation=-180;
+	this.wearPic.startRotation=this.wearPic.rotation=startRotation;
 
-
+	this.onBody=false; 
 
 	if (movable) {
 		this.linePic.addEventListener("mousedown",handlePrePressmoveMousedown);
