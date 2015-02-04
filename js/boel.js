@@ -1,4 +1,16 @@
-xxx ska verkligen handlepressmove både sätta update till true och göra stage.update? 
+/*
+ändra färg på canvas:
+http://www.kirupa.com/html5/setting_css_styles_using_javascript.htm
+
+eller 
+
+http://stackoverflow.com/questions/566203/changing-css-values-with-javascript
+*/
+
+//xxx ska verkligen handlepressmove både sätta update till true och göra stage.update? 
+/*
+http://www.fabiobiondi.com/blog/2012/10/export-and-save-a-screenshot-of-an-html5-canvas-using-php-jquery-and-easeljs/ kanske kan vara användbart om man vill spara bild
+*/
 
 /* Boel och Tore - da game */
 
@@ -18,13 +30,23 @@ xxx ska verkligen handlepressmove både sätta update till true och göra stage.
 //table pics
 
 //debug settings
-var debug=true;
+
+
+
+
+var debug=false;
 var debugAlwaysUpdate=false;
 
 //prototypes for subclasses
 Ball.prototype=Object.create(createjs.Bitmap.prototype);
 
 //setup parameters
+var splashScreenBackgroundColor="#86DBD5";
+var ballBackgroundColor="#FFFF00";
+var tableBackgroundColor="#FF95CB";
+var clothesBackgroundColor="#93D4F2";
+
+var wakeInterval=20*1000; //time between forced stage update in milliseconds
 var returnSpeed=0.5; //pixels per millisecond
 var timeToNewBallGame=5000; //ms
 var ballBounceSpeed=0.4;//pixels per millisecond
@@ -44,7 +66,7 @@ var fps=24; //fps not used if useRAF=true;
 var cakeBounceTime=6.0; //time for a complete cake bounce cycle in seconds
 var minSecNextSmash=8.0; //important that this is larger than cakeBounceTime
 var maxSecNextSmash=14.0;
-var gameTransitionTime=700; //was 400
+var gameTransitionTime=700;
 var numberX=100; //canvas.width-200;
 var numberY=100; //0;
 var numberTransitionTime=1000;
@@ -141,7 +163,7 @@ var ordinal=[
 var canvas;
 var minBounceDistance;
 var stage;
-var background;
+var background; //xxx only for debug, should be deleted
 var queue;
 var offset;
 var update = false;
@@ -174,10 +196,10 @@ var cakeComplete=new Array();
 var debugText;
 var loadedFiles;
 var filesToLoad;
-var ballBackground;
-var splashScreenBackground;
-var tableBackground;
-var clothesBackground;
+//var ballBackground; //xxx delete
+//var splashScreenBackground; //xxx delete
+//var tableBackground; //xxx delete
+//var clothesBackground; //xxx delete
 var nowMillis;
 var nextSmash;
 var nextRandomCheck;
@@ -187,14 +209,42 @@ var nextBallTime;
 var selectedNameNumber;
 var selectedName; 
 var soundQueue=[];
+var paintDetect=new Array();
+var lastWakeTime=0;
+
+//drawing variables
+var drawingCanvas;
+var oldPt;
+var oldMidPt;
+var crayonColor;
+var crayonStroke;
+var crayonColors;
+var crayonColorIndex;
+var crayons=new Array();
+var crayonsOverlay=new Array();
+var stroke;
+
+
 
 
 function init() {
+	
+
+	
+	
+	
 	console.log("Boel game starting at "+Date());
 	console.log("TweenJS version "+createjs.TweenJS.version);
 
 	// create stage and point it to the canvas:
 	canvas = document.getElementById("myCanvas");
+	
+	
+	
+	
+	changeBackground(splashScreenBackgroundColor);
+	
+
 	
 	//some initial values of "constans"
 	//pixels, must be larger than canvas diagonal to make sure ball bounces outside of canvas
@@ -212,11 +262,7 @@ function init() {
 
 	//check to see if we are running in a browser with touch support
 	stage = new createjs.Stage(canvas);
-	stage.addEventListener("stagemousedown", handleStageMouseDown);
 
-
-
-stage.autoClear=false;//xxxxxxxxxxxx
 
 	stage.name="The Stage";
 	// enable touch interactions if supported on the current device:
@@ -224,17 +270,36 @@ stage.autoClear=false;//xxxxxxxxxxxx
 
 	//the background is an almost invisible object, there to be able to click the background
 	//currently only used for testing and debugging
-	background=createBackground("#FFFFFF",0.05);
-	splashScreenBackground=createBackground("#86DBD5",1.0);
+	if (debug) {
+		background=createBackground("#FFFFFF",0.05);
+	}
+	var debugbutton1=new createjs.Shape();
+	debugbutton1.graphics.beginFill("blue").drawCircle(30, 0, 30, 30);
+	stage.addChild(debugbutton1);
+	debugbutton1.addEventListener("click",function(event){debugAlwaysUpdate=!debugAlwaysUpdate;console.log(">debugAlwaysUpdate: ",debugAlwaysUpdate);});
+	var debugbutton2=new createjs.Shape();
+	debugbutton2.graphics.beginFill("blue").drawCircle(90, 0, 30, 30);
+	stage.addChild(debugbutton2);
+	debugbutton2.addEventListener("click",function(event){console.log(sockRight.extraArea.x,sockRight.extraArea.y,sockRight.linePic.x,sockRight.linePic.y);stage.update();console.log("updating stage")});
+
+	
+	/* to be deleted
+	splashScreenBackground=createBackground("#86DBD5",0*1.0);//xxxyyy
 	ballBackground=createBackground("#FFFF00",0.0);
 	tableBackground=createBackground("#FF95CB",0.0);
 	clothesBackground=createBackground("#93D4F2",0,0);
+	*/ 
 	
-	stage.addChild(background);
+	if (debug) {
+		stage.addChild(background);
+	}
+	
+	/* to be deleted 
 	stage.addChild(splashScreenBackground);
 	stage.addChild(ballBackground);
 	stage.addChild(tableBackground);
 	stage.addChild(clothesBackground);
+	*/
 
 	addProgressBar();
 
@@ -313,6 +378,7 @@ stage.autoClear=false;//xxxxxxxxxxxx
 		{id:"sockRightLine", src:"assets/sockrightline.png"},
 		{id:"sockRightWear", src:"assets/sockrightwear.png"},
 		{id:"tore", src:"assets/tore.png"},
+		{id:"toreSad", src:"assets/toresad.png"},	
 		{id:"star", src:"assets/star.png"},
 		{id:"blueBall", src:"assets/blueball.png"},
 		{id:"redBall", src:"assets/redball.png"},
@@ -366,6 +432,13 @@ stage.autoClear=false;//xxxxxxxxxxxx
 	filesToLoad=files.length;
 } //init
 
+function changeBackground(color) {	
+	canvas.style.backgroundColor = color;
+}
+
+
+
+/* to be deleted
 function createBackground(color,alpha) {
 	b = new createjs.Shape();
 	b.graphics.beginFill(color).drawRect(0, 0, canvas.width, canvas.height);
@@ -374,22 +447,18 @@ function createBackground(color,alpha) {
 	b.alpha=alpha;
 	return b;
 }
+*/
 
 //xxx only used for debugging, should be deleted
 function handleBackgroundTouch(event) {
-	console.log("background touch",event.stageX,event.stageY);
-	background.touchX=event.stageX;
-	background.touchY=event.stageY;
-	stage.update();
+	if (debug) {
+		console.log("background touch",event.stageX,event.stageY);
+		background.touchX=event.stageX;
+		background.touchY=event.stageY;
+		stage.update();
+	}
 }
 
-//xxx only used for debugging, should be deleted
-function handleStageMouseDown(event) {
-    printDebug("stageX:"+Math.floor(event.stageX)+", stageY:"+Math.floor(event.stageY)+" ");
-    console.log("stageX:"+Math.floor(event.stageX)+", stageY:"+Math.floor(event.stageY)+" ");
-	console.log("regx och y",event.stageX-tableX,event.stageY-tableY);
-
-}	
 
 function printDebug(text) {
 	//console.log("printDebug ",text);
@@ -453,7 +522,11 @@ function handleComplete(event) {
 	
 	
 	//setup almost complete, start the ticker
-	background.addEventListener("mousedown", handleBackgroundTouch);
+	if (debug) {
+		background.addEventListener("mousedown", handleBackgroundTouch);
+	}
+	
+	
 	createjs.Ticker.addEventListener("tick", handleTick);
 	
 	
@@ -467,6 +540,14 @@ function handleComplete(event) {
 
 function handleTick(event) {
 	nowMillis=createjs.Ticker.getTime(false);
+
+	if (nowMillis-lastWakeTime>wakeInterval) {
+		//this update is good for two reasons:
+		//1: it prevents certain browsers to sleep
+		//2: it assures that the stage is updatedet even if a tween is to fast and not caucht by handleTick
+		update=true;
+		lastWakeTime=nowMillis;
+	}
 
 	//ball game stuff
 	//check if it is time to touch a ball. If it is, decide what ball to touch
@@ -500,7 +581,10 @@ function handleTick(event) {
 		}
 		stage.update(event); //pass event to make sure for example sprite animation works
 	}
-	update=createjs.Tween.hasActiveTweens();
+	update=createjs.Tween.hasActiveTweens();//xxxtickxxx
+	if (update) {
+		console.log("update=true");
+	}
 }
 
 function checkBallOutsideAndBallBounce() {
@@ -627,14 +711,19 @@ function handleCakePieceTouch(event) {
 }
 
 function changeSplashScreen(alpha) {
+	log("changeSplashScreen()");
 	createjs.Tween.get(menuCake).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
 	createjs.Tween.get(menuBall).to({alpha:alpha},gameTransitionTime,createjs.Ease.linear);  
 	createjs.Tween.get(menuClothes).to({alpha:alpha},gameTransitionTime,createjs.Ease.linear);  
 	createjs.Tween.get(boelSplashScreen).to({alpha:alpha},gameTransitionTime/2, createjs.Ease.linear);
-	createjs.Tween.get(splashScreenBackground).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
+	//splashScreenBackground.alpha=alpha;//xxxyyy createjs.Tween.get(splashScreenBackground).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
+	if (alpha>0.9) {
+		changeBackground(splashScreenBackgroundColor);
+	}
 }
 
 function showSplashScreen() {
+	log("showSplashScreen()");
 	changeSplashScreen(1.0);
 }
 
@@ -653,11 +742,13 @@ function handleMenuCakeTouch(event) {
 		nextRandomCheck=randomFutureMillis(minSecSelectFirstName,maxSecSelectFirstName);
 		createjs.Tween.get(cake).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);
 		createjs.Tween.get(table).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);
-    	createjs.Tween.get(tableBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
+    	//tableBackground.alpha=1.0;//xxxyyy createjs.Tween.get(tableBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
+		changeBackground(tableBackgroundColor);
 	}
 }
 
 function handleButtonTouch(event) {
+	//update=true; //xxxtick nu funkar det att gå tillbaka men utan tween, istället pang på!
 	if (menuBall.focus) {
 		restoreMenuBall();
 	} else if (menuCake.focus) {
@@ -743,10 +834,14 @@ function addClothes() {
 	clothes.alpha=0.0;
 	
 	tore=new createjs.Bitmap(queue.getResult("tore"));
+	tore.sad=new createjs.Bitmap(queue.getResult("toreSad"));
 	tore.startX=tore.x=toreX;
 	tore.startY=tore.y=toreY;
 	tore.regX=tore.image.width/2|0;
 	tore.regY=tore.image.height/2|0;
+	tore.sad.x=tore.x-42;
+	tore.sad.y=tore.y-156;
+	tore.sad.alpha=0.0;
 	tore.rotation=0;
 
 	
@@ -754,13 +849,30 @@ function addClothes() {
 	sockLeft=new Clothes("sockLeftLine","sockLeftWear","sockLeft",sockLeftStartRotation,sockLeftX,sockLeftY,sockLeftWearX,sockLeftWearY,true);
 	trousers=new Clothes("trousersLine","trousersWear","trousers",trousersStartRotation,trousersX,trousersY,trousersWearX,trousersWearY,true);
 	shirt=new Clothes("shirtLine","shirtWear","shirt",shirtStartRotation,shirtX,shirtY,shirtWearX,shirtWearY,true);
+	clothes.clean=true;
 
 	
 	line=new createjs.Bitmap(queue.getResult("line"));
 	line.x=lineX;
 	line.y=lineY;
 	
+	//objects that should detect if you paint on them and make Tore sad
+	paintDetect.push(tore);
+	paintDetect.push(shirt.wearPic);
+	paintDetect.push(sockLeft.wearPic);
+	paintDetect.push(sockRight.wearPic);
+	paintDetect.push(trousers.wearPic);
+	
+	
+	//note shirt and trousers have extraArea but they are not used and not added to clothes. 
+	clothes.addChild(sockRight.extraArea);
+	clothes.addChild(sockLeft.extraArea);
+
+	
 	clothes.addChild(tore);
+	clothes.addChild(tore.sad);
+	
+	/* original order - not so good
 	clothes.addChild(sockRight.linePic);
 	clothes.addChild(sockRight.wearPic);
 	clothes.addChild(sockLeft.linePic);
@@ -769,6 +881,21 @@ function addClothes() {
 	clothes.addChild(trousers.wearPic);
 	clothes.addChild(shirt.linePic);
 	clothes.addChild(shirt.wearPic);
+	*/
+	
+	/* line pics on top of wear pics - much better! */
+	clothes.addChild(sockRight.wearPic);
+	clothes.addChild(sockLeft.wearPic);	
+	clothes.addChild(trousers.wearPic);
+	clothes.addChild(shirt.wearPic);
+	clothes.addChild(sockRight.linePic);
+	clothes.addChild(sockLeft.linePic);
+	clothes.addChild(trousers.linePic);
+	clothes.addChild(shirt.linePic);
+
+
+
+
 	clothes.addChild(line);
 	stage.addChild(clothes);
 }
@@ -796,6 +923,7 @@ function startClothesGame(delay) {
 }
 
 function restorePieceOfClothes(c) {
+	log("restorePieceOfClothes()");
 	createjs.Tween.removeTweens(c.linePic);
 	createjs.Tween.removeTweens(c.wearPic);
 	c.linePic.rotation=c.linePic.startRotation;
@@ -808,10 +936,13 @@ function restorePieceOfClothes(c) {
 }
 
 function restoreMenuClothes() {
+	log("restoreMenuClothes()");
 	restorePieceOfClothes(shirt);
 	restorePieceOfClothes(trousers);
 	restorePieceOfClothes(sockLeft);
 	restorePieceOfClothes(sockRight);
+	disableDrawing();
+//xxx almost works but must make tore happy again!!!!! and make clothes not dirty. hm, dirty är egenskap på ett plagg, kan få konsekvenser om man sedan ritar på annat plagg
 	menuClothes.focus=false;
 	showSplashScreen();
 	hideClothes();
@@ -819,17 +950,20 @@ function restoreMenuClothes() {
 
 
 function hideClothes() {
+	log("hideClothes()");
 	createjs.Tween.get(clothes).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
-	createjs.Tween.get(clothesBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+	//createjs.Tween.get(clothesBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
 }
 
 function showClothesGame() {
-	 createjs.Tween.get(clothesBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);	
+	//createjs.Tween.get(clothesBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
+	changeBackground(clothesBackgroundColor);	 	
 }
 
 
 function showBallGame() {
-	 createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);	
+	 //ballBackground.alpha=1.0;//xxx yyy createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
+	 changeBackground(ballBackgroundColor);	
 }
 
 function startBallGame(delay) {
@@ -881,7 +1015,7 @@ function hideBalls() {
 	for (i=0;i<allBalls.length;i++) {	
 		createjs.Tween.get(allBalls[i]).to({alpha:0.0}, gameTransitionTime, createjs.Ease.linear);
 	}
-	createjs.Tween.get(ballBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+	//createjs.Tween.get(ballBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
 }
 
 
@@ -1168,9 +1302,17 @@ function handlePrePressmoveMousedown(evt) {
 
 function handlePressmove(evt) {
 	var t=evt.target;
+	//xxx make sure t is always linepic, and t2 is extraarea
 	if (!t.tweening) {
  		t.x = evt.stageX-t.mousedownOffset.x;
 		t.y = evt.stageY-t.mousedownOffset.y;
+		if (t.kind=="linePic") {
+			t.clothes.extraArea.x=t.x;
+			t.clothes.extraArea.y=t.y;
+		} else if (t.kind=="extraArea") {
+			t.clothes.linePic.x=t.x;
+			t.clothes.linePic.y=t.y;
+		}
 		
 		printDebug("x rel tore:"+Math.floor(t.x-tore.x)+",y rel tore:"+Math.floor(t.y-tore.y)+",x:"+Math.floor(t.x)+",y:"+Math.floor(t.y)+" ");
 
@@ -1189,17 +1331,28 @@ function handlePressmove(evt) {
 function checkIfAllClothesOn() {
 	if (shirt.onBody && trousers.onBody && sockLeft.onBody && sockRight.onBody) {
 		extendAndPlayQueue("tada");
+		//enableDrawing(); xxx
 	}
 }
 
 function handlePostPressmovePressup(evt) {
-	t=evt.target;
-	if (!t.tweening && !t.clothes.onBody) {
+	var t=evt.target;
+	var t2;
+	if (t.kind=="linePic") {
+		t2=t.clothes.extraArea;
+	} else if (t.kind=="extraArea") {
+		t2=t.clothes.linePic;
+	}
+
+	if (!t.tweening && !t2.tweening && !t.clothes.onBody) {
+		//xxx condition could be simplified, t and t2 always tweening at the same time. but both t and t2 must be set
+		//as t might become t2 later
 		t.tweening=true;
+		t2.tweening=true;
 		var distance=Math.sqrt((t.x-t.startX)*(t.x-t.startX)+(t.y-t.startY)*(t.y-t.startY));
 		var time=distance/returnSpeed;
-		console.log("time",Math.round(time));
-		createjs.Tween.get(t).to({x:t.startX,y:t.startY},time,createjs.Ease.sineInOut).call(function(evt) {evt.target.tweening=false});
+		createjs.Tween.get(t).to({x:t.startX,y:t.startY},time,createjs.Ease.sineInOut).call(function(evt) {t.tweening=false});
+		createjs.Tween.get(t2).to({x:t2.startX,y:t2.startY},time,createjs.Ease.sineInOut).call(function(evt) {t2.tweening=false});
 	}
 }
 
@@ -1235,7 +1388,7 @@ function restoreMenuCake() {
 	//hide
 	createjs.Tween.get(cake).to({alpha:0.0}, gameTransitionTime, createjs.Ease.linear);
 	createjs.Tween.get(table).to({alpha:0.0}, gameTransitionTime, createjs.Ease.linear);
-	createjs.Tween.get(tableBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+	//createjs.Tween.get(tableBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
 
 }
 
@@ -1436,7 +1589,7 @@ function showStar() {
 				to({alpha:0.7,scaleX:2.3,scaleY:2.3},2000,createjs.Ease.getElasticOut(1,0.3)).
 				wait(1000).
 				to({alpha:0},1000).
-				to({scaleX:0.1,scaleY:0.1},10);
+				to({scaleX:0.1,scaleY:0.1},10).call(enableDrawing); //xxx temporry fix!!!!! only with tore start
 }
 
 function hideStar() {
@@ -1583,17 +1736,41 @@ function Clothes(linePicId,wearPicId,name,startRotation,startX,startY,wearX,wear
 	this.linePic.tweening=false; //true if tweening back to position. Used because of bug in hasActiveTweens
 	this.linePic.wearX=wearX;
 	this.linePic.wearY=wearY;
+	this.linePic.kind="linePic";
 	
 	this.wearPic.regX=this.wearPic.image.width/2|0;
 	this.wearPic.regY=this.wearPic.image.height/2|0;
 	this.wearPic.startRotation=this.wearPic.rotation=startRotation;
+	
+	
+	this.extraArea=new createjs.Shape();
+	this.extraArea.graphics.beginStroke("black").beginFill(clothesBackgroundColor).drawCircle(0,0,50,50);//xxx ta bort stroke
+	this.extraArea.x=startX;
+	this.extraArea.y=startY;
+	this.extraArea.clothes=this;
+	this.extraArea.startX=startX;
+	this.extraArea.startY=startY;
+	//this.extraArea.startRotation=this.extraArea.rotation=startRotation;
+
+	//this.extraArea.regX=this.linePic.regX;
+	//this.extraArea.regY=this.linePic.regY;
+	this.extraArea.kind="extraArea";
+	//xxx hade varit trevligt med sock+extraarea som en container men då måste allt ligga i lager ovanför tore, inte extraarean under
+	//kan lägga till en ifsats på pressmove så att den gör lite olika om man drar i extraarean. 
+
+
 
 	this.onBody=false; 
 
 	if (movable) {
+		this.extraArea.addEventListener("mousedown",handlePrePressmoveMousedown);
+		this.extraArea.addEventListener("pressmove",handlePressmove);
+		this.extraArea.addEventListener("pressup",handlePostPressmovePressup);
+	
 		this.linePic.addEventListener("mousedown",handlePrePressmoveMousedown);
 		this.linePic.addEventListener("pressmove",handlePressmove);
 		this.linePic.addEventListener("pressup",handlePostPressmovePressup);
+		
 	}
 }
 
@@ -1633,4 +1810,199 @@ function Character(pieceNumber,pieceDeltaX,pieceDeltaY,happyPic,hasSadPic,hasHan
 	this.name=name 
 	addCharacterEventListener(this);
 	makeCharacterHappy(this);
+}
+
+//drawing functions
+function enableDrawing() {
+	
+	//kanske gömma clothes.line innan man börjar rita
+	
+	line.alpha=0;
+	stage.update();
+	
+	stage.autoClear = false;
+	//clothesBackground.alpha=0;  //xxx måste återställas
+	//clothes.alpha=0.0; xxxx
+	if (debug) {
+		background.alpha=0.0;
+	}
+	crayonColors = ["red", "yellow", "green","#FFAABB","blue","orange","brown","purple"]; //xxx till setup
+	crayonColorIndex=0;
+	crayonColor=crayonColors[crayonColorIndex];
+
+	for (var i=0;i<crayonColors.length;i++) {
+		crayons[i]=makeCrayon(crayonColors[i],"black",3); //xxx possibly move to init
+		crayonsOverlay[i]=makeCrayon("lightblue","lightblue",4);
+		crayons[i].index=i;
+		stage.addChild(crayonsOverlay[i]);
+		stage.addChild(crayons[i]);
+		crayons[i].addEventListener("mousedown",handleCrayonMouseDown);
+	}
+	
+	drawCrayons(crayonColorIndex);
+	drawingCanvas = new createjs.Shape(); //xxx probably move to init
+	stage.addEventListener("stagemousedown", handleStrokeMouseDown);
+	stage.addEventListener("stagemouseup", handleStrokeMouseUp);
+	stage.addChild(drawingCanvas);
+}
+
+function disableDrawing() {
+	log("disableDrawing()");
+	tore.sad.alpha=0;
+	clothes.clean=true;
+	line.alpha=1;
+	stage.autoClear=true;
+	removeCrayons();
+	stage.removeChild(drawingCanvas);
+	console.log("----------remove 1");
+	stage.removeEventListener("stagemousedown", handleStrokeMouseDown);
+	console.log("----------remove 2");
+
+	stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
+		console.log("----------remove 3");
+
+	stage.removeEventListener("stagemousemove" , handleStrokeMouseMove);
+		console.log("----------all 3 removed");
+
+}
+
+function removeCrayons() {
+	for (var i=0;i<crayonColors.length;i++) {
+		stage.removeChild(crayonsOverlay[i]);
+		stage.removeChild(crayons[i]);
+	}
+}
+
+function makeCrayon(color,outlineColor,outlineWidth) {
+	var crayon=new createjs.Shape();
+	crayon.graphics.
+	beginFill(color).
+	beginStroke(outlineColor).setStrokeStyle(outlineWidth, 'round', 'round').
+	moveTo(40,0).
+	lineTo(200,0).
+	lineTo(200,40).
+	lineTo(40,40).
+	lineTo(36,35).
+	lineTo(2,23).
+	lineTo(2,17).
+	lineTo(36,5).
+	lineTo(40,0).
+	beginFill(outlineColor).
+	drawRect(60,2,20,36).
+	beginStroke(color).setStrokeStyle(7, 'round', 'round').
+	moveTo(70,2).
+	curveTo(65,10,70,20).
+	curveTo(75,30,70,38).
+	beginStroke(outlineColor).setStrokeStyle(outlineWidth-1, 'round', 'round').
+	moveTo(60,0).lineTo(80,0).
+	moveTo(60,40).lineTo(80,40);
+	return crayon;
+}
+
+function handleClothesPaint() {
+	if (clothes.clean) {
+		console.log("paint on clothes");
+		clothes.clean=false;
+		tore.sad.alpha=1.0; //xxx eller tween?
+		stage.update();
+		clothes.alpha=0.0;
+	}
+	
+}
+//xxx två fel: erro om man klickar back innan kritor visats
+//tore försvineer ändra gången man spelar
+//första felet fixat men allvarligt fel upptäckt. om man gör en paus och i ritspelet fryser det. 
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+function drawCrayons(index) {
+	var crayonDelta=50; //xxx to setup
+	var number=crayons.length; 
+	var crayonTop=canvas.height-(number+1)*crayonDelta;
+	var crayonShowLength=100; //xxx to setup
+
+
+	for (var i=0;i<number;i++) {
+
+		crayonsOverlay[i].y=crayonTop+i*crayonDelta;
+		console.log(crayonTop,i*crayonDelta);
+		crayonsOverlay[i].x=canvas.width-crayonShowLength-2;
+
+		crayons[i].y=crayonTop+i*crayonDelta;
+		if (i==index) {
+			crayons[i].x=canvas.width-crayonShowLength;
+		} else {
+			crayons[i].x=canvas.width-crayonShowLength/2;
+		}
+		console.log("x,y:",crayons[i].x,crayons[i].y)
+	}
+}
+
+function handleCrayonMouseDown(evt) {
+	crayonColorIndex=evt.target.index;
+	crayonColor=crayonColors[crayonColorIndex];
+	drawCrayons(crayonColorIndex);
+	printDebug("autoClear"+stage.autoClear);
+	stage.update();
+}
+
+
+function handleStrokeMouseDown(evt) {
+	console.log(">>>>>>> handleStrokeMouseDown");
+	console.log("handleStrokeMouseDown detect paint");
+	detectPaint();
+	stroke = 10; //xxx to setup
+	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
+	oldMidPt= new createjs.Point(stage.mouseX,stage.mouseY);
+	
+	drawingCanvas.graphics.clear().beginFill(crayonColor).drawCircle(oldPt.x,oldPt.y,stroke/2,stroke/2);
+	stage.update();
+
+	stage.addEventListener("stagemousemove" , handleStrokeMouseMove);
+}
+
+function handleStrokeMouseMove(evt) {
+	console.log("***** handleStrokeMouseMove detect paint");
+	detectPaint();
+
+	var midPt = new createjs.Point(oldPt.x + stage.mouseX>>1, oldPt.y+stage.mouseY>>1);
+
+	drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
+	moveTo(midPt.x, midPt.y).
+	curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
+	
+	oldPt.x = stage.mouseX;
+	oldPt.y = stage.mouseY;
+
+	oldMidPt.x = midPt.x;
+	oldMidPt.y = midPt.y;
+
+	stage.update();
+}
+
+function handleStrokeMouseUp(evt) {
+	drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
+	moveTo(oldMidPt.x, oldMidPt.y).
+	lineTo(stage.mouseX,stage.mouseY);
+	stage.update();
+	stage.removeEventListener("stagemousemove" , handleStrokeMouseMove);
+	
+}
+
+function detectPaint() {
+	var detected=false;
+	for (var i=0;i<paintDetect.length && !detected;i++) {
+		var pt=paintDetect[i].globalToLocal(stage.mouseX, stage.mouseY); //xxx kan inte detta göras en gång för alla?
+		if (paintDetect[i].hitTest(pt.x,pt.y)) {
+			detected=true;
+			handleClothesPaint();
+		}
+	}
+	
+}
+
+
+function log(text) {
+	console.log(text);
+	console.log("active tweens: "+createjs.Tween.hasActiveTweens());
 }

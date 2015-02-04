@@ -1,54 +1,84 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
+    <title>EaselJS: Curve To Demo</title>
+    <link rel="stylesheet" href="css/style.css" media="screen" type="text/css">
+    <script src="js/easeljs-0.7.1.min.js"></script>
+	<script src="js/tweenjs-0.5.1.min.js"></script>
+    <!--script src="js/tweenjs-NEXT.min.js"></script-->
+	<script src="js/soundjs-0.5.2.min.js"></script>
+    <script src="js/preloadjs-0.4.1.min.js"></script>
 <script>
-var names={
-	"hunden":0,
-	"tore":1,
-	"pappa":2,
-	"morfar":3,
-	"mamma":4,
-	"boel":5};
+//in boel
+var canvas, stage;
 
+//new
 
+var testShirt;
 
-for(var key in names) {
-    var val = names[key];
-    
-    console.log("Key: "+key+" value:"+val);
+function init() {
+	
+	/*
+	ok, nu återstår att lägga till så att man märker om det ritas på dröjan. handle mouse vadå? 
+	*/
+	
+	
+	//in boel
+	if (window.top != window) {
+		document.getElementById("header").style.display = "none";
+	}
+
+	//check to see if we are running in a browser with touch support
+	canvas = document.getElementById("myCanvas");
+
+	stage = new createjs.Stage(canvas);
+
+	//new
+	//stage.autoClear = false;
+
+	//stage.addEventListener("stagemousedown", handleMouseDown);
+	//stage.addEventListener("stagemouseup", handleMouseUp);
+
+	testShirt=new createjs.Shape();
+	testShirt.graphics.beginFill("orange").drawRect(200,200,100,100);
+	stage.addChild(testShirt);
+	testShirt.addEventListener("mouseover", handleMouseOver);
+	stage.enableMouseOver(10);
+
+	stage.update();
+
+	//stage.removeChild(testShirt); //otherwise you cant paint on top of it. 
+	testShirt.alpha=1; //possible to draw on shirt but 0.001 so low that subsequent updates don't draw nnew shirt on top of crayon
+	console.log("init ready");
 }
 
-var arr=["ett","två","tre"];
-for (var item in arr) {
-	console.log(arr[item]);
+function handleMouseOver() {
+	console.log("mouse over");
 }
 
-var arr2=["fyra","fem"];
 
 
-arr=arr.concat(arr2);
 
-s=arr.splice
+function handleMouseDown(evt) {
+	console.log("handleMouseDown");
+}
+
+function handleMouseMove(evt) {
+	console.log("handleMouseMove");
+}
+
+function handleMouseUp(evt) {
+	stage.removeEventListener("stagemousemove" , handleMouseMove);
+}
+
+
+
 
 
 </script>
-
-
-
-<meta charset="UTF-8">
-<title>Untitled Document</title>
 </head>
+<body onload="init();">
 
-<body>
-<pre>
-<script>
-document.write(arr);
-
-document.write("<br>")
-document.write(arr.length);
-</script>
-
-</pre>
-
+<canvas id="myCanvas" width="960" height="400"></canvas>
 </body>
 </html>
