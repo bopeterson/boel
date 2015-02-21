@@ -1,15 +1,21 @@
 /*
-ändra färg på canvas:
-http://www.kirupa.com/html5/setting_css_styles_using_javascript.htm
 
-eller 
+i dagsläget kommer "x vill ha tårta" efter för många sekunder. man kan minska det i setupparametrear men om det kommer innan "ja x fick nte tårtbiten" så kommer ingen pulsering eller ljud om att y vill ha tårta. Borde flytta soundqueempty från selectNextCharacter till checkcharacter (vid help visible). men vänta tills tårtlogiken är omgjord. 
 
-http://stackoverflow.com/questions/566203/changing-css-values-with-javascript
-*/
+flytta ned 1-6 och hjälp så att de inte krocka rmed statusrad på ipad
 
-//xxx ska verkligen handlepressmove både sätta update till true och göra stage.update? 
-/*
+lägg till ljud på hjälp
+
+boel vill ha tårta. var är boel? borde bara pulsera när rösten säger "var är boel?"
+
+lägg till variabler med canvaswidth och height och ändra referenser till dem. 
+
+ska verkligen handlepressmove både sätta update till true och göra stage.update? 
+
 http://www.fabiobiondi.com/blog/2012/10/export-and-save-a-screenshot-of-an-html5-canvas-using-php-jquery-and-easeljs/ kanske kan vara användbart om man vill spara bild
+
+byt till senaste createjs-obs ha koll på isrunning() då!!!
+
 */
 
 /* Boel och Tore - da game */
@@ -31,11 +37,13 @@ http://www.fabiobiondi.com/blog/2012/10/export-and-save-a-screenshot-of-an-html5
 
 //debug settings
 
-
-
-
 var debug=false;
 var debugAlwaysUpdate=false;
+
+//variables that must be the same as attributes in index.html
+//they could be retrived as canvas.height etc, but must sometimes be used before they can be retrieved. 
+canvasWidth=1024;
+canvasHeight=768;
 
 //prototypes for subclasses
 Ball.prototype=Object.create(createjs.Bitmap.prototype);
@@ -53,7 +61,7 @@ var ballBounceSpeed=0.4;//pixels per millisecond
 var minSecSelectFirstName=1.5; //min random time before voice "x vill ha tårta, var är x" for first character after start. 
 var maxSecSelectFirstName=1.6;
 var minSecSelectName=4.0; //min random time before voice: "x vill ha tårta, var är x" for characters after first character
-var maxSecSelectName=8.0; //max random time...
+var maxSecSelectName=5.0; //max random time...
 var minSecNextBall=3.0;
 var maxSecNextBall=3.2;
 var progressBarHeight=20;
@@ -67,28 +75,31 @@ var cakeBounceTime=6.0; //time for a complete cake bounce cycle in seconds
 var minSecNextSmash=8.0; //important that this is larger than cakeBounceTime
 var maxSecNextSmash=14.0;
 var gameTransitionTime=700;
-var numberX=100; //canvas.width-200;
-var numberY=100; //0;
+var numberX=canvasWidth-60; //canvas.width-200;xxx canvaswidth variable
+var numberY=70; //0; xxx finetune
 var numberTransitionTime=1000;
 var startBallGameRotationTime=2000;
 var startBallGameNoOfTurns=2;
 
-var menuClothesX=20
-var menuClothesY=350;
-var menuCakeX=20; //was (menuCake.image.width/2|0)+20; 
-var menuCakeY=450; //was (menuCake.image.height/2|0)+20;
-var menuBallX=20; //was canvas.width-menuBall.image.width/2-20;
-var menuBallY=550; //was menuBall.image.height/2+20;
-var menuButtonX=20;
-var menuButtonY=650;
+var menuClothesX=412-3;
+var menuClothesY=484;
+var menuCakeX=menuClothesX+100+6; //was (menuCake.image.width/2|0)+20; 
+var menuCakeY=menuClothesY; //was (menuCake.image.height/2|0)+20;
+var menuBallX=menuClothesX; //was canvas.width-menuBall.image.width/2-20;
+var menuBallY=menuClothesY+100+6; //was menuBall.image.height/2+20;
+var menuHelpX=menuCakeX;
+var menuHelpY=menuBallY;
+
+var backButtonX=10; //menuCakeX;
+var backButtonY=670;
 var ballMinBorderDistance=150; //min distance from center of ball to border when placed randomly
 var ballMinDistance=100; //min distance between balls. if min distance close to 200, the balls won't fit and the script will freeze
 var wrongBallNumberOfTurns=4;
 var wrongBallTurnTime=2000; //must be at least as long as the sound "det var ju blåa bollen", otherwise there might be an error if wrong ball is touched
 var tableX=100;
 var tableY=50;
-var clothesX=(1024-768); //    /2 för centrering
-var clothesY=0;
+var clothesGameContainerX=(canvasWidth-768); //768 is width of line.png, which is not loaded yet. 
+var clothesGameContainerY=0;
 
 var pieceMoveTime=1000;
 var ballPulsateTime=1000;
@@ -121,9 +132,6 @@ var trousersWearX=0; //position relative to Tore when worn
 var trousersWearY=106; 
 var trousersStartRotation=-157;
 
-
-
-
 var sockLeftX=309;
 var sockLeftY=127;
 var sockLeftStartRotation=20;
@@ -135,7 +143,6 @@ var sockRightY=143;
 var sockRightStartRotation=30;
 var sockRightWearX=28;
 var sockRightWearY=186;
-
 
 var ballTween=new Object();
 
@@ -159,15 +166,39 @@ var ordinal=[
 	"femtetaartbiten",
 	"sjaettetaartbiten"];
 
+
+//help texts
+var generalHelpText="Det finns tre olika spel, tårtspelet, bollspelet och klädspelet. Tårtspelet och bollspelet fungerar bäst om ljudet är på. Peka på knapparna för att välja ett av spelen. ";
+var ballHelpText="Du ska försöka få bort alla bollarna från skärmen. Lyssna på rösten och peka på bollen med rätt färg. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
+var clothesHelpText="Dra kläderna från tvättlinan till Tore. Sätt de olika plaggen på rätt ställe på kroppen. När Tore har alla kläder på sig kan du rita på skärmen. Men rita inte på Tore, för då blir han ledsen. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel eller börja om det här spelet. ";
+var cakeHelpText="Alla vill ha tårta. Rösten berättar vems tur det är att få tårta. Peka på den personen som rösten säger vill ha tårta. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
+
+//help sounds
+var generalHelpSound;
+var ballHelpSound;
+var clothesHelpSound;
+var cakeHelpSound;
+
+
 //global variable definitions
+
+var nextSmashId;
+var nextBallId;
+var randomCheckId;
+
+var helpFrame;
+var helpTextBox;
+var helpContainer;
+
 var canvas;
 var minBounceDistance;
 var stage;
-var background; //xxx only for debug, should be deleted
+var background; //xxx only for debug, should be deleted. No, revitalized as a cover when help is shown.
 var queue;
 var offset;
 var update = false;
-var menuBall,menuCake;
+var menuBall,menuCake,menuHelp
+var backButton; 
 var boel,cake;
 var progressBar;
 var blueBall,redBall,yellowBall,greenBall;
@@ -176,7 +207,7 @@ var pieceParts,numberOfCakePieces;
 var cakeFiles;
 var cakeBall;
 var table;
-var clothes;
+var clothesGameContainer; //a container for all graphics in the clothesgame. xxx maybe rename to clothesContainer
 var line;
 var shirt;
 var trousers;
@@ -248,7 +279,7 @@ function init() {
 	
 	//some initial values of "constans"
 	//pixels, must be larger than canvas diagonal to make sure ball bounces outside of canvas
-	minBounceDistance=Math.floor(Math.sqrt(canvas.width*canvas.width+canvas.height*canvas.height)*1.5); 
+	minBounceDistance=Math.floor(Math.sqrt(canvasWidth*canvasWidth+canvasHeight*canvasHeight)*1.5); 
 
 	//initial values. some of these must be reset to initial values when game is restarted
 	loadedFiles=0;
@@ -268,20 +299,21 @@ function init() {
 	// enable touch interactions if supported on the current device:
 	createjs.Touch.enable(stage);
 
-	//the background is an almost invisible object, there to be able to click the background
-	//currently only used for testing and debugging
-	if (debug) {
-		background=createBackground("#FFFFFF",0.05);
-	}
+		
+	
+	/*
 	var debugbutton1=new createjs.Shape();
 	debugbutton1.graphics.beginFill("blue").drawCircle(30, 0, 30, 30);
 	stage.addChild(debugbutton1);
-	debugbutton1.addEventListener("click",function(event){debugAlwaysUpdate=!debugAlwaysUpdate;console.log(">debugAlwaysUpdate: ",debugAlwaysUpdate);});
+	debugbutton1.addEventListener("click",function(event){hideHelp()});
+	*/
+	
+	/*
 	var debugbutton2=new createjs.Shape();
 	debugbutton2.graphics.beginFill("blue").drawCircle(90, 0, 30, 30);
 	stage.addChild(debugbutton2);
 	debugbutton2.addEventListener("click",function(event){console.log(sockRight.extraArea.x,sockRight.extraArea.y,sockRight.linePic.x,sockRight.linePic.y);stage.update();console.log("updating stage")});
-
+	*/
 	
 	/* to be deleted
 	splashScreenBackground=createBackground("#86DBD5",0*1.0);//xxxyyy
@@ -289,10 +321,6 @@ function init() {
 	tableBackground=createBackground("#FF95CB",0.0);
 	clothesBackground=createBackground("#93D4F2",0,0);
 	*/ 
-	
-	if (debug) {
-		stage.addChild(background);
-	}
 	
 	/* to be deleted 
 	stage.addChild(splashScreenBackground);
@@ -361,12 +389,13 @@ function init() {
 		
 	//simple as opposed to the more complex files making a cake and a table
 	var simpleImageFiles=[
-		{id:"boelSplashScreen", src:"assets/boelsplashscreen.png"},
+		{id:"boelToreSplash", src:"assets/boeltoresplash.png"},
 		{id:"menuBall", src:"assets/menuball.png"},
 		{id:"menuCake", src:"assets/menucake.png"},
 		{id:"menuClothes", src:"assets/menuclothes.png"},		
+		{id:"menuHelp", src:"assets/menuhelp.png"},
 		{id:"dog", src:"assets/dog.png"},
-		{id:"button", src:"assets/button.png"},
+		{id:"backButton", src:"assets/backbutton.png"},
 		{id:"cakePlate", src:"assets/cake_plate.png"},
 		{id:"line", src:"assets/line.png"},
 		{id:"shirtLine", src:"assets/shirtline.png"},
@@ -438,16 +467,16 @@ function changeBackground(color) {
 
 
 
-/* to be deleted
+
 function createBackground(color,alpha) {
 	b = new createjs.Shape();
-	b.graphics.beginFill(color).drawRect(0, 0, canvas.width, canvas.height);
+	b.graphics.beginFill(color).drawRect(0, 0, canvasWidth, canvasHeight);
 	b.x = 0;
 	b.y = 0;
 	b.alpha=alpha;
 	return b;
 }
-*/
+
 
 //xxx only used for debugging, should be deleted
 function handleBackgroundTouch(event) {
@@ -457,6 +486,8 @@ function handleBackgroundTouch(event) {
 		background.touchY=event.stageY;
 		stage.update();
 	}
+	hideHelp();
+	
 }
 
 
@@ -491,7 +522,7 @@ function updateProgressBar(progress) {
 
 function addProgressBar() {
 	progressBar=new createjs.Shape();
-	progressBar.graphics.beginFill(progressBarColor).drawRect(0, 0, canvas.width, progressBarHeight);
+	progressBar.graphics.beginFill(progressBarColor).drawRect(0, 0, canvasWidth, progressBarHeight);
 	progressBar.x = 0;
 	progressBar.y = 0;
 	progressBar.scaleX=0.05;
@@ -502,7 +533,7 @@ function addProgressBar() {
 function handleComplete(event) {
 	//event triggered even if file not loaded
 	if (loadedFiles<filesToLoad) {
-		progressBar.graphics.beginFill(progressBarErrorColor).drawRect(0, 0, canvas.width, progressBar.height);
+		progressBar.graphics.beginFill(progressBarErrorColor).drawRect(0, 0, canvasWidth, progressBar.height);
 		//xxx the loader div is only for debugging and should be deleted
 		//var div = document.getElementById("loader");
 		//div.innerHTML = "Some resources were not loaded: "+(filesToLoad-loadedFiles);
@@ -510,21 +541,19 @@ function handleComplete(event) {
 		createjs.Tween.get(progressBar).to({alpha:0.0},progressBarFadeTime);
 	}
 
-	addBoelSplashScreen();
+	addBoelToreSplash();
+	addHelp();
 	addTable();
 	addCake(pieceParts,numberOfCakePieces,cakeFiles);
 	addBall();
 	addClothes();
-	addButton();
+	addBackButton();
 	addNumbers();
 	addDebugText();
 	addStar();
-	
+	addBackground();
 	
 	//setup almost complete, start the ticker
-	if (debug) {
-		background.addEventListener("mousedown", handleBackgroundTouch);
-	}
 	
 	
 	createjs.Ticker.addEventListener("tick", handleTick);
@@ -538,41 +567,56 @@ function handleComplete(event) {
 	stage.update();		
 }
 
+function addBackground() {
+	//the background is an almost invisible object, there to be able to click the background
+	//currently only used for testing and debugging
+	//UPDATE: not so invisible anymore, there for preventing clicks behind it when help is shown. 
+	background=createBackground("#FFFFFF",0.5); //should be less
+
+	//stage.addChild(background); xxx done when help is shown
+	background.addEventListener("mousedown", handleBackgroundTouch);
+}
+
 function handleTick(event) {
 	nowMillis=createjs.Ticker.getTime(false);
 
 	if (nowMillis-lastWakeTime>wakeInterval) {
 		//this update is good for two reasons:
 		//1: it prevents certain browsers to sleep
-		//2: it assures that the stage is updatedet even if a tween is to fast and not caucht by handleTick
+		//2: it assures that the stage is updatedet even if a tween is too fast and not caught by handleTick
 		update=true;
 		lastWakeTime=nowMillis;
 	}
 
 	//ball game stuff
 	//check if it is time to touch a ball. If it is, decide what ball to touch
+	
+	/*
 	if (nowMillis>nextBallTime && nextBallTime>0  && !isRunning()) {
-		nextBall=findRandomBall();
-		extendAndPlayQueue("var"+nextBall.color); //this sound is "watched" and will trigger pulsating ball
-		nextBallTime=-1; //no new nextBall until this nextBall is touched 
+		handleNextBall();
 	}
+	*/
+	
+	//try with settimeout instead xxxsettimeout
+	
 
 	//cake game stuff
 	//check if it is time to smash a cake piece
+	/*
 	if (nowMillis>nextSmash && nextSmash>0  && !isRunning()) {
 		smashNextPiece();
-		nextSmash=randomFutureMillis(minSecNextSmash,maxSecNextSmash); //note: nextSmash is also updated when a cake piece is moved
-		//there might not be a piece to smash now, but might be at nextSmash. If there is no piece to smash at nextSmash, nextSmash will get a new value
 	}
+	*/
+
+	//try with settimeout instead xxxsettimeout
+	
 
 	//check if it is time for a character to get a piece of cake
+	/*
 	if (nowMillis>nextRandomCheck && nextRandomCheck>0) {
-		var characterSelected=selectNextCharacter();
-		if (characterSelected) {
-			//a character was selected. No new character should be selected until this character receives a piece of cake
-			nextRandomCheck=-1;
-		}
+		checkCharacter();
 	}
+	*/
 	
 	//things to do only when a tween is running or something is dragged
 	if (update || debugAlwaysUpdate) {
@@ -582,8 +626,35 @@ function handleTick(event) {
 		stage.update(event); //pass event to make sure for example sprite animation works
 	}
 	update=createjs.Tween.hasActiveTweens();//xxxtickxxx
-	if (update) {
-		console.log("update=true");
+	//if (update) {
+	//	console.log("update=true");
+	//}
+}
+
+function checkCharacter() {
+	console.log("checking character");
+	if (helpContainer.visible) {
+		console.log("not ready to check character");
+		randomCheckId=setTimeout(checkCharacter,2000);
+	} else {
+		var characterSelected=selectNextCharacter();
+		if (characterSelected) {
+			//a character was selected. No new character should be selected until this character receives a piece of cake
+			clearTimeout(randomCheckId);
+			nextRandomCheck=-1;
+		}
+	}
+}
+
+function handleNextBall() {
+	//xxxsettimeout denna delen ska bort om man inte kör med settimeout
+	if (isRunning() || helpContainer.visible) {
+		console.log("not ready for next ball yet");
+		nextBallId=setTimeout(handleNextBall,2000);
+	} else if (menuBall.focus) {
+		nextBall=findRandomBall();
+		extendAndPlayQueue("var"+nextBall.color); //this sound is "watched" and will trigger pulsating ball
+		nextBallTime=-1; //no new nextBall until this nextBall is touched 
 	}
 }
 
@@ -592,7 +663,7 @@ function checkBallOutsideAndBallBounce() {
 		var ball=ballTween.target;
 		//check if ball is outside of canvas
 		//if it is, delete it (set .inside to false) so you can't bounce against it
-		var inside=(ball.x-ball.radius)<canvas.width && (ball.y-ball.radius)<canvas.height && (ball.x+ball.radius)>0 && (ball.y+ball.radius)>0;
+		var inside=(ball.x-ball.radius)<canvasWidth && (ball.y-ball.radius)<canvasHeight && (ball.x+ball.radius)>0 && (ball.y+ball.radius)>0;
 		if (!inside) {
 			ball.inside=false;
 			ball.alpha=0;
@@ -624,7 +695,8 @@ function checkBallOutsideAndBallBounce() {
 }
 
 function selectNextCharacter() {
-	//returns true a character is selected, false otherwise
+	//returns true if a character is selected, false otherwise
+	//also pulsates a character and plays sound, if there is a character to select
 	//who has no cake yet?
 	var characterSelected=false;
 	if (soundQueue.length==0 && selectedNameNumber==-1) {
@@ -652,19 +724,34 @@ function selectNextCharacter() {
 }
 
 function smashNextPiece() {
-	//smashes a random piece
-	var movedAndNotSmashed=[];
-	for (var pieceNumber in cakeComplete) {
-		piece=cakeComplete[pieceNumber];
-		if (piece.moved && !piece.smashed) {
-			movedAndNotSmashed.push(pieceNumber);
+	console.log("trying to smash next piece");
+	if (isRunning() || helpContainer.visible) {
+		console.log("not ready to smash yet");
+		clearTimeout(nextSmashId);
+		nextSmashId=setTimeout(smashNextPiece,2000);
+	} else {
+		//smashes a random piece
+		var movedAndNotSmashed=[];
+		for (var pieceNumber in cakeComplete) {
+			piece=cakeComplete[pieceNumber];
+			if (piece.moved && !piece.smashed) {
+				movedAndNotSmashed.push(pieceNumber);
+			}
 		}
-	}
-	if (movedAndNotSmashed.length>0) {
-		//decude which piece to smash
-		var randomIndex=Math.floor(Math.random()*movedAndNotSmashed.length);
-		var randomPiece=movedAndNotSmashed[randomIndex];
-		bounceToTable(randomPiece);
+		if (movedAndNotSmashed.length>0) {
+			//decide which piece to smash
+			var randomIndex=Math.floor(Math.random()*movedAndNotSmashed.length);
+			var randomPiece=movedAndNotSmashed[randomIndex];
+			bounceToTable(randomPiece);
+			nextSmash=randomFutureMillis2(minSecNextSmash,maxSecNextSmash); //note: nextSmash is also updated when a cake piece is moved
+
+			//there might not be a piece to smash now, but might be at nextSmash. If there is no piece to smash at nextSmash, nextSmash will get a new value
+			//xxxsettimeout
+			clearTimeout(nextSmashId);
+			nextSmashId=setTimeout(smashNextPiece,nextSmash);
+			console.log("smashNextPiece: next smash in ",(nextSmash-0*nowMillis)/1000," seconds",nextSmashId);	
+		}
+
 	}
 }
 
@@ -711,24 +798,60 @@ function handleCakePieceTouch(event) {
 }
 
 function changeSplashScreen(alpha) {
-	log("changeSplashScreen()");
 	createjs.Tween.get(menuCake).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
 	createjs.Tween.get(menuBall).to({alpha:alpha},gameTransitionTime,createjs.Ease.linear);  
 	createjs.Tween.get(menuClothes).to({alpha:alpha},gameTransitionTime,createjs.Ease.linear);  
-	createjs.Tween.get(boelSplashScreen).to({alpha:alpha},gameTransitionTime/2, createjs.Ease.linear);
+	createjs.Tween.get(backButton).to({alpha:(1-alpha)},gameTransitionTime,createjs.Ease.linear);  
+	createjs.Tween.get(boelToreSplash).to({alpha:alpha},gameTransitionTime/2, createjs.Ease.linear);
 	//splashScreenBackground.alpha=alpha;//xxxyyy createjs.Tween.get(splashScreenBackground).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
+	
+	
+	
 	if (alpha>0.9) {
 		changeBackground(splashScreenBackgroundColor);
+		createjs.Tween.get(menuHelp).to({x:menuHelpX,y:menuHelpY},gameTransitionTime/2, createjs.Ease.linear); //xxx 10, 10  to setup parameterrs
+	} else {
+		createjs.Tween.get(menuHelp).to({x:10,y:10},gameTransitionTime/2, createjs.Ease.linear); 
 	}
+	
 }
 
 function showSplashScreen() {
-	log("showSplashScreen()");
 	changeSplashScreen(1.0);
 }
 
 function hideSplashScreen() {
 	changeSplashScreen(0.0);
+}
+
+function handleMenuHelpTouch(evt) {
+	if (noGameRunning()) {
+		showHelp(generalHelpText,generalHelpSound);	
+	} else if (menuCake.focus) {
+		showHelp(cakeHelpText,cakeHelpSound);
+	} else if (menuBall.focus) {
+		showHelp(ballHelpText,ballHelpSound);
+	} else if (menuClothes.focus) {
+		showHelp(clothesHelpText,clothesHelpSound);
+	}
+}
+
+function showHelp(text,sound) {
+	console.log("showHelp");
+	//xxx ska man pausa tweens? pausa ljud? blir lite knepigt...
+	helpTextBox.text=text;
+	helpContainer.visible=true;
+	stage.addChild(background);
+	stage.addChild(helpContainer);
+	stage.update();
+}
+
+function hideHelp() {
+	helpTextBox.text="";
+	stage.removeChild(helpContainer);
+	stage.removeChild(background);
+	helpContainer.visible=false;
+	stage.update();
 }
 
 function handleMenuCakeTouch(event) {
@@ -739,7 +862,10 @@ function handleMenuCakeTouch(event) {
     	hideSplashScreen();
 	
 		//xxx to be moved to startcakegame
-		nextRandomCheck=randomFutureMillis(minSecSelectFirstName,maxSecSelectFirstName);
+		nextRandomCheck=randomFutureMillis2(minSecSelectFirstName,maxSecSelectFirstName);
+		console.log("---->next random check at ",nextRandomCheck);
+		//no need to clear previous timeout here (I think xxx)
+		randomCheckId=setTimeout(checkCharacter,nextRandomCheck);
 		createjs.Tween.get(cake).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);
 		createjs.Tween.get(table).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);
     	//tableBackground.alpha=1.0;//xxxyyy createjs.Tween.get(tableBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
@@ -747,7 +873,7 @@ function handleMenuCakeTouch(event) {
 	}
 }
 
-function handleButtonTouch(event) {
+function handleBackButtonTouch(event) {
 	//update=true; //xxxtick nu funkar det att gå tillbaka men utan tween, istället pang på!
 	if (menuBall.focus) {
 		restoreMenuBall();
@@ -763,15 +889,16 @@ function addStar() {
 	stage.addChild(star);
 	star.regX=star.image.width/2|0;
 	star.regY=star.image.height/2|0;
-	star.x=canvas.width/2|0;
-	star.y=canvas.height/2|0;
+	star.x=canvasWidth/2|0;
+	star.y=canvasHeight/2|0;
 	hideStar();
 }
 
 function addDebugText() {
 	debugText = new createjs.Text("", "24px Courier", "#000");
+
 	debugText.x=20;
-	debugText.y=canvas.height-30;
+	debugText.y=canvasHeight-30;
 	if (debug) {
 		debugText.text="Debug on";
 	} else {
@@ -780,9 +907,9 @@ function addDebugText() {
 	stage.addChild(debugText);
 }
 
-function addBoelSplashScreen() {
-	boelSplashScreen=new createjs.Bitmap(queue.getResult("boelSplashScreen"));
-	stage.addChild(boelSplashScreen);
+function addBoelToreSplash() {
+	boelToreSplash=new createjs.Bitmap(queue.getResult("boelToreSplash"));
+	stage.addChild(boelToreSplash);
 }
 
 function addNumbers() {
@@ -828,10 +955,11 @@ function addClothes() {
 	
 	menuClothes.addEventListener("mousedown", handleMenuClothesTouch);
 	
-	clothes=new createjs.Container();
-	clothes.x=clothesX;
-	clothes.y=clothesY;
-	clothes.alpha=0.0;
+	clothesGameContainer=new createjs.Container();
+	clothesGameContainer.x=clothesGameContainerX;
+	clothesGameContainer.y=clothesGameContainerY;
+	clothesGameContainer.alpha=0.0;
+	clothesGameContainer.drawingEnabled=false;
 	
 	tore=new createjs.Bitmap(queue.getResult("tore"));
 	tore.sad=new createjs.Bitmap(queue.getResult("toreSad"));
@@ -843,13 +971,14 @@ function addClothes() {
 	tore.sad.y=tore.y-156;
 	tore.sad.alpha=0.0;
 	tore.rotation=0;
+	tore.dressed=false;
 
 	
 	sockRight=new Clothes("sockRightLine","sockRightWear","sockRight",sockRightStartRotation,sockRightX,sockRightY,sockRightWearX,sockRightWearY,true);
 	sockLeft=new Clothes("sockLeftLine","sockLeftWear","sockLeft",sockLeftStartRotation,sockLeftX,sockLeftY,sockLeftWearX,sockLeftWearY,true);
 	trousers=new Clothes("trousersLine","trousersWear","trousers",trousersStartRotation,trousersX,trousersY,trousersWearX,trousersWearY,true);
 	shirt=new Clothes("shirtLine","shirtWear","shirt",shirtStartRotation,shirtX,shirtY,shirtWearX,shirtWearY,true);
-	clothes.clean=true;
+	clothesGameContainer.clean=true;
 
 	
 	line=new createjs.Bitmap(queue.getResult("line"));
@@ -864,13 +993,13 @@ function addClothes() {
 	paintDetect.push(trousers.wearPic);
 	
 	
-	//note shirt and trousers have extraArea but they are not used and not added to clothes. 
-	clothes.addChild(sockRight.extraArea);
-	clothes.addChild(sockLeft.extraArea);
+	//note shirt and trousers have extraArea but they are not used and not added to clothesGameContainer. 
+	clothesGameContainer.addChild(sockRight.extraArea);
+	clothesGameContainer.addChild(sockLeft.extraArea);
 
 	
-	clothes.addChild(tore);
-	clothes.addChild(tore.sad);
+	clothesGameContainer.addChild(tore);
+	clothesGameContainer.addChild(tore.sad);
 	
 	/* original order - not so good
 	clothes.addChild(sockRight.linePic);
@@ -884,20 +1013,20 @@ function addClothes() {
 	*/
 	
 	/* line pics on top of wear pics - much better! */
-	clothes.addChild(sockRight.wearPic);
-	clothes.addChild(sockLeft.wearPic);	
-	clothes.addChild(trousers.wearPic);
-	clothes.addChild(shirt.wearPic);
-	clothes.addChild(sockRight.linePic);
-	clothes.addChild(sockLeft.linePic);
-	clothes.addChild(trousers.linePic);
-	clothes.addChild(shirt.linePic);
+	clothesGameContainer.addChild(sockRight.wearPic);
+	clothesGameContainer.addChild(sockLeft.wearPic);	
+	clothesGameContainer.addChild(trousers.wearPic);
+	clothesGameContainer.addChild(shirt.wearPic);
+	clothesGameContainer.addChild(sockRight.linePic);
+	clothesGameContainer.addChild(sockLeft.linePic);
+	clothesGameContainer.addChild(trousers.linePic);
+	clothesGameContainer.addChild(shirt.linePic);
 
 
 
 
-	clothes.addChild(line);
-	stage.addChild(clothes);
+	clothesGameContainer.addChild(line);
+	stage.addChild(clothesGameContainer);
 }
 
 function handleMenuClothesTouch(event) {
@@ -917,12 +1046,14 @@ function startClothesGame(delay) {
 	
 	line.alpha=1.0;
 	tore.alpha=1.0;
+	tore.dressed=false;
 
-	createjs.Tween.get(clothes).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);	
+	createjs.Tween.get(clothesGameContainer).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);	
 
 }
 
 function restorePieceOfClothes(c) {
+	//xxx this is basically the same as in function Clothes. Should be unified
 	log("restorePieceOfClothes()");
 	createjs.Tween.removeTweens(c.linePic);
 	createjs.Tween.removeTweens(c.wearPic);
@@ -932,16 +1063,22 @@ function restorePieceOfClothes(c) {
 	c.wearPic.alpha=0;
 	c.linePic.x=c.linePic.startX;
 	c.linePic.y=c.linePic.startY;
+	c.extraArea.x=c.extraArea.startX;
+	c.extraArea.y=c.extraArea.startY;
+	c.extraArea.alpha=1.0;
 	c.onBody=false;
 }
 
 function restoreMenuClothes() {
+	menuClothes.focus=false;
 	log("restoreMenuClothes()");
 	restorePieceOfClothes(shirt);
 	restorePieceOfClothes(trousers);
 	restorePieceOfClothes(sockLeft);
 	restorePieceOfClothes(sockRight);
-	disableDrawing();
+	if (clothesGameContainer.drawingEnabled) {
+		disableDrawing();
+	}
 //xxx almost works but must make tore happy again!!!!! and make clothes not dirty. hm, dirty är egenskap på ett plagg, kan få konsekvenser om man sedan ritar på annat plagg
 	menuClothes.focus=false;
 	showSplashScreen();
@@ -951,7 +1088,7 @@ function restoreMenuClothes() {
 
 function hideClothes() {
 	log("hideClothes()");
-	createjs.Tween.get(clothes).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+	createjs.Tween.get(clothesGameContainer).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
 	//createjs.Tween.get(clothesBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
 }
 
@@ -968,7 +1105,10 @@ function showBallGame() {
 
 function startBallGame(delay) {
 	hideStar();	
-	nextBallTime=delay+randomFutureMillis(minSecNextBall,maxSecNextBall);
+	nextBallTime=delay+randomFutureMillis2(minSecNextBall,maxSecNextBall);
+	//xxxsettimeout note: change randomFutureMillis2 to randomFutureMillis if settimeout is not used anymore
+	nextBallId=setTimeout(handleNextBall,nextBallTime);
+	
 	nextBall=null; //decided att next ball time
 	allBalls.forEach(setRandomPosition);
 	for (var i=0;i<allBalls.length;i++) {
@@ -980,11 +1120,47 @@ function startBallGame(delay) {
 function restoreMenuBall() {
 	menuBall.focus=false;
  	nextBallTime=-1;
+	clearTimeout(nextBallId);
 	for (i=0;i<allBalls.length;i++) {	
 		createjs.Tween.removeTweens(allBalls[i]);
 	}
 	showSplashScreen();
 	hideBalls();
+}
+
+function addHelp() {
+	menuHelp=new createjs.Bitmap(queue.getResult("menuHelp"));
+	stage.addChild(menuHelp);
+	menuHelp.x=menuHelpX;
+	menuHelp.y=menuHelpY;
+	menuHelp.alpha=1.0;
+	menuHelp.addEventListener("mousedown", handleMenuHelpTouch);
+
+
+	helpContainer = new createjs.Container();
+	helpContainer.x=100;
+	helpContainer.y=100;
+	helpContainer.visible=false;
+	
+	helpFrame = new createjs.Shape();
+	
+	helpFrame.graphics.
+	beginFill("white").
+	beginStroke("orange").setStrokeStyle(20, 'round', 'round').
+	drawRect(0,0,canvasWidth-100*2,canvasHeight-100*2);
+
+
+	
+	helpTextBox = new createjs.Text("", "36px sans-serif", "#000");
+	helpTextBox.lineHeight=42;
+	helpTextBox.lineWidth=canvasWidth-4*100;
+	helpTextBox.x=100;
+	helpTextBox.y=100;
+	helpContainer.addChild(helpFrame);
+	helpContainer.addChild(helpTextBox);
+
+	
+	menuHelp.focus=false; //xxx ska detta in som gamerunning? inte riktigt kanke. den ska nog bort
 }
 
 
@@ -1023,8 +1199,8 @@ function setRandomPosition(ball) {
 	var free=false;
 	forceField=ballMinDistance/2;
 	while (!free) { //a for me rare occasion where I would consider repeat instead...
-		ball.x=Math.floor(Math.random()*(canvas.width-ballMinBorderDistance*2)+ballMinBorderDistance);
-		ball.y=Math.floor(Math.random()*(canvas.height-ballMinBorderDistance*2)+ballMinBorderDistance);
+		ball.x=Math.floor(Math.random()*(canvasWidth-ballMinBorderDistance*2)+ballMinBorderDistance);
+		ball.y=Math.floor(Math.random()*(canvasHeight-ballMinBorderDistance*2)+ballMinBorderDistance);
 		free=!detectBallCollision(ball,forceField);
 	}
 	ball.rotation=Math.floor(Math.random()*360);
@@ -1091,7 +1267,11 @@ function handlePlayBallTouch(event) {
 			  var directionY=otherBall.y+0.35*otherBall.image.width*randomDirection();
 			  ballTween=makeBallTween(ball,directionX,directionY,ballBounceSpeed);
 			  nextBall=null;
-			  nextBallTime=randomFutureMillis(minSecNextBall,maxSecNextBall);
+			  nextBallTime=randomFutureMillis2(minSecNextBall,maxSecNextBall);
+	//xxxsettimeout note: change randomFutureMillis2 to randomFutureMillis if settimeout is not used anymore
+
+			  console.log("Next ball time: ",nextBallTime);
+			  nextBallId=setTimeout(handleNextBall,nextBallTime);
 		  } else {
 			  //random direction for last ball
 			  var angle=Math.random()*2*Math.PI;
@@ -1171,7 +1351,7 @@ function addTable() {
 //gjort trimvariabler hit
 
 function handleTableTouch(event) {
-	console.log("xxx not used right now, but prevents from clicking through table");
+	//console.log("xxx not used right now, but prevents from clicking through table");
 }
 
 function addCharacterEventListener(character) {
@@ -1294,65 +1474,78 @@ function addCake(pieceParts,numberOfCakePieces,cakeFiles) {
 }
 
 function handlePrePressmoveMousedown(evt) {
-	console.log("handlePrePressmoveMousedown",evt);
-	if (!evt.target.tweening) {
-		evt.target.mousedownOffset={x:evt.stageX-evt.target.x,y:evt.stageY-evt.target.y};
+	var t;
+	var t2;
+	//make sure t is always linepic, and t2 is extraarea
+	if (evt.target.kind=="linePic") {
+		t=evt.target;
+		t2=t.clothes.extraArea;
+	} else if (evt.target.kind=="extraArea") {
+		t2=evt.target;
+		t=t2.clothes.linePic;
+	}
+
+
+	if (!t.tweening) {
+		t.mousedownOffset={x:evt.stageX-t.x,y:evt.stageY-t.y};
 	}
 }
 
 function handlePressmove(evt) {
-	var t=evt.target;
-	//xxx make sure t is always linepic, and t2 is extraarea
+	var t;
+	var t2;
+	//make sure t is always linepic, and t2 is extraarea
+	if (evt.target.kind=="linePic") {
+		t=evt.target;
+		t2=t.clothes.extraArea;
+	} else if (evt.target.kind=="extraArea") {
+		t2=evt.target;
+		t=t2.clothes.linePic;
+	}
+
 	if (!t.tweening) {
  		t.x = evt.stageX-t.mousedownOffset.x;
 		t.y = evt.stageY-t.mousedownOffset.y;
-		if (t.kind=="linePic") {
-			t.clothes.extraArea.x=t.x;
-			t.clothes.extraArea.y=t.y;
-		} else if (t.kind=="extraArea") {
-			t.clothes.linePic.x=t.x;
-			t.clothes.linePic.y=t.y;
-		}
-		
-		printDebug("x rel tore:"+Math.floor(t.x-tore.x)+",y rel tore:"+Math.floor(t.y-tore.y)+",x:"+Math.floor(t.x)+",y:"+Math.floor(t.y)+" ");
-
+		t2.x=t.x;
+		t2.y=t.y;
 		if (t.x>tore.x+t.wearX-hitDistance && t.x<tore.x+t.wearX+hitDistance && t.y>tore.y+t.wearY-hitDistance && t.y<tore.y+t.wearY+hitDistance && !t.clothes.onBody) {
 			t.clothes.onBody=true;
 			t.clothes.wearPic.x=t.x;
 			t.clothes.wearPic.y=t.y;
-			createjs.Tween.get(t.clothes.linePic).to({x:tore.x+t.wearX,y:tore.y+t.wearY,rotation:0,alpha:0.0},clothesTweenTime,createjs.Ease.linear);
+			t2.alpha=0;
+			createjs.Tween.get(t).to({x:tore.x+t.wearX,y:tore.y+t.wearY,rotation:0,alpha:0.0},clothesTweenTime,createjs.Ease.linear);
 			createjs.Tween.get(t.clothes.wearPic).to({x:tore.x+t.wearX,y:tore.y+t.wearY,rotation:0,alpha:1.0},clothesTweenTime,createjs.Ease.linear).wait(500).call(checkIfAllClothesOn);
 		}
-		
 		update=true;
 	}
 }
 
 function checkIfAllClothesOn() {
-	if (shirt.onBody && trousers.onBody && sockLeft.onBody && sockRight.onBody) {
+	if (shirt.onBody && trousers.onBody && sockLeft.onBody && sockRight.onBody && !tore.dressed) {
+		tore.dressed=true;
 		extendAndPlayQueue("tada");
-		//enableDrawing(); xxx
+		createjs.Tween.get(line).to({alpha:0},500,createjs.Ease.linear).wait(3800).call(enableDrawing);
 	}
 }
 
 function handlePostPressmovePressup(evt) {
-	var t=evt.target;
+	var t;
 	var t2;
-	if (t.kind=="linePic") {
+	//make sure t is always linepic, and t2 is extraarea
+	if (evt.target.kind=="linePic") {
+		t=evt.target;
 		t2=t.clothes.extraArea;
-	} else if (t.kind=="extraArea") {
-		t2=t.clothes.linePic;
+	} else if (evt.target.kind=="extraArea") {
+		t2=evt.target;
+		t=t2.clothes.linePic;
 	}
 
-	if (!t.tweening && !t2.tweening && !t.clothes.onBody) {
-		//xxx condition could be simplified, t and t2 always tweening at the same time. but both t and t2 must be set
-		//as t might become t2 later
+	if (!t.tweening && !t.clothes.onBody) {
 		t.tweening=true;
-		t2.tweening=true;
 		var distance=Math.sqrt((t.x-t.startX)*(t.x-t.startX)+(t.y-t.startY)*(t.y-t.startY));
 		var time=distance/returnSpeed;
 		createjs.Tween.get(t).to({x:t.startX,y:t.startY},time,createjs.Ease.sineInOut).call(function(evt) {t.tweening=false});
-		createjs.Tween.get(t2).to({x:t2.startX,y:t2.startY},time,createjs.Ease.sineInOut).call(function(evt) {t2.tweening=false});
+		createjs.Tween.get(t2).to({x:t2.startX,y:t2.startY},time,createjs.Ease.sineInOut);
 	}
 }
 
@@ -1361,6 +1554,8 @@ function restoreMenuCake() {
 	if (menuCake.focus) {
 		createjs.Tween.removeAllTweens();
 		soundQueue=[];
+		clearTimeout(nextSmashId);
+		clearTimeout(randomCheckId);
 		nextRandomCheck=-1;
 		selectedNameNumber=-1
 		selectedName="";
@@ -1394,15 +1589,16 @@ function restoreMenuCake() {
 
 
 
-function addButton() {
-	button=new createjs.Bitmap(queue.getResult("button"));
-	stage.addChild(button);
-	button.x = menuButtonX;
-	button.y = menuButtonY;
+function addBackButton() {
+	backButton=new createjs.Bitmap(queue.getResult("backButton"));
+	stage.addChild(backButton);
+	backButton.x = backButtonX;
+	backButton.y = backButtonY;
+	backButton.alpha=0;
 	//button.regX = button.image.width/2; //should be deleted xxx
 	//button.regY = button.image.height/2;
-	button.name = "Menu button";
-	button.addEventListener("mousedown",handleButtonTouch);
+	backButton.name = "Back button";
+	backButton.addEventListener("mousedown",handleBackButtonTouch);
 }
 
 
@@ -1494,8 +1690,14 @@ function moveCakePiece(piecenumber,x,y,action) {
 		if (movePerformed) {
 			//här bestämmer vi tid för nästa smash. Vilken bit som smashas bestäms dock inte här
 			//utan i handleTick
-			nextSmash=randomFutureMillis(minSecNextSmash,maxSecNextSmash); //note: nextSmash is also updated when a cake bounce is started
-			console.log("move: next smash in ",(nextSmash-nowMillis)/1000," seconds");
+			nextSmash=randomFutureMillis2(minSecNextSmash,maxSecNextSmash); //note: nextSmash is also updated when a cake bounce is started
+			
+			//xxxxxxxxxxx
+			//xxxsettimeout
+			clearTimeout(nextSmashId);
+			nextSmashId=setTimeout(smashNextPiece,nextSmash);
+					
+			console.log("move: next smash in ",(nextSmash-0*nowMillis)/1000," seconds",nextSmashId);
 
 			if (selectedNameNumber==piecenumber) {	
 				//"rätt" person klickad		
@@ -1504,11 +1706,18 @@ function moveCakePiece(piecenumber,x,y,action) {
 				}
 				extendAndPlayQueue([nameClicked+"start","faar",ordinal[movedPieces]]);
 				selectedNameNumber=-1;
-				nextRandomCheck=randomFutureMillis(minSecSelectName,maxSecSelectName);
+				nextRandomCheck=randomFutureMillis2(minSecSelectName,maxSecSelectName);
+				console.log("2---->next random check at ",nextRandomCheck);
+
+				clearTimeout(randomCheckId);
+				randomCheckId=setTimeout(checkCharacter,nextRandomCheck);
 			} else if (selectedNameNumber==-1) {	
 				//person utan tårtbit klickad		
 				extendAndPlayQueue([nameClicked+"start","faar",ordinal[movedPieces]]);//somma som föregående
-				nextRandomCheck=randomFutureMillis(minSecSelectName,maxSecSelectName);	
+				nextRandomCheck=randomFutureMillis2(minSecSelectName,maxSecSelectName);
+				console.log("3---->next random check at ",nextRandomCheck);
+				clearTimeout(randomCheckId);
+				randomCheckId=setTimeout(checkCharacter,nextRandomCheck);	
 			} else {
 				//"fel" person som inte än fått tårtbit klickad
 				extendAndPlayQueue(["detvarvaelinte",nameSelected+"slut"]);
@@ -1589,7 +1798,7 @@ function showStar() {
 				to({alpha:0.7,scaleX:2.3,scaleY:2.3},2000,createjs.Ease.getElasticOut(1,0.3)).
 				wait(1000).
 				to({alpha:0},1000).
-				to({scaleX:0.1,scaleY:0.1},10).call(enableDrawing); //xxx temporry fix!!!!! only with tore start
+				to({scaleX:0.1,scaleY:0.1},10); //xxx temporry fix!!!!! only with tore start
 }
 
 function hideStar() {
@@ -1627,6 +1836,14 @@ function randomFutureMillis(minSec,maxSec) {
 	return nowMillis+1000*randomSec;
 }
 
+function randomFutureMillis2(minSec,maxSec) {
+	//xxxsettimeout this one does not add nowMillis
+	//note: input in milliseconds and seconds, output in milliseconds
+	randomSec=minSec+Math.random()*(maxSec-minSec);
+	return 1000*randomSec;
+}
+
+
 function bounceToTable(piecenumber) {	
 	var time = Math.floor(1000*cakeBounceTime/4);
 	var startX=cakeBall.x;
@@ -1655,14 +1872,14 @@ function bounceToTable(piecenumber) {
 }
 
 function restoreCakeBall() {
-	if (cakeBall.x>canvas.width+100) {
-		cakeBall.x=canvas.width+100;
+	if (cakeBall.x>canvasWidth+100) {
+		cakeBall.x=canvasWidth+100;
 		cakeBall.y=100;
 	} else if (cakeBall.x<-100) {
 		cakeBall.x=-100;
 		cakeBall.y=100;
 	} else {
-		cakeBall.x=canvas.width+100;
+		cakeBall.x=canvasWidth+100;
 		cakeBall.y=100;
 	}
 	cakeBall.rotation=0;
@@ -1700,7 +1917,7 @@ function getCharacter(pieceNumber) {
 }
 
 function pulsate(bitmap,pulsetime) {
-	console.log("bitmap",bitmap,"pulsetime",pulsetime);
+	//console.log("bitmap",bitmap,"pulsetime",pulsetime);
 	var partTime=Math.floor(pulsetime/4);
 	createjs.Tween.get(bitmap).to({scaleX:1.1,scaleY:1.1},partTime,createjs.Ease.sineInOut).to({scaleX:1.0,scaleY:1.0},partTime,createjs.Ease.sineInOut).to({scaleX:1.1,scaleY:1.1},partTime,createjs.Ease.sineInOut).to({scaleX:1.0,scaleY:1.0},partTime,createjs.Ease.sineInOut);
 }
@@ -1744,7 +1961,7 @@ function Clothes(linePicId,wearPicId,name,startRotation,startX,startY,wearX,wear
 	
 	
 	this.extraArea=new createjs.Shape();
-	this.extraArea.graphics.beginStroke("black").beginFill(clothesBackgroundColor).drawCircle(0,0,50,50);//xxx ta bort stroke
+	this.extraArea.graphics.beginFill(clothesBackgroundColor).drawCircle(0,0,50,50);
 	this.extraArea.x=startX;
 	this.extraArea.y=startY;
 	this.extraArea.clothes=this;
@@ -1814,56 +2031,49 @@ function Character(pieceNumber,pieceDeltaX,pieceDeltaY,happyPic,hasSadPic,hasHan
 
 //drawing functions
 function enableDrawing() {
+	if (helpContainer.visible) {
+		//wait until helpContainer is gone
+		console.log("not ready to enable drawing");
+		setTimeout(enableDrawing,2000);
+	} else if (menuClothes.focus) {
+		clothesGameContainer.drawingEnabled=true;
+		menuHelp.alpha=0.0;
+		stage.update();
+		stage.autoClear = false;
+		crayonColors = ["red", "yellow", "green","#FFAABB","blue","orange","brown","purple"]; //xxx till setup
+		crayonColorIndex=0;
+		crayonColor=crayonColors[crayonColorIndex];
 	
-	//kanske gömma clothes.line innan man börjar rita
-	
-	line.alpha=0;
-	stage.update();
-	
-	stage.autoClear = false;
-	//clothesBackground.alpha=0;  //xxx måste återställas
-	//clothes.alpha=0.0; xxxx
-	if (debug) {
-		background.alpha=0.0;
+		for (var i=0;i<crayonColors.length;i++) {
+			crayons[i]=makeCrayon(crayonColors[i],"black",3); //xxx possibly move to init
+			crayonsOverlay[i]=makeCrayon("lightblue","lightblue",4);
+			crayons[i].index=i;
+			stage.addChild(crayonsOverlay[i]);
+			stage.addChild(crayons[i]);
+			crayons[i].addEventListener("mousedown",handleCrayonMouseDown);
+		}
+		
+		drawCrayons(crayonColorIndex);
+		drawingCanvas = new createjs.Shape(); //xxx probably move to init
+		stage.addEventListener("stagemousedown", handleStrokeMouseDown);
+		stage.addEventListener("stagemouseup", handleStrokeMouseUp);
+		stage.addChild(drawingCanvas);
+		stage.update();
 	}
-	crayonColors = ["red", "yellow", "green","#FFAABB","blue","orange","brown","purple"]; //xxx till setup
-	crayonColorIndex=0;
-	crayonColor=crayonColors[crayonColorIndex];
-
-	for (var i=0;i<crayonColors.length;i++) {
-		crayons[i]=makeCrayon(crayonColors[i],"black",3); //xxx possibly move to init
-		crayonsOverlay[i]=makeCrayon("lightblue","lightblue",4);
-		crayons[i].index=i;
-		stage.addChild(crayonsOverlay[i]);
-		stage.addChild(crayons[i]);
-		crayons[i].addEventListener("mousedown",handleCrayonMouseDown);
-	}
-	
-	drawCrayons(crayonColorIndex);
-	drawingCanvas = new createjs.Shape(); //xxx probably move to init
-	stage.addEventListener("stagemousedown", handleStrokeMouseDown);
-	stage.addEventListener("stagemouseup", handleStrokeMouseUp);
-	stage.addChild(drawingCanvas);
 }
 
 function disableDrawing() {
-	log("disableDrawing()");
+	clothesGameContainer.drawingEnabled=false;
+	menuHelp.alpha=1.0;
 	tore.sad.alpha=0;
-	clothes.clean=true;
+	clothesGameContainer.clean=true;
 	line.alpha=1;
 	stage.autoClear=true;
 	removeCrayons();
 	stage.removeChild(drawingCanvas);
-	console.log("----------remove 1");
 	stage.removeEventListener("stagemousedown", handleStrokeMouseDown);
-	console.log("----------remove 2");
-
 	stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
-		console.log("----------remove 3");
-
 	stage.removeEventListener("stagemousemove" , handleStrokeMouseMove);
-		console.log("----------all 3 removed");
-
 }
 
 function removeCrayons() {
@@ -1900,12 +2110,12 @@ function makeCrayon(color,outlineColor,outlineWidth) {
 }
 
 function handleClothesPaint() {
-	if (clothes.clean) {
+	if (clothesGameContainer.clean) {
 		console.log("paint on clothes");
-		clothes.clean=false;
+		clothesGameContainer.clean=false;
 		tore.sad.alpha=1.0; //xxx eller tween?
 		stage.update();
-		clothes.alpha=0.0;
+		clothesGameContainer.alpha=0.0;
 	}
 	
 }
@@ -1918,7 +2128,7 @@ function handleClothesPaint() {
 function drawCrayons(index) {
 	var crayonDelta=50; //xxx to setup
 	var number=crayons.length; 
-	var crayonTop=canvas.height-(number+1)*crayonDelta;
+	var crayonTop=canvasHeight-(number+1)*crayonDelta;
 	var crayonShowLength=100; //xxx to setup
 
 
@@ -1926,13 +2136,13 @@ function drawCrayons(index) {
 
 		crayonsOverlay[i].y=crayonTop+i*crayonDelta;
 		console.log(crayonTop,i*crayonDelta);
-		crayonsOverlay[i].x=canvas.width-crayonShowLength-2;
+		crayonsOverlay[i].x=canvasWidth-crayonShowLength-2;
 
 		crayons[i].y=crayonTop+i*crayonDelta;
 		if (i==index) {
-			crayons[i].x=canvas.width-crayonShowLength;
+			crayons[i].x=canvasWidth-crayonShowLength;
 		} else {
-			crayons[i].x=canvas.width-crayonShowLength/2;
+			crayons[i].x=canvasWidth-crayonShowLength/2;
 		}
 		console.log("x,y:",crayons[i].x,crayons[i].y)
 	}
