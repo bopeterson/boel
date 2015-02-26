@@ -1,0 +1,17 @@
+body, html {
+	margin: 0px; /* all four margins are 0px */
+	/*padding: 0px;*/ /* padding is not needed to be set */
+	text-align: center; /* alignt the canvqs */
+	height: 100%;
+}
+
+#canvasHolder {
+	height:inherit; /* required by chrome but not safari for correct height adjustment */
+	background-color:#CCCCCC;
+}
+
+canvas {
+	max-height: 100%;
+	max-width: 100%;
+	background-color:#FFFFFF;
+}
