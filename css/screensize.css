@@ -3,12 +3,11 @@ body, html {
 	padding: 0px;
 	text-align: center;
 	height: 100%;
-	/*background-color:#86DBD5;*/
 	background-color:#CCC;
 }
 
 canvas {
-	max-height: 100%;
+	max-height: auto;
 	max-width: 100%;
 	background-color:#FFFFFF
 }

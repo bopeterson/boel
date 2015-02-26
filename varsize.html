@@ -4,7 +4,6 @@
 	<meta charset="UTF-8">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes"><!--for chrome on Android-->
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width"> 
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">   
     <!-- adding an icon to the iPhone/iPad homescreen -->
@@ -14,20 +13,20 @@
     <!--meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no"-->
     <link rel="stylesheet" href="css/style.css" media="screen" type="text/css">
 
-	<title>Boel och Tore</title>
+	<title>Boel och bollen</title>
 
     <script src="js/easeljs-0.8.0.min.js"></script>
 	<script src="js/tweenjs-0.6.0.min.js"></script>    
 	<script src="js/soundjs-0.6.0.min.js"></script>
     <script src="js/preloadjs-0.6.0.min.js"></script>
 
-	<script src="js/boel.js"></script>
+	<script src="js/varsize.js"></script>
 </head>
 
 <body onload="init();">
     <!--ipad  2048‑by‑1536. r-->
-    <div id="canvasHolder"><!--the canvasHolder makes loading less wobbly when images are preloaded-->
-   		<canvas id="myCanvas" width="1024" height="768"></canvas><!--must be the same as the canvasWidth and canvasHeight parameters in boel.js-->
+    <div id="canvasHolder"><!--the canvasHolder makes loading less wobbly-->
+   	<canvas id="myCanvas" width="2000" height="768"></canvas><!--must be the same as the canvasWidth and canvasHeight parameters in boel.js-->
     </div>
 </body>
 </html>

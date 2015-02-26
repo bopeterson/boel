@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width"> 
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">   
+    <!-- adding an icon to the iPhone/iPad homescreen -->
+    <link rel="apple-touch-icon" href="assets/icon.png">
+
+    
+    <!--meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no"-->
+    <link rel="stylesheet" href="css/style.css" media="screen" type="text/css">
+
+	<title>Bara boll</title>
+
+    <script src="js/easeljs-0.8.0.min.js"></script>
+	<script src="js/tweenjs-0.6.0.min.js"></script>    
+	<script src="js/soundjs-0.6.0.min.js"></script>
+    <script src="js/preloadjs-0.6.0.min.js"></script>
+
+	<script src="js/baraboll.js"></script>
+</head>
+
+<body>
+    <!--ipad  2048‑by‑1536. r-->
+    <div id="startbutton">
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="mp3 preload">
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="ogg preload">
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="mp3+ogg preload">
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="ogg+mp3 preload"><br>
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="mp3">
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="ogg">
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="mp3+ogg">
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="ogg+mp3">
+    <input type="button" style="height:150px; width:150px" onclick="init(this.value)" value="no sound">
+    <br><!-- #BeginDate format:IS1m -->2015-02-24  13:27<!-- #EndDate -->
+    </div>
+    <div id="canvasHolder"><!--the canvasHolder makes loading less wobbly-->
+   	<canvas id="myCanvas" width="1024" height="768"></canvas><!--must be the same as the canvasWidth and canvasHeight parameters in boel.js-->
+    </div>
+</body>
+</html>

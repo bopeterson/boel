@@ -246,8 +246,8 @@ function init() {
 	
 	
 	
-	console.log("Boel game starting at "+Date());
-	console.log("TweenJS version "+createjs.TweenJS.version);
+	//xxx.log("Boel game starting at "+Date());
+	//xxx.log("TweenJS version "+createjs.TweenJS.version);
 
 	// create stage and point it to the canvas:
 	canvas = document.getElementById("myCanvas");
@@ -294,7 +294,7 @@ function init() {
 	var debugbutton2=new createjs.Shape();
 	debugbutton2.graphics.beginFill("blue").drawCircle(90, 0, 30, 30);
 	stage.addChild(debugbutton2);
-	debugbutton2.addEventListener("click",function(event){console.log(sockRight.extraArea.x,sockRight.extraArea.y,sockRight.linePic.x,sockRight.linePic.y);stage.update();console.log("updating stage")});
+	debugbutton2.addEventListener("click",function(event){//xxx.log(sockRight.extraArea.x,sockRight.extraArea.y,sockRight.linePic.x,sockRight.linePic.y);stage.update();//xxx.log("updating stage")});
 	*/
 	
 	/* to be deleted
@@ -319,55 +319,55 @@ function init() {
 	//xxx must include ogg as well. Please use the new alternateExtensions property.
 	//se http://www.createjs.com/tutorials/SoundJS%20and%20PreloadJS/. Gör olika testljud med ogg och mp3 för att testa
 	var soundFiles=[
-		{id:"andrataartbiten",src:"assets/andrataartbiten.mp3"},
-		{id:"boelslut",src:"assets/boelslut.mp3"},
-		{id:"boelstart",src:"assets/boelstart.mp3"},
-		{id:"boelvill_",src:"assets/boelvill_.mp3"},
-		{id:"detaerju",src:"assets/detaerju.mp3"},
-		{id:"detaerjuentaartbit",src:"assets/detaerjuentaartbit.mp3"},
-		{id:"detvarvaelinte",src:"assets/detvarvaelinte.mp3"},
-		{id:"faar",src:"assets/faar.mp3"},
-		{id:"femtetaartbiten",src:"assets/femtetaartbiten.mp3"},
-		{id:"fjaerdetaartbiten",src:"assets/fjaerdetaartbiten.mp3"},
-		{id:"foerstataartbiten",src:"assets/foerstataartbiten.mp3"},
-		{id:"hundenslut",src:"assets/hundenslut.mp3"},
-		{id:"hundenstart",src:"assets/hundenstart.mp3"},
-		{id:"hundenvill_",src:"assets/hundenvill_.mp3"},
-		{id:"ja",src:"assets/ja.mp3"},
-		{id:"mammaslut",src:"assets/mammaslut.mp3"},
-		{id:"mammastart",src:"assets/mammastart.mp3"},
-		{id:"mammavill_",src:"assets/mammavill_.mp3"},
-		{id:"morfarslut",src:"assets/morfarslut.mp3"},
-		{id:"morfarstart",src:"assets/morfarstart.mp3"},
-		{id:"morfarvill_",src:"assets/morfarvill_.mp3"},
-		{id:"pappaslut",src:"assets/pappaslut.mp3"},
-		{id:"pappastart",src:"assets/pappastart.mp3"},
-		{id:"pappavill_",src:"assets/pappavill_.mp3"},
-		{id:"sjaettetaartbiten",src:"assets/sjaettetaartbiten.mp3"},
-		{id:"somfaar",src:"assets/somfaar.mp3"},
-		{id:"toreslut",src:"assets/toreslut.mp3"},
-		{id:"torestart",src:"assets/torestart.mp3"},
-		{id:"torevill_",src:"assets/torevill_.mp3"},
-		{id:"tredjetaartbiten",src:"assets/tredjetaartbiten.mp3"},
-		{id:"tyst1000",src:"assets/tyst1000.mp3"},
-		{id:"cakebounce",src:"assets/cakebounce.mp3"},
-		{id:"detjublue",src:"assets/detjublue.mp3"},
-		{id:"detjuyellow",src:"assets/detjuyellow.mp3"},
-		{id:"detjugreen",src:"assets/detjugreen.mp3"},
-		{id:"detjured",src:"assets/detjured.mp3"},
-		//{id:"nejinteyellow",src:"assets/nejinteyellow.mp3"},
-		//{id:"nejintegreen",src:"assets/nejintegreen.mp3"},
-		//{id:"nejinteblue",src:"assets/nejinteblue.mp3"},
-		//{id:"nejintered",src:"assets/nejintered.mp3"},
-		{id:"jagreen",src:"assets/jagreen.mp3"},
-		{id:"jablue",src:"assets/jablue.mp3"},
-		{id:"jared",src:"assets/jared.mp3"},
-		{id:"jayellow",src:"assets/jayellow.mp3"},
-		{id:"vargreen",src:"assets/vargreen.mp3"},
-		{id:"varblue",src:"assets/varblue.mp3"},
-		{id:"varyellow",src:"assets/varyellow.mp3"},
-		{id:"varred",src:"assets/varred.mp3"},
-		{id:"tada",src:"assets/tada.mp3"}];
+		{id:"andrataartbiten",src:"assets/andrataartbiten.ogg"},
+		{id:"boelslut",src:"assets/boelslut.ogg"},
+		{id:"boelstart",src:"assets/boelstart.ogg"},
+		{id:"boelvill_",src:"assets/boelvill_.ogg"},
+		{id:"detaerju",src:"assets/detaerju.ogg"},
+		{id:"detaerjuentaartbit",src:"assets/detaerjuentaartbit.ogg"},
+		{id:"detvarvaelinte",src:"assets/detvarvaelinte.ogg"},
+		{id:"faar",src:"assets/faar.ogg"},
+		{id:"femtetaartbiten",src:"assets/femtetaartbiten.ogg"},
+		{id:"fjaerdetaartbiten",src:"assets/fjaerdetaartbiten.ogg"},
+		{id:"foerstataartbiten",src:"assets/foerstataartbiten.ogg"},
+		{id:"hundenslut",src:"assets/hundenslut.ogg"},
+		{id:"hundenstart",src:"assets/hundenstart.ogg"},
+		{id:"hundenvill_",src:"assets/hundenvill_.ogg"},
+		{id:"ja",src:"assets/ja.ogg"},
+		{id:"mammaslut",src:"assets/mammaslut.ogg"},
+		{id:"mammastart",src:"assets/mammastart.ogg"},
+		{id:"mammavill_",src:"assets/mammavill_.ogg"},
+		{id:"morfarslut",src:"assets/morfarslut.ogg"},
+		{id:"morfarstart",src:"assets/morfarstart.ogg"},
+		{id:"morfarvill_",src:"assets/morfarvill_.ogg"},
+		{id:"pappaslut",src:"assets/pappaslut.ogg"},
+		{id:"pappastart",src:"assets/pappastart.ogg"},
+		{id:"pappavill_",src:"assets/pappavill_.ogg"},
+		{id:"sjaettetaartbiten",src:"assets/sjaettetaartbiten.ogg"},
+		{id:"somfaar",src:"assets/somfaar.ogg"},
+		{id:"toreslut",src:"assets/toreslut.ogg"},
+		{id:"torestart",src:"assets/torestart.ogg"},
+		{id:"torevill_",src:"assets/torevill_.ogg"},
+		{id:"tredjetaartbiten",src:"assets/tredjetaartbiten.ogg"},
+		{id:"tyst1000",src:"assets/tyst1000.ogg"},
+		{id:"cakebounce",src:"assets/cakebounce.ogg"},
+		{id:"detjublue",src:"assets/detjublue.ogg"},
+		{id:"detjuyellow",src:"assets/detjuyellow.ogg"},
+		{id:"detjugreen",src:"assets/detjugreen.ogg"},
+		{id:"detjured",src:"assets/detjured.ogg"},
+		//{id:"nejinteyellow",src:"assets/nejinteyellow.ogg"},
+		//{id:"nejintegreen",src:"assets/nejintegreen.ogg"},
+		//{id:"nejinteblue",src:"assets/nejinteblue.ogg"},
+		//{id:"nejintered",src:"assets/nejintered.ogg"},
+		{id:"jagreen",src:"assets/jagreen.ogg"},
+		{id:"jablue",src:"assets/jablue.ogg"},
+		{id:"jared",src:"assets/jared.ogg"},
+		{id:"jayellow",src:"assets/jayellow.ogg"},
+		{id:"vargreen",src:"assets/vargreen.ogg"},
+		{id:"varblue",src:"assets/varblue.ogg"},
+		{id:"varyellow",src:"assets/varyellow.ogg"},
+		{id:"varred",src:"assets/varred.ogg"},
+		{id:"tada",src:"assets/tada.ogg"}];
 				
 		
 	//simple as opposed to the more complex files making a cake and a table
@@ -430,13 +430,13 @@ function init() {
 				{id:"tableGrandDadHand",src:"assets/tablegranddadhand.png"},
 				];
 
-	var files=simpleImageFiles.concat(cakeFiles,numberFiles,tableFiles,soundFiles);	
+	var files=simpleImageFiles.concat(cakeFiles,numberFiles,tableFiles); //,soundFiles);	
 
 
 	queue=new createjs.LoadQueue(false);
-	createjs.Sound.alternateExtensions = ["ogg"]; 
+	createjs.Sound.alternateExtensions = ["mp3"]; 
 	//in theory, you could list .mp3 files and have "ogg" as alternate extension, but that
-	//seems to cause problems for chrome on android. It is better to have it the other way around. Or maybe not.
+	//seems to cause problems for chrome on android. It is better to have it the other way around. 
 	queue.installPlugin(createjs.Sound);
 	queue.addEventListener("complete",handleComplete);
 	queue.addEventListener("error", handleFileError);
@@ -466,7 +466,7 @@ function createBackground(color,alpha) {
 //xxx only used for debugging, should be deleted
 function handleBackgroundTouch(event) {
 	if (debug) {
-		console.log("background touch",event.stageX,event.stageY);
+		//xxx.log("background touch",event.stageX,event.stageY);
 		background.touchX=event.stageX;
 		background.touchY=event.stageY;
 		stage.update();
@@ -477,7 +477,7 @@ function handleBackgroundTouch(event) {
 
 
 function printDebug(text) {
-	//console.log("printDebug ",text);
+	////xxx.log("printDebug ",text);
 	if (debug) {
 		debugText.text+=text;
 		debugText.text=debugText.text.substring(debugText.text.length-68,debugText.text.length);
@@ -492,7 +492,7 @@ function handleFileError(event) {
 }
 	
 function handleFileLoad(event) {
-	console.log(event.item.src);
+	//xxx.log(event.item.src);
 	printDebug(event.item.src+',');
 
 	loadedFiles++;
@@ -618,14 +618,14 @@ function handleTick(event) {
 	}
 	update=createjs.Tween.hasActiveTweens();//xxxtickxxx
 	//if (update) {
-	//	console.log("update=true");
+	//	//xxx.log("update=true");
 	//}
 }
 
 function checkCharacter() {
-	console.log("checking character");
+	//xxx.log("checking character");
 	if (helpContainer.visible) {
-		console.log("not ready to check character");
+		//xxx.log("not ready to check character");
 		randomCheckId=setTimeout(checkCharacter,2000);
 	} else {
 		var characterSelected=selectNextCharacter();
@@ -640,7 +640,7 @@ function checkCharacter() {
 function handleNextBall() {
 	//xxxsettimeout denna delen ska bort om man inte kör med settimeout
 	if (isRunning() || helpContainer.visible) {
-		console.log("not ready for next ball yet");
+		//xxx.log("not ready for next ball yet");
 		nextBallId=setTimeout(handleNextBall,2000);
 	} else if (menuBall.focus) {
 		nextBall=findRandomBall();
@@ -715,9 +715,9 @@ function selectNextCharacter() {
 }
 
 function smashNextPiece() {
-	console.log("trying to smash next piece");
+	//xxx.log("trying to smash next piece");
 	if (isRunning() || helpContainer.visible) {
-		console.log("not ready to smash yet");
+		//xxx.log("not ready to smash yet");
 		clearTimeout(nextSmashId);
 		nextSmashId=setTimeout(smashNextPiece,2000);
 	} else {
@@ -740,7 +740,7 @@ function smashNextPiece() {
 			//xxxsettimeout
 			clearTimeout(nextSmashId);
 			nextSmashId=setTimeout(smashNextPiece,nextSmash);
-			console.log("smashNextPiece: next smash in ",(nextSmash-0*nowMillis)/1000," seconds",nextSmashId);	
+			//xxx.log("smashNextPiece: next smash in ",(nextSmash-0*nowMillis)/1000," seconds",nextSmashId);	
 		}
 
 	}
@@ -828,7 +828,7 @@ function handleMenuHelpTouch(evt) {
 }
 
 function showHelp(text,sound) {
-	console.log("showHelp");
+	//xxx.log("showHelp");
 	//xxx ska man pausa tweens? pausa ljud? blir lite knepigt...
 	helpTextBox.text=text;
 	helpContainer.visible=true;
@@ -854,7 +854,7 @@ function handleMenuCakeTouch(event) {
 	
 		//xxx to be moved to startcakegame
 		nextRandomCheck=randomFutureMillis2(minSecSelectFirstName,maxSecSelectFirstName);
-		console.log("---->next random check at ",nextRandomCheck);
+		//xxx.log("---->next random check at ",nextRandomCheck);
 		//no need to clear previous timeout here (I think xxx)
 		randomCheckId=setTimeout(checkCharacter,nextRandomCheck);
 		createjs.Tween.get(cake).to({alpha:1.0}, gameTransitionTime, createjs.Ease.linear);
@@ -1261,7 +1261,7 @@ function handlePlayBallTouch(event) {
 			  nextBallTime=randomFutureMillis2(minSecNextBall,maxSecNextBall);
 	//xxxsettimeout note: change randomFutureMillis2 to randomFutureMillis if settimeout is not used anymore
 
-			  console.log("Next ball time: ",nextBallTime);
+			  //xxx.log("Next ball time: ",nextBallTime);
 			  nextBallId=setTimeout(handleNextBall,nextBallTime);
 		  } else {
 			  //random direction for last ball
@@ -1272,8 +1272,8 @@ function handlePlayBallTouch(event) {
 			  ballTween=makeBallTween(ball,x,y,ballBounceSpeed);
 		  }
 	  } else if (nextBall!==null) {
-		console.log("next ball",nextBall);
-		console.log("wrong ball touched");
+		//xxx.log("next ball",nextBall);
+		//xxx.log("wrong ball touched");
 		//wrong ball is touched
 		var startRotation=ball.rotation;
 		createjs.Tween.get(ball).to({rotation:startRotation+360*wrongBallNumberOfTurns}, wrongBallTurnTime,createjs.Ease.sineInOut);
@@ -1342,7 +1342,7 @@ function addTable() {
 //gjort trimvariabler hit
 
 function handleTableTouch(event) {
-	//console.log("xxx not used right now, but prevents from clicking through table");
+	////xxx.log("xxx not used right now, but prevents from clicking through table");
 }
 
 function addCharacterEventListener(character) {
@@ -1688,7 +1688,7 @@ function moveCakePiece(piecenumber,x,y,action) {
 			clearTimeout(nextSmashId);
 			nextSmashId=setTimeout(smashNextPiece,nextSmash);
 					
-			console.log("move: next smash in ",(nextSmash-0*nowMillis)/1000," seconds",nextSmashId);
+			//xxx.log("move: next smash in ",(nextSmash-0*nowMillis)/1000," seconds",nextSmashId);
 
 			if (selectedNameNumber==piecenumber) {	
 				//"rätt" person klickad		
@@ -1698,7 +1698,7 @@ function moveCakePiece(piecenumber,x,y,action) {
 				extendAndPlayQueue([nameClicked+"start","faar",ordinal[movedPieces]]);
 				selectedNameNumber=-1;
 				nextRandomCheck=randomFutureMillis2(minSecSelectName,maxSecSelectName);
-				console.log("2---->next random check at ",nextRandomCheck);
+				//xxx.log("2---->next random check at ",nextRandomCheck);
 
 				clearTimeout(randomCheckId);
 				randomCheckId=setTimeout(checkCharacter,nextRandomCheck);
@@ -1706,7 +1706,7 @@ function moveCakePiece(piecenumber,x,y,action) {
 				//person utan tårtbit klickad		
 				extendAndPlayQueue([nameClicked+"start","faar",ordinal[movedPieces]]);//somma som föregående
 				nextRandomCheck=randomFutureMillis2(minSecSelectName,maxSecSelectName);
-				console.log("3---->next random check at ",nextRandomCheck);
+				//xxx.log("3---->next random check at ",nextRandomCheck);
 				clearTimeout(randomCheckId);
 				randomCheckId=setTimeout(checkCharacter,nextRandomCheck);	
 			} else {
@@ -1742,19 +1742,19 @@ function extendAndPlayQueue(sounds) {
 }
 
 function playQueue() {
-	console.log("playQueue: ", soundQueue);
+	//xxx.log("playQueue: ", soundQueue);
 	var soundinstance;
 	if (soundQueue.length>0) {
 		sq0=soundQueue[0];
 		watchSound(sq0);
 		printDebug(sq0);
-		soundinstance=createjs.Sound.play(sq0);
-		if (soundinstance.playState!="playFailed") {
-			soundinstance.addEventListener("complete",handleNextSound);
-		} else {
-			console.log("play failed");
+		//soundinstance=createjs.Sound.play(sq0);
+		//if (soundinstance.playState!="playFailed") {
+		//	soundinstance.addEventListener("complete",handleNextSound);
+		//} else {
+			//xxx.log("play failed (sound disabled)");
 			handleNextSound(null);
-		}
+		//}
 	}
 }
 
@@ -1908,7 +1908,7 @@ function getCharacter(pieceNumber) {
 }
 
 function pulsate(bitmap,pulsetime) {
-	//console.log("bitmap",bitmap,"pulsetime",pulsetime);
+	////xxx.log("bitmap",bitmap,"pulsetime",pulsetime);
 	var partTime=Math.floor(pulsetime/4);
 	createjs.Tween.get(bitmap).to({scaleX:1.1,scaleY:1.1},partTime,createjs.Ease.sineInOut).to({scaleX:1.0,scaleY:1.0},partTime,createjs.Ease.sineInOut).to({scaleX:1.1,scaleY:1.1},partTime,createjs.Ease.sineInOut).to({scaleX:1.0,scaleY:1.0},partTime,createjs.Ease.sineInOut);
 }
@@ -2024,7 +2024,7 @@ function Character(pieceNumber,pieceDeltaX,pieceDeltaY,happyPic,hasSadPic,hasHan
 function enableDrawing() {
 	if (helpContainer.visible) {
 		//wait until helpContainer is gone
-		console.log("not ready to enable drawing");
+		//xxx.log("not ready to enable drawing");
 		setTimeout(enableDrawing,2000);
 	} else if (menuClothes.focus) {
 		clothesGameContainer.drawingEnabled=true;
@@ -2039,11 +2039,9 @@ function enableDrawing() {
 			crayons[i]=makeCrayon(crayonColors[i],"black",3); //xxx possibly move to init
 			crayonsOverlay[i]=makeCrayon("lightblue","lightblue",4);
 			crayons[i].index=i;
-			crayonsOverlay[i].index=i;
 			stage.addChild(crayonsOverlay[i]);
 			stage.addChild(crayons[i]);
 			crayons[i].addEventListener("mousedown",handleCrayonMouseDown);
-			crayonsOverlay[i].addEventListener("mousedown",handleCrayonMouseDown);
 		}
 		
 		drawCrayons(crayonColorIndex);
@@ -2104,7 +2102,7 @@ function makeCrayon(color,outlineColor,outlineWidth) {
 
 function handleClothesPaint() {
 	if (clothesGameContainer.clean) {
-		console.log("paint on clothes");
+		//xxx.log("paint on clothes");
 		clothesGameContainer.clean=false;
 		tore.sad.alpha=1.0; //xxx eller tween?
 		stage.update();
@@ -2112,9 +2110,13 @@ function handleClothesPaint() {
 	}
 	
 }
+//xxx två fel: erro om man klickar back innan kritor visats
+//tore försvineer ändra gången man spelar
+//första felet fixat men allvarligt fel upptäckt. om man gör en paus och i ritspelet fryser det. 
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 function drawCrayons(index) {
-	console.log("drawCrayons",index);
 	var crayonDelta=50; //xxx to setup
 	var number=crayons.length; 
 	var crayonTop=canvasHeight-(number+1)*crayonDelta;
@@ -2124,6 +2126,7 @@ function drawCrayons(index) {
 	for (var i=0;i<number;i++) {
 
 		crayonsOverlay[i].y=crayonTop+i*crayonDelta;
+		//xxx.log(crayonTop,i*crayonDelta);
 		crayonsOverlay[i].x=canvasWidth-crayonShowLength-2;
 
 		crayons[i].y=crayonTop+i*crayonDelta;
@@ -2132,6 +2135,7 @@ function drawCrayons(index) {
 		} else {
 			crayons[i].x=canvasWidth-crayonShowLength/2;
 		}
+		//xxx.log("x,y:",crayons[i].x,crayons[i].y)
 	}
 }
 
@@ -2139,12 +2143,14 @@ function handleCrayonMouseDown(evt) {
 	crayonColorIndex=evt.target.index;
 	crayonColor=crayonColors[crayonColorIndex];
 	drawCrayons(crayonColorIndex);
+	printDebug("autoClear"+stage.autoClear);
 	stage.update();
 }
 
 
 function handleStrokeMouseDown(evt) {
-	console.log(">>>>> handleStrokeMouseDown", stage.mouseX|0, stage.mouseY|0);
+	//xxx.log(">>>>>>> handleStrokeMouseDown");
+	//xxx.log("handleStrokeMouseDown detect paint");
 	detectPaint();
 	stroke = 10; //xxx to setup
 	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
@@ -2157,7 +2163,7 @@ function handleStrokeMouseDown(evt) {
 }
 
 function handleStrokeMouseMove(evt) {
-	console.log("***** handleStrokeMouseMove");
+	//xxx.log("***** handleStrokeMouseMove detect paint");
 	detectPaint();
 
 	var midPt = new createjs.Point(oldPt.x + stage.mouseX>>1, oldPt.y+stage.mouseY>>1);
@@ -2176,8 +2182,6 @@ function handleStrokeMouseMove(evt) {
 }
 
 function handleStrokeMouseUp(evt) {
-	console.log("***** handleStrokeMouseUp", stage.mouseX|0, stage.mouseY|0);
-
 	drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
 	moveTo(oldMidPt.x, oldMidPt.y).
 	lineTo(stage.mouseX,stage.mouseY);
@@ -2200,6 +2204,6 @@ function detectPaint() {
 
 
 function log(text) {
-	console.log(text);
-	console.log("active tweens: "+createjs.Tween.hasActiveTweens());
+	//xxx.log(text);
+	//xxx.log("active tweens: "+createjs.Tween.hasActiveTweens());
 }

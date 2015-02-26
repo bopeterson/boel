@@ -22,7 +22,7 @@ var debugAlwaysUpdate=false;
 
 //variables that must be the same as attributes in index.html
 //they could be retrived as canvas.height etc, but must sometimes be used before they can be retrieved. 
-canvasWidth=1024;
+canvasWidth=2000;
 canvasHeight=768;
 
 //prototypes for subclasses
@@ -319,55 +319,55 @@ function init() {
 	//xxx must include ogg as well. Please use the new alternateExtensions property.
 	//se http://www.createjs.com/tutorials/SoundJS%20and%20PreloadJS/. Gör olika testljud med ogg och mp3 för att testa
 	var soundFiles=[
-		{id:"andrataartbiten",src:"assets/andrataartbiten.mp3"},
-		{id:"boelslut",src:"assets/boelslut.mp3"},
-		{id:"boelstart",src:"assets/boelstart.mp3"},
-		{id:"boelvill_",src:"assets/boelvill_.mp3"},
-		{id:"detaerju",src:"assets/detaerju.mp3"},
-		{id:"detaerjuentaartbit",src:"assets/detaerjuentaartbit.mp3"},
-		{id:"detvarvaelinte",src:"assets/detvarvaelinte.mp3"},
-		{id:"faar",src:"assets/faar.mp3"},
-		{id:"femtetaartbiten",src:"assets/femtetaartbiten.mp3"},
-		{id:"fjaerdetaartbiten",src:"assets/fjaerdetaartbiten.mp3"},
-		{id:"foerstataartbiten",src:"assets/foerstataartbiten.mp3"},
-		{id:"hundenslut",src:"assets/hundenslut.mp3"},
-		{id:"hundenstart",src:"assets/hundenstart.mp3"},
-		{id:"hundenvill_",src:"assets/hundenvill_.mp3"},
-		{id:"ja",src:"assets/ja.mp3"},
-		{id:"mammaslut",src:"assets/mammaslut.mp3"},
-		{id:"mammastart",src:"assets/mammastart.mp3"},
-		{id:"mammavill_",src:"assets/mammavill_.mp3"},
-		{id:"morfarslut",src:"assets/morfarslut.mp3"},
-		{id:"morfarstart",src:"assets/morfarstart.mp3"},
-		{id:"morfarvill_",src:"assets/morfarvill_.mp3"},
-		{id:"pappaslut",src:"assets/pappaslut.mp3"},
-		{id:"pappastart",src:"assets/pappastart.mp3"},
-		{id:"pappavill_",src:"assets/pappavill_.mp3"},
-		{id:"sjaettetaartbiten",src:"assets/sjaettetaartbiten.mp3"},
-		{id:"somfaar",src:"assets/somfaar.mp3"},
-		{id:"toreslut",src:"assets/toreslut.mp3"},
-		{id:"torestart",src:"assets/torestart.mp3"},
-		{id:"torevill_",src:"assets/torevill_.mp3"},
-		{id:"tredjetaartbiten",src:"assets/tredjetaartbiten.mp3"},
-		{id:"tyst1000",src:"assets/tyst1000.mp3"},
-		{id:"cakebounce",src:"assets/cakebounce.mp3"},
-		{id:"detjublue",src:"assets/detjublue.mp3"},
-		{id:"detjuyellow",src:"assets/detjuyellow.mp3"},
-		{id:"detjugreen",src:"assets/detjugreen.mp3"},
-		{id:"detjured",src:"assets/detjured.mp3"},
-		//{id:"nejinteyellow",src:"assets/nejinteyellow.mp3"},
-		//{id:"nejintegreen",src:"assets/nejintegreen.mp3"},
-		//{id:"nejinteblue",src:"assets/nejinteblue.mp3"},
-		//{id:"nejintered",src:"assets/nejintered.mp3"},
-		{id:"jagreen",src:"assets/jagreen.mp3"},
-		{id:"jablue",src:"assets/jablue.mp3"},
-		{id:"jared",src:"assets/jared.mp3"},
-		{id:"jayellow",src:"assets/jayellow.mp3"},
-		{id:"vargreen",src:"assets/vargreen.mp3"},
-		{id:"varblue",src:"assets/varblue.mp3"},
-		{id:"varyellow",src:"assets/varyellow.mp3"},
-		{id:"varred",src:"assets/varred.mp3"},
-		{id:"tada",src:"assets/tada.mp3"}];
+		{id:"andrataartbiten",src:"assets/andrataartbiten.ogg"},
+		{id:"boelslut",src:"assets/boelslut.ogg"},
+		{id:"boelstart",src:"assets/boelstart.ogg"},
+		{id:"boelvill_",src:"assets/boelvill_.ogg"},
+		{id:"detaerju",src:"assets/detaerju.ogg"},
+		{id:"detaerjuentaartbit",src:"assets/detaerjuentaartbit.ogg"},
+		{id:"detvarvaelinte",src:"assets/detvarvaelinte.ogg"},
+		{id:"faar",src:"assets/faar.ogg"},
+		{id:"femtetaartbiten",src:"assets/femtetaartbiten.ogg"},
+		{id:"fjaerdetaartbiten",src:"assets/fjaerdetaartbiten.ogg"},
+		{id:"foerstataartbiten",src:"assets/foerstataartbiten.ogg"},
+		{id:"hundenslut",src:"assets/hundenslut.ogg"},
+		{id:"hundenstart",src:"assets/hundenstart.ogg"},
+		{id:"hundenvill_",src:"assets/hundenvill_.ogg"},
+		{id:"ja",src:"assets/ja.ogg"},
+		{id:"mammaslut",src:"assets/mammaslut.ogg"},
+		{id:"mammastart",src:"assets/mammastart.ogg"},
+		{id:"mammavill_",src:"assets/mammavill_.ogg"},
+		{id:"morfarslut",src:"assets/morfarslut.ogg"},
+		{id:"morfarstart",src:"assets/morfarstart.ogg"},
+		{id:"morfarvill_",src:"assets/morfarvill_.ogg"},
+		{id:"pappaslut",src:"assets/pappaslut.ogg"},
+		{id:"pappastart",src:"assets/pappastart.ogg"},
+		{id:"pappavill_",src:"assets/pappavill_.ogg"},
+		{id:"sjaettetaartbiten",src:"assets/sjaettetaartbiten.ogg"},
+		{id:"somfaar",src:"assets/somfaar.ogg"},
+		{id:"toreslut",src:"assets/toreslut.ogg"},
+		{id:"torestart",src:"assets/torestart.ogg"},
+		{id:"torevill_",src:"assets/torevill_.ogg"},
+		{id:"tredjetaartbiten",src:"assets/tredjetaartbiten.ogg"},
+		{id:"tyst1000",src:"assets/tyst1000.ogg"},
+		{id:"cakebounce",src:"assets/cakebounce.ogg"},
+		{id:"detjublue",src:"assets/detjublue.ogg"},
+		{id:"detjuyellow",src:"assets/detjuyellow.ogg"},
+		{id:"detjugreen",src:"assets/detjugreen.ogg"},
+		{id:"detjured",src:"assets/detjured.ogg"},
+		//{id:"nejinteyellow",src:"assets/nejinteyellow.ogg"},
+		//{id:"nejintegreen",src:"assets/nejintegreen.ogg"},
+		//{id:"nejinteblue",src:"assets/nejinteblue.ogg"},
+		//{id:"nejintered",src:"assets/nejintered.ogg"},
+		{id:"jagreen",src:"assets/jagreen.ogg"},
+		{id:"jablue",src:"assets/jablue.ogg"},
+		{id:"jared",src:"assets/jared.ogg"},
+		{id:"jayellow",src:"assets/jayellow.ogg"},
+		{id:"vargreen",src:"assets/vargreen.ogg"},
+		{id:"varblue",src:"assets/varblue.ogg"},
+		{id:"varyellow",src:"assets/varyellow.ogg"},
+		{id:"varred",src:"assets/varred.ogg"},
+		{id:"tada",src:"assets/tada.ogg"}];
 				
 		
 	//simple as opposed to the more complex files making a cake and a table
@@ -434,9 +434,9 @@ function init() {
 
 
 	queue=new createjs.LoadQueue(false);
-	createjs.Sound.alternateExtensions = ["ogg"]; 
+	createjs.Sound.alternateExtensions = ["mp3"]; 
 	//in theory, you could list .mp3 files and have "ogg" as alternate extension, but that
-	//seems to cause problems for chrome on android. It is better to have it the other way around. Or maybe not.
+	//seems to cause problems for chrome on android. It is better to have it the other way around. 
 	queue.installPlugin(createjs.Sound);
 	queue.addEventListener("complete",handleComplete);
 	queue.addEventListener("error", handleFileError);
@@ -2039,11 +2039,9 @@ function enableDrawing() {
 			crayons[i]=makeCrayon(crayonColors[i],"black",3); //xxx possibly move to init
 			crayonsOverlay[i]=makeCrayon("lightblue","lightblue",4);
 			crayons[i].index=i;
-			crayonsOverlay[i].index=i;
 			stage.addChild(crayonsOverlay[i]);
 			stage.addChild(crayons[i]);
 			crayons[i].addEventListener("mousedown",handleCrayonMouseDown);
-			crayonsOverlay[i].addEventListener("mousedown",handleCrayonMouseDown);
 		}
 		
 		drawCrayons(crayonColorIndex);
@@ -2112,9 +2110,13 @@ function handleClothesPaint() {
 	}
 	
 }
+//xxx två fel: erro om man klickar back innan kritor visats
+//tore försvineer ändra gången man spelar
+//första felet fixat men allvarligt fel upptäckt. om man gör en paus och i ritspelet fryser det. 
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 function drawCrayons(index) {
-	console.log("drawCrayons",index);
 	var crayonDelta=50; //xxx to setup
 	var number=crayons.length; 
 	var crayonTop=canvasHeight-(number+1)*crayonDelta;
@@ -2124,6 +2126,7 @@ function drawCrayons(index) {
 	for (var i=0;i<number;i++) {
 
 		crayonsOverlay[i].y=crayonTop+i*crayonDelta;
+		console.log(crayonTop,i*crayonDelta);
 		crayonsOverlay[i].x=canvasWidth-crayonShowLength-2;
 
 		crayons[i].y=crayonTop+i*crayonDelta;
@@ -2132,6 +2135,7 @@ function drawCrayons(index) {
 		} else {
 			crayons[i].x=canvasWidth-crayonShowLength/2;
 		}
+		console.log("x,y:",crayons[i].x,crayons[i].y)
 	}
 }
 
@@ -2139,12 +2143,14 @@ function handleCrayonMouseDown(evt) {
 	crayonColorIndex=evt.target.index;
 	crayonColor=crayonColors[crayonColorIndex];
 	drawCrayons(crayonColorIndex);
+	printDebug("autoClear"+stage.autoClear);
 	stage.update();
 }
 
 
 function handleStrokeMouseDown(evt) {
-	console.log(">>>>> handleStrokeMouseDown", stage.mouseX|0, stage.mouseY|0);
+	console.log(">>>>>>> handleStrokeMouseDown");
+	console.log("handleStrokeMouseDown detect paint");
 	detectPaint();
 	stroke = 10; //xxx to setup
 	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
@@ -2157,7 +2163,7 @@ function handleStrokeMouseDown(evt) {
 }
 
 function handleStrokeMouseMove(evt) {
-	console.log("***** handleStrokeMouseMove");
+	console.log("***** handleStrokeMouseMove detect paint");
 	detectPaint();
 
 	var midPt = new createjs.Point(oldPt.x + stage.mouseX>>1, oldPt.y+stage.mouseY>>1);
@@ -2176,8 +2182,6 @@ function handleStrokeMouseMove(evt) {
 }
 
 function handleStrokeMouseUp(evt) {
-	console.log("***** handleStrokeMouseUp", stage.mouseX|0, stage.mouseY|0);
-
 	drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
 	moveTo(oldMidPt.x, oldMidPt.y).
 	lineTo(stage.mouseX,stage.mouseY);

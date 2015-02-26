@@ -434,9 +434,9 @@ function init() {
 
 
 	queue=new createjs.LoadQueue(false);
-	createjs.Sound.alternateExtensions = ["ogg"]; 
+	//createjs.Sound.alternateExtensions = ["mp3"]; 
 	//in theory, you could list .mp3 files and have "ogg" as alternate extension, but that
-	//seems to cause problems for chrome on android. It is better to have it the other way around. Or maybe not.
+	//seems to cause problems for chrome on android. It is better to have it the other way around. 
 	queue.installPlugin(createjs.Sound);
 	queue.addEventListener("complete",handleComplete);
 	queue.addEventListener("error", handleFileError);
@@ -2039,11 +2039,9 @@ function enableDrawing() {
 			crayons[i]=makeCrayon(crayonColors[i],"black",3); //xxx possibly move to init
 			crayonsOverlay[i]=makeCrayon("lightblue","lightblue",4);
 			crayons[i].index=i;
-			crayonsOverlay[i].index=i;
 			stage.addChild(crayonsOverlay[i]);
 			stage.addChild(crayons[i]);
 			crayons[i].addEventListener("mousedown",handleCrayonMouseDown);
-			crayonsOverlay[i].addEventListener("mousedown",handleCrayonMouseDown);
 		}
 		
 		drawCrayons(crayonColorIndex);
@@ -2112,9 +2110,13 @@ function handleClothesPaint() {
 	}
 	
 }
+//xxx två fel: erro om man klickar back innan kritor visats
+//tore försvineer ändra gången man spelar
+//första felet fixat men allvarligt fel upptäckt. om man gör en paus och i ritspelet fryser det. 
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 function drawCrayons(index) {
-	console.log("drawCrayons",index);
 	var crayonDelta=50; //xxx to setup
 	var number=crayons.length; 
 	var crayonTop=canvasHeight-(number+1)*crayonDelta;
@@ -2124,6 +2126,7 @@ function drawCrayons(index) {
 	for (var i=0;i<number;i++) {
 
 		crayonsOverlay[i].y=crayonTop+i*crayonDelta;
+		console.log(crayonTop,i*crayonDelta);
 		crayonsOverlay[i].x=canvasWidth-crayonShowLength-2;
 
 		crayons[i].y=crayonTop+i*crayonDelta;
@@ -2132,6 +2135,7 @@ function drawCrayons(index) {
 		} else {
 			crayons[i].x=canvasWidth-crayonShowLength/2;
 		}
+		console.log("x,y:",crayons[i].x,crayons[i].y)
 	}
 }
 
@@ -2139,12 +2143,14 @@ function handleCrayonMouseDown(evt) {
 	crayonColorIndex=evt.target.index;
 	crayonColor=crayonColors[crayonColorIndex];
 	drawCrayons(crayonColorIndex);
+	printDebug("autoClear"+stage.autoClear);
 	stage.update();
 }
 
 
 function handleStrokeMouseDown(evt) {
-	console.log(">>>>> handleStrokeMouseDown", stage.mouseX|0, stage.mouseY|0);
+	console.log(">>>>>>> handleStrokeMouseDown");
+	console.log("handleStrokeMouseDown detect paint");
 	detectPaint();
 	stroke = 10; //xxx to setup
 	oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
@@ -2157,7 +2163,7 @@ function handleStrokeMouseDown(evt) {
 }
 
 function handleStrokeMouseMove(evt) {
-	console.log("***** handleStrokeMouseMove");
+	console.log("***** handleStrokeMouseMove detect paint");
 	detectPaint();
 
 	var midPt = new createjs.Point(oldPt.x + stage.mouseX>>1, oldPt.y+stage.mouseY>>1);
@@ -2176,8 +2182,6 @@ function handleStrokeMouseMove(evt) {
 }
 
 function handleStrokeMouseUp(evt) {
-	console.log("***** handleStrokeMouseUp", stage.mouseX|0, stage.mouseY|0);
-
 	drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
 	moveTo(oldMidPt.x, oldMidPt.y).
 	lineTo(stage.mouseX,stage.mouseY);
