@@ -105,10 +105,23 @@ var lastWakeTime=0;
 
 var preload;
 
+var snd;
 
 function init(mode) {
 	
+	snd = new Audio("assets/tada.mp3"); // buffers automatically when created
+	snd.play();
+	//snd.pause();
 	
+	/*
+	detta är nog bra även om det beskriver xmlhttp http://www.html5rocks.com/en/tutorials/webaudio/intro/
+	intressant att testa från http://stackoverflow.com/questions/9419263/playing-audio-with-javascript och http://www.storiesinflight.com/html5/audio.html
+	
+	verkar också bra:
+	http://www.position-absolute.com/articles/introduction-to-the-html5-audio-tag-javascript-manipulation/
+	
+	document.getElementById('yourAudioTag').play();
+	*/
 	
 	var filetype1;
 	var filetype2;
@@ -213,6 +226,10 @@ function init(mode) {
 		{id:"varyellow",src:"assets/varyellow."+filetype1},
 		{id:"varred",src:"assets/varred."+filetype1},
 		{id:"tada",src:"assets/tada."+filetype1}];
+		
+	if (filetype1=="none" && filetype2=="none") { 
+		soundFiles=[];
+	}
 				
 		
 	//simple as opposed to the more complex files making a cake and a table
@@ -238,6 +255,12 @@ function init(mode) {
 	
 
 	queue=new createjs.LoadQueue(false);
+	//queue=new createjs.LoadQueue(true,null,true);
+	//queue=new createjs.LoadQueue(false,null,false);
+	//queue=new createjs.LoadQueue(false,null,true);
+	//queue=new createjs.LoadQueue(true,null,false);
+
+
 	if (filetype2!="none") {
 		createjs.Sound.alternateExtensions = [filetype2];
 	}
@@ -513,6 +536,7 @@ function hideSplashScreen() {
 }
 
 function handleMenuHelpTouch(evt) {
+	snd.play();
 	if (noGameRunning()) {
 		showHelp(generalHelpText,generalHelpSound);	
 	} else if (menuBall.focus) {
