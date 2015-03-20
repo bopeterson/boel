@@ -272,6 +272,9 @@ var stroke;
 
 
 
+
+/* =========== MIXED ========== */
+
 /**
  * Launched from index.html
  * @summary mixed
@@ -656,6 +659,161 @@ function init() {
     filesToLoad = files.length;
 } //init
 
+/** 
+ * @summary mixed
+ */
+function watchSound(s0) {
+    "use strict";
+    var i;
+    for (i = 0; i < ordinal.length; i += 1) {
+        if (s0 == ordinal[i]) {
+            showNumber(i);
+        }
+    }
+    if (s0 == "varblue" || s0 == "varred" || s0 == "varyellow" || s0 == "vargreen") {
+        pulsate(nextBall, ballPulsateTime);
+
+    }
+    if (s0 == "tada") {
+        showStar();
+    }
+}
+
+/** 
+ * @summary mixed
+ */
+function noGameRunning() {
+    "use strict";
+    return (!menuBall.focus && !menuCake.focus && !menuClothes.focus);
+}
+
+/** 
+ * @summary mixed
+ */
+function handleComplete(event) {
+    "use strict";
+    //event triggered even if file not loaded
+    if (loadedFiles < filesToLoad) {
+        progressBar.graphics.beginFill(progressBarErrorColor).drawRect(0, 0, canvasWidth, progressBar.height);
+        //xxx the loader div is only for debugging and should be deleted
+        //var div = document.getElementById("loader");
+        //div.innerHTML = "Some resources were not loaded: " + (filesToLoad - loadedFiles);
+    } else {
+        createjs.Tween.get(progressBar).to({
+            alpha: 0.0
+        }, progressBarFadeTime);
+    }
+
+    addBoelToreSplash();
+    stage.removeChild(progressBar); //to make it visible on top of BoelToreSplash
+    stage.addChild(progressBar);
+    stage.removeChild(debugText); //to make it visible on top of BoelToreSplash
+    stage.addChild(debugText);
+    addHelp();
+    addTable();
+    addCake(pieceParts, numberOfCakePieces, cakeFiles);
+    addBall();
+    addClothes();
+    addBackButton();
+    addNumbers();
+    addStar();
+    addBackground();
+
+    //setup almost complete, start the ticker
+
+    if (useRAF) {
+        createjs.Ticker.timingMode = createjs.Ticker.RAF;
+    } else {
+        createjs.Ticker.timingMode = createjs.Ticker.TIMEOUT;
+        createjs.Ticker.framerate=fps;
+    }
+    stage.update();
+
+    createjs.Ticker.addEventListener("tick", handleTick);
+
+}
+
+/** 
+ * @summary mixed
+ */
+function changeSplashScreen(alpha) {
+    "use strict";
+    createjs.Tween.get(menuCake).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(menuBall).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(menuClothes).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(backButton).to({
+        alpha: (1 - alpha)
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(boelToreSplash).to({
+        alpha: alpha
+    }, gameTransitionTime / 2, createjs.Ease.linear);
+    //splashScreenBackground.alpha = alpha;//xxxyyy createjs.Tween.get(splashScreenBackground).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
+
+
+
+    if (alpha > 0.9) {
+        changeBackground(splashScreenBackgroundColor);
+        createjs.Tween.get(menuHelp).to({
+            x: menuHelpX,
+            y: menuHelpY
+        }, gameTransitionTime / 2, createjs.Ease.linear);
+    } else {
+        createjs.Tween.get(menuHelp).to({
+            x: menuHelpRunningX,
+            y: menuHelpRunningY
+        }, gameTransitionTime / 2, createjs.Ease.linear);
+    }
+
+}
+
+/** 
+ * @summary mixed
+ */
+function handleTick(event) {
+    "use strict";
+    nowMillis = createjs.Ticker.getTime(false);
+
+    if (nowMillis - lastWakeTime > wakeInterval) {
+        //this update is good for two reasons:
+        //1: it prevents certain browsers to sleep
+        //2: it assures that the stage is updatedet even if a tween is too fast and not caught by handleTick
+        update = true;
+        lastWakeTime = nowMillis;
+    }
+
+    //things to do only when a tween is running or something is dragged
+    if (update || debugAlwaysUpdate) {
+        if (menuBall.focus)  {
+            checkBallOutsideAndBallBounce();
+        }
+        stage.update(event); //pass event to make sure for example sprite animation works
+    }
+    update = createjs.Tween.hasActiveTweens(); //xxxtickxxx
+}
+
+/** 
+ * @summary mixed
+ */
+function handleBackButtonTouch(event) {
+    "use strict";
+    //update = true; //xxxtick nu funkar det att gå tillbaka men utan tween, istället pang på!
+    if (menuBall.focus) {
+        restoreMenuBall();
+    } else if (menuCake.focus) {
+        restoreMenuCake();
+    } else if (menuClothes.focus) {
+        restoreMenuClothes();
+    }
+}
+
+/* =========== GENERAL ========== */
+
 /** Changes background color of canvas
  * @summary general
  * @param {string} color - Background color in valid css format, for example "#FF0000" or "red"
@@ -711,7 +869,6 @@ function printDebug(text) {
 /** 
  * @summary general
  */
-
 function handleFileError(event) {
     "use strict";
     //var div = document.getElementById("loader");
@@ -759,52 +916,6 @@ function addProgressBar() {
 }
 
 /** 
- * @summary mixed
- */
-function handleComplete(event) {
-    "use strict";
-    //event triggered even if file not loaded
-    if (loadedFiles < filesToLoad) {
-        progressBar.graphics.beginFill(progressBarErrorColor).drawRect(0, 0, canvasWidth, progressBar.height);
-        //xxx the loader div is only for debugging and should be deleted
-        //var div = document.getElementById("loader");
-        //div.innerHTML = "Some resources were not loaded: " + (filesToLoad - loadedFiles);
-    } else {
-        createjs.Tween.get(progressBar).to({
-            alpha: 0.0
-        }, progressBarFadeTime);
-    }
-
-    addBoelToreSplash();
-    stage.removeChild(progressBar); //to make it visible on top of BoelToreSplash
-    stage.addChild(progressBar);
-    stage.removeChild(debugText); //to make it visible on top of BoelToreSplash
-    stage.addChild(debugText);
-    addHelp();
-    addTable();
-    addCake(pieceParts, numberOfCakePieces, cakeFiles);
-    addBall();
-    addClothes();
-    addBackButton();
-    addNumbers();
-    addStar();
-    addBackground();
-
-    //setup almost complete, start the ticker
-
-
-    createjs.Ticker.addEventListener("tick", handleTick);
-
-
-    if (useRAF) {
-        createjs.Ticker.timingMode = createjs.Ticker.RAF;
-    } else {
-        createjs.Ticker.setFPS(fps);
-    }
-    stage.update();
-}
-
-/** 
  * @summary general
  */
 function addBackground() {
@@ -821,27 +932,299 @@ function addBackground() {
 /** 
  * @summary general
  */
-function handleTick(event) {
+function addHelp() {
     "use strict";
-    nowMillis = createjs.Ticker.getTime(false);
+    menuHelp = new createjs.Bitmap(queue.getResult("menuHelp"));
+    stage.addChild(menuHelp);
+    menuHelp.x = menuHelpX;
+    menuHelp.y = menuHelpY;
+    menuHelp.alpha = 1.0;
+    menuHelp.addEventListener("mousedown", handleMenuHelpTouch);
 
-    if (nowMillis - lastWakeTime > wakeInterval) {
-        //this update is good for two reasons:
-        //1: it prevents certain browsers to sleep
-        //2: it assures that the stage is updatedet even if a tween is too fast and not caught by handleTick
-        update = true;
-        lastWakeTime = nowMillis;
-    }
 
-    //things to do only when a tween is running or something is dragged
-    if (update || debugAlwaysUpdate) {
-        if (menuBall.focus)  {
-            checkBallOutsideAndBallBounce();
-        }
-        stage.update(event); //pass event to make sure for example sprite animation works
-    }
-    update = createjs.Tween.hasActiveTweens(); //xxxtickxxx
+    helpContainer = new createjs.Container();
+    helpContainer.x = 100;
+    helpContainer.y = 100;
+    helpContainer.visible = false;
+
+    helpFrame = new createjs.Shape();
+
+    helpFrame.graphics.
+    beginFill("white").
+    beginStroke("orange").setStrokeStyle(20, 'round', 'round').
+    drawRect(0, 0, canvasWidth - 100 * 2, canvasHeight - 100 * 2);
+
+
+
+    helpTextBox = new createjs.Text("", "36px sans-serif", "#000");
+    helpTextBox.lineHeight = 42;
+    helpTextBox.lineWidth = canvasWidth - 4 * 100;
+    helpTextBox.x = 100;
+    helpTextBox.y = 100;
+    helpContainer.addChild(helpFrame);
+    helpContainer.addChild(helpTextBox);
+
+
+    menuHelp.focus = false; //xxx ska detta in som gamerunning? inte riktigt kanke. den ska nog bort
 }
+
+/** 
+ * @summary general
+ */
+function addStar() {
+    "use strict";
+    star = new createjs.Bitmap(queue.getResult("star"));
+    stage.addChild(star);
+    star.regX = star.image.width / 2 | 0;
+    star.regY = star.image.height / 2 | 0;
+    star.x = canvasWidth / 2 | 0;
+    star.y = canvasHeight / 2 | 0;
+    hideStar();
+}
+
+/** 
+ * @summary general
+ */
+function addDebugText() {
+    "use strict";
+    debugText = new createjs.Text("", "24px Courier", "#000");
+
+    debugText.x = 20;
+    debugText.y = canvasHeight - 30;
+    if (debug) {
+        debugText.text = "Debug on";
+    } else {
+        debugText.text = " ";
+    }
+    stage.addChild(debugText);
+}
+
+/** 
+ * @summary general
+ */
+function showSplashScreen() {
+    "use strict";
+    changeSplashScreen(1.0);
+}
+
+/** 
+ * @summary general
+ */
+function hideSplashScreen() {
+    "use strict";
+    changeSplashScreen(0.0);
+}
+
+/** 
+ * @summary general
+ */
+function handleMenuHelpTouch(evt) {
+    "use strict";
+    if (noGameRunning()) {
+        showHelp(generalHelpText, generalHelpSound);
+    } else if (menuCake.focus) {
+        showHelp(cakeHelpText, cakeHelpSound);
+    } else if (menuBall.focus) {
+        showHelp(ballHelpText, ballHelpSound);
+    } else if (menuClothes.focus) {
+        showHelp(clothesHelpText, clothesHelpSound);
+    }
+}
+
+/** 
+ * @summary general
+ */
+function showHelp(text, sound) {
+    "use strict";
+    console.log("showHelp");
+    //xxx ska man pausa tweens? pausa ljud? blir lite knepigt...
+    helpTextBox.text = text;
+    helpContainer.visible = true;
+    stage.addChild(background);
+    stage.addChild(helpContainer);
+    stage.update();
+}
+
+/** 
+ * @summary general
+ */
+function hideHelp() {
+    "use strict";
+    helpTextBox.text = "";
+    stage.removeChild(helpContainer);
+    stage.removeChild(background);
+    helpContainer.visible = false;
+    stage.update();
+}
+
+/** 
+ * @summary general
+ */
+function isRunning(tween) {
+    "use strict";
+    //if no argument is given it should check all running tweens, but if argument is given only that tween should be checked
+    //however, due to a bug in 0.5.1, all tweens are checked, with or without tween argument. 
+
+    //possibly somtehing like createjs.Tween.hasActiveTweens(tween.target???) might work, but 
+    //in NEXT version
+    //NOTE: if this is fixed in a future version make sure this function works both with and without argument.  
+    return createjs.Tween.hasActiveTweens();
+}
+
+/** 
+ * @summary general
+ */
+function addBoelToreSplash() {
+    "use strict";
+    boelToreSplash = new createjs.Bitmap(queue.getResult("boelToreSplash"));
+    stage.addChild(boelToreSplash);
+}
+
+/** 
+ * @summary general
+ */
+function addBackButton() {
+    "use strict";
+    backButton = new createjs.Bitmap(queue.getResult("backButton"));
+    stage.addChild(backButton);
+    backButton.x = backButtonX;
+    backButton.y = backButtonY;
+    backButton.alpha = 0;
+    //button.regX = button.image.width/2; //should be deleted xxx
+    //button.regY = button.image.height/2;
+    backButton.name = "Back button";
+    backButton.addEventListener("mousedown", handleBackButtonTouch);
+}
+
+/** 
+ * @summary general
+ */
+function extendAndPlayQueue(sounds) {
+    "use strict";
+    var soundQueueLengthBefore = soundQueue.length;
+    soundQueue = soundQueue.concat(sounds);
+    if (soundQueueLengthBefore == 0) { //queue was empty, no sound was playing
+        playQueue();
+    }
+}
+
+/** 
+ * @summary general
+ */
+function playQueue() {
+    "use strict";
+    console.log("playQueue: ", soundQueue);
+    var sq0;
+    var soundinstance;
+    if (soundQueue.length > 0) {
+        sq0 = soundQueue[0];
+        watchSound(sq0);
+        printDebug(sq0);
+        soundinstance = createjs.Sound.play(sq0);
+        if (soundinstance.playState != "playFailed") {
+            soundinstance.addEventListener("complete", handleNextSound);
+        } else {
+            console.log("play failed");
+            handleNextSound(null);
+        }
+    }
+}
+
+/** 
+ * @summary general
+ */
+function playSingle(sound) {
+    "use strict";
+    var soundinstance;
+    soundinstance = createjs.Sound.play(sound);
+}
+
+/** 
+ * @summary general
+ */
+function handleNextSound(evt) {
+    "use strict";
+    soundQueue = soundQueue.splice(1);
+    playQueue();
+}
+
+/** 
+ * @summary general
+ */
+function showStar() {
+    "use strict";
+    createjs.Tween.get(star).
+    to({
+        alpha: 0.7,
+        scaleX: 2.3,
+        scaleY: 2.3
+    }, 2000, createjs.Ease.getElasticOut(1, 0.3)).
+    wait(1000).
+    to({
+        alpha: 0
+    }, 1000).
+    to({
+        scaleX: 0.1,
+        scaleY: 0.1
+    }, 10);
+}
+
+/** 
+ * @summary general
+ */
+function hideStar() {
+    "use strict";
+    createjs.Tween.removeTweens(star);
+    star.alpha = 0;
+    star.scaleX = 0.1;
+    star.scaleY = 0.1;
+}
+
+
+/** 
+ * @summary general
+ */
+function randomFutureMillis(minSec, maxSec) {
+    "use strict";
+    //note: input in milliseconds and seconds, output in milliseconds
+    var randomSec = minSec + Math.random() * (maxSec - minSec);
+    return 1000 * randomSec;
+}
+
+/** 
+ * @summary general
+ */
+function pulsate(bitmap, pulsetime) {
+    "use strict";
+    //console.log("bitmap",bitmap,"pulsetime",pulsetime);
+    var partTime = Math.floor(pulsetime / 4);
+    createjs.Tween.get(bitmap).to({
+        scaleX: 1.1,
+        scaleY: 1.1
+    }, partTime, createjs.Ease.sineInOut).to({
+        scaleX: 1.0,
+        scaleY: 1.0
+    }, partTime, createjs.Ease.sineInOut).to({
+        scaleX: 1.1,
+        scaleY: 1.1
+    }, partTime, createjs.Ease.sineInOut).to({
+        scaleX: 1.0,
+        scaleY: 1.0
+    }, partTime, createjs.Ease.sineInOut);
+}
+
+/** 
+ * @summary general
+ */
+function log(text) {
+    "use strict";
+    console.log(text);
+    console.log("active tweens: " + createjs.Tween.hasActiveTweens());
+}
+
+
+/* =========== CAKE ========== */
+
 
 /** 
  * @summary cake
@@ -861,62 +1244,6 @@ function checkCharacter() {
         }
     }
 }
-
-/** 
- * @summary ball
- */
-function handleNextBall() {
-    "use strict";
-    if (isRunning() || helpContainer.visible) {
-        console.log("not ready for next ball yet");
-        nextBallId = setTimeout(handleNextBall, 2000);
-    } else if (menuBall.focus) {
-        nextBall = findRandomBall();
-        extendAndPlayQueue("var" + nextBall.color); //this sound is "watched" and will trigger pulsating ball
-        nextBallTime = -1; //no new nextBall until this nextBall is touched 
-    }
-}
-
-/** 
- * @summary ball
- */
-function checkBallOutsideAndBallBounce() {
-    "use strict";
-    if (ballTween.hasOwnProperty("target")) {
-        var ball = ballTween.target;
-        //check if ball is outside of canvas
-        //if it is, delete it (set .inside to false) so you can't bounce against it
-        var inside = (ball.x - ball.radius) < canvasWidth && (ball.y - ball.radius) < canvasHeight && (ball.x + ball.radius) > 0 && (ball.y + ball.radius) > 0;
-        if (!inside) {
-            ball.inside = false;
-            ball.alpha = 0;
-            ballTween.setPaused(true);
-            if (ball.last) {
-                //restart game if it is the last ball
-                extendAndPlayQueue("tada");
-                startBallGame(timeToNewBallGame);
-            }
-        }
-        //check if ball has bounced into another ball 
-        if (detectBallCollision(ball, 0)) {
-            if (ball.obstacleBall != ball.lastObstacleBall) {
-                //ball has bounced into another ball. stop running tween and start new tween in new direction
-                if (isRunning(ballTween)) {
-                    ballTween.setPaused(true); //funkar nog bäst
-                }
-                //calculate bounce direction
-                var centerToCenterAngle = Math.atan2(ball.y - ball.obstacleBall.y, ball.x - ball.obstacleBall.x);
-                ball.bounceAngle = 2 * centerToCenterAngle - Math.PI - ball.startAngle;
-                var deltaX = minBounceDistance * Math.cos(ball.bounceAngle);
-                var deltaY = minBounceDistance * Math.sin(ball.bounceAngle);
-                var finalX = ball.x + deltaX;
-                var finalY = ball.y + deltaY;
-                ballTween = makeBallTween(ball, finalX, finalY, ballBounceSpeed);
-            }
-        }
-    }
-}
-
 
 /** 
  * @summary cake
@@ -1018,56 +1345,6 @@ function smashNextPiece() {
 }
 
 /** 
- * @summary ball
- */
-function makeBallTween(ball, x, y, speed) {
-    "use strict";
-    //speed in pixels per millisecond
-    var distance = Math.sqrt((x - ball.x) * (x - ball.x) + (y - ball.y) * (y - ball.y));
-    var time = Math.floor(distance / speed);
-    ball.startAngle = Math.atan2(y - ball.y, x - ball.x);
-    var rotationAngle = randomDirection() * Math.floor(360 * distance / 600.0); //600 deliberately not a setup variable, although it could have been
-    return createjs.Tween.get(ball).to({
-        x: x,
-        y: y,
-        rotation: ball.rotation + rotationAngle
-    }, time, createjs.Ease.linear);
-}
-
-/** 
- * @summary ball
- */
-function randomDirection() {
-    "use strict";
-    return (Math.random() < 0.5) ? -1.0 : 1.0;
-}
-
-/** 
- * @summary ball
- */
-function randomSpeedAndDirection() {
-    "use strict";
-    //returns random value betwwen -1 and 1
-    return 2 * Math.random() - 1.0;
-}
-
-//xxx code is kinda clean until this point, but much of the cake code hereafter needs clean up. 
-
-/** 
- * @summary general
- */
-function isRunning(tween) {
-    "use strict";
-    //if no argument is given it should check all running tweens, but if argument is given only that tween should be checked
-    //however, due to a bug in 0.5.1, all tweens are checked, with or without tween argument. 
-
-    //possibly somtehing like createjs.Tween.hasActiveTweens(tween.target???) might work, but 
-    //in NEXT version
-    //NOTE: if this is fixed in a future version make sure this function works both with and without argument.  
-    return createjs.Tween.hasActiveTweens();
-}
-
-/** 
  * @summary cake
  */
 function handleCharacterTouch(event) {
@@ -1085,103 +1362,6 @@ function handleCakePieceTouch(event) {
     var pieceNumber = event.target.number;
     var c = getCharacter(pieceNumber);
     moveCakePiece(c.pieceNumber, c.pieceDeltaX, c.pieceDeltaY, "piece");
-}
-
-/** 
- * @summary mixed
- */
-function changeSplashScreen(alpha) {
-    "use strict";
-    createjs.Tween.get(menuCake).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(menuBall).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(menuClothes).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(backButton).to({
-        alpha: (1 - alpha)
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(boelToreSplash).to({
-        alpha: alpha
-    }, gameTransitionTime / 2, createjs.Ease.linear);
-    //splashScreenBackground.alpha = alpha;//xxxyyy createjs.Tween.get(splashScreenBackground).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
-
-
-
-    if (alpha > 0.9) {
-        changeBackground(splashScreenBackgroundColor);
-        createjs.Tween.get(menuHelp).to({
-            x: menuHelpX,
-            y: menuHelpY
-        }, gameTransitionTime / 2, createjs.Ease.linear);
-    } else {
-        createjs.Tween.get(menuHelp).to({
-            x: menuHelpRunningX,
-            y: menuHelpRunningY
-        }, gameTransitionTime / 2, createjs.Ease.linear);
-    }
-
-}
-
-/** 
- * @summary general
- */
-function showSplashScreen() {
-    "use strict";
-    changeSplashScreen(1.0);
-}
-
-/** 
- * @summary general
- */
-function hideSplashScreen() {
-    "use strict";
-    changeSplashScreen(0.0);
-}
-
-/** 
- * @summary general
- */
-function handleMenuHelpTouch(evt) {
-    "use strict";
-    if (noGameRunning()) {
-        showHelp(generalHelpText, generalHelpSound);
-    } else if (menuCake.focus) {
-        showHelp(cakeHelpText, cakeHelpSound);
-    } else if (menuBall.focus) {
-        showHelp(ballHelpText, ballHelpSound);
-    } else if (menuClothes.focus) {
-        showHelp(clothesHelpText, clothesHelpSound);
-    }
-}
-
-/** 
- * @summary general
- */
-function showHelp(text, sound) {
-    "use strict";
-    console.log("showHelp");
-    //xxx ska man pausa tweens? pausa ljud? blir lite knepigt...
-    helpTextBox.text = text;
-    helpContainer.visible = true;
-    stage.addChild(background);
-    stage.addChild(helpContainer);
-    stage.update();
-}
-
-/** 
- * @summary general
- */
-function hideHelp() {
-    "use strict";
-    helpTextBox.text = "";
-    stage.removeChild(helpContainer);
-    stage.removeChild(background);
-    helpContainer.visible = false;
-    stage.update();
 }
 
 /** 
@@ -1212,61 +1392,6 @@ function handleMenuCakeTouch(event) {
 }
 
 /** 
- * @summary general
- */
-function handleBackButtonTouch(event) {
-    "use strict";
-    //update = true; //xxxtick nu funkar det att gå tillbaka men utan tween, istället pang på!
-    if (menuBall.focus) {
-        restoreMenuBall();
-    } else if (menuCake.focus) {
-        restoreMenuCake();
-    } else if (menuClothes.focus) {
-        restoreMenuClothes();
-    }
-}
-
-/** 
- * @summary general
- */
-function addStar() {
-    "use strict";
-    star = new createjs.Bitmap(queue.getResult("star"));
-    stage.addChild(star);
-    star.regX = star.image.width / 2 | 0;
-    star.regY = star.image.height / 2 | 0;
-    star.x = canvasWidth / 2 | 0;
-    star.y = canvasHeight / 2 | 0;
-    hideStar();
-}
-
-/** 
- * @summary general
- */
-function addDebugText() {
-    "use strict";
-    debugText = new createjs.Text("", "24px Courier", "#000");
-
-    debugText.x = 20;
-    debugText.y = canvasHeight - 30;
-    if (debug) {
-        debugText.text = "Debug on";
-    } else {
-        debugText.text = " ";
-    }
-    stage.addChild(debugText);
-}
-
-/** 
- * @summary general
- */
-function addBoelToreSplash() {
-    "use strict";
-    boelToreSplash = new createjs.Bitmap(queue.getResult("boelToreSplash"));
-    stage.addChild(boelToreSplash);
-}
-
-/** 
  * @summary cake
  */
 function addNumbers() {
@@ -1282,468 +1407,6 @@ function addNumbers() {
         number.alpha = 0.0;
         numbers.push(number);
         stage.addChild(numbers[i]);
-    }
-}
-
-/** 
- * @summary ball
- */
-function handleMenuBallTouch(event) {
-    "use strict";
-    if (noGameRunning()) {
-        menuBall.focus = true;
-        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone.
-        hideSplashScreen();
-        showBallGame();
-        startBallGame(0);
-    }
-}
-
-/** 
- * @summary mixed
- */
-function noGameRunning() {
-    "use strict";
-    return (!menuBall.focus && !menuCake.focus && !menuClothes.focus);
-}
-
-/** 
- * @summary clothes
- */
-function addClothes() {
-    "use strict";
-
-    menuClothes = new createjs.Bitmap(queue.getResult("menuClothes"));
-    stage.addChild(menuClothes);
-
-    //these parameters won't change
-    menuClothes.x = menuClothesX;
-    menuClothes.y = menuClothesY;
-    menuClothes.name = "menuClothes";
-
-    //these will change
-    menuClothes.alpha = 1.0;
-    menuClothes.focus = false;
-
-    menuClothes.addEventListener("mousedown", handleMenuClothesTouch);
-
-    clothesGameContainer = new createjs.Container();
-    clothesGameContainer.x = clothesGameContainerX;
-    clothesGameContainer.y = clothesGameContainerY;
-    clothesGameContainer.alpha = 0.0;
-    clothesGameContainer.drawingEnabled = false;
-
-    tore = new createjs.Bitmap(queue.getResult("tore"));
-    tore.sad = new createjs.Bitmap(queue.getResult("toreSad"));
-    tore.startX = tore.x = toreX;
-    tore.startY = tore.y = toreY;
-    tore.regX = tore.image.width / 2 | 0;
-    tore.regY = tore.image.height / 2 | 0;
-    tore.sad.x = tore.x - 42;
-    tore.sad.y = tore.y - 156;
-    tore.sad.alpha = 0.0;
-    tore.rotation = 0;
-    tore.dressed = false;
-
-
-    sockRight = new Clothes("sockRightLine", "sockRightWear", "sockRight", sockRightStartRotation, sockRightX, sockRightY, sockRightWearX, sockRightWearY, true);
-    sockLeft = new Clothes("sockLeftLine", "sockLeftWear", "sockLeft", sockLeftStartRotation, sockLeftX, sockLeftY, sockLeftWearX, sockLeftWearY, true);
-    trousers = new Clothes("trousersLine", "trousersWear", "trousers", trousersStartRotation, trousersX, trousersY, trousersWearX, trousersWearY, true);
-    shirt = new Clothes("shirtLine", "shirtWear", "shirt", shirtStartRotation, shirtX, shirtY, shirtWearX, shirtWearY, true);
-    clothesGameContainer.clean = true;
-
-
-    line = new createjs.Bitmap(queue.getResult("line"));
-    line.x = lineX;
-    line.y = lineY;
-
-    //objects that should detect if you paint on them and make Tore sad
-    paintDetect.push(tore);
-    paintDetect.push(shirt.wearPic);
-    paintDetect.push(sockLeft.wearPic);
-    paintDetect.push(sockRight.wearPic);
-    paintDetect.push(trousers.wearPic);
-
-
-    //note shirt and trousers have extraArea but they are not used and not added to clothesGameContainer. 
-    clothesGameContainer.addChild(sockRight.extraArea);
-    clothesGameContainer.addChild(sockLeft.extraArea);
-
-
-    clothesGameContainer.addChild(tore);
-    clothesGameContainer.addChild(tore.sad);
-
-    /* original order - not so good
-        clothes.addChild(sockRight.linePic);
-        clothes.addChild(sockRight.wearPic);
-        clothes.addChild(sockLeft.linePic);
-        clothes.addChild(sockLeft.wearPic);    
-        clothes.addChild(trousers.linePic);
-        clothes.addChild(trousers.wearPic);
-        clothes.addChild(shirt.linePic);
-        clothes.addChild(shirt.wearPic);
-        */
-
-    /* line pics on top of wear pics - much better! */
-    clothesGameContainer.addChild(sockRight.wearPic);
-    clothesGameContainer.addChild(sockLeft.wearPic);
-    clothesGameContainer.addChild(trousers.wearPic);
-    clothesGameContainer.addChild(shirt.wearPic);
-    clothesGameContainer.addChild(sockRight.linePic);
-    clothesGameContainer.addChild(sockLeft.linePic);
-    clothesGameContainer.addChild(trousers.linePic);
-    clothesGameContainer.addChild(shirt.linePic);
-
-
-
-
-    clothesGameContainer.addChild(line);
-    stage.addChild(clothesGameContainer);
-}
-
-/** 
- * @summary clothes
- */
-function handleMenuClothesTouch(event) {
-    "use strict";
-    if (noGameRunning()) {
-        menuClothes.focus = true;
-        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone.
-        hideSplashScreen();
-        showClothesGame();
-        startClothesGame(0);
-    }
-}
-
-/** 
- * @summary clothes
- */
-function startClothesGame(delay) {
-    "use strict";
-
-    //xxx mpste snyggas till, detta är quick and dirty
-
-
-    line.alpha = 1.0;
-    tore.alpha = 1.0;
-    tore.dressed = false;
-
-    createjs.Tween.get(clothesGameContainer).to({
-        alpha: 1.0
-    }, gameTransitionTime, createjs.Ease.linear);
-
-}
-
-/** 
- * @summary clothes
- */
-function restorePieceOfClothes(c) {
-    "use strict";
-    //xxx this is basically the same as in function Clothes. Should be unified
-    log("restorePieceOfClothes()");
-    createjs.Tween.removeTweens(c.linePic);
-    createjs.Tween.removeTweens(c.wearPic);
-    c.linePic.rotation = c.linePic.startRotation;
-    c.wearPic.rotation = c.wearPic.startRotation;
-    c.linePic.alpha = 1.0;
-    c.wearPic.alpha = 0;
-    c.linePic.x = c.linePic.startX;
-    c.linePic.y = c.linePic.startY;
-    c.extraArea.x = c.extraArea.startX;
-    c.extraArea.y = c.extraArea.startY;
-    c.extraArea.alpha = 1.0;
-    c.onBody = false;
-}
-
-/** 
- * @summary clothes
- */
-function restoreMenuClothes() {
-    "use strict";
-    menuClothes.focus = false;
-    log("restoreMenuClothes()");
-    restorePieceOfClothes(shirt);
-    restorePieceOfClothes(trousers);
-    restorePieceOfClothes(sockLeft);
-    restorePieceOfClothes(sockRight);
-    if (clothesGameContainer.drawingEnabled) {
-        disableDrawing();
-    }
-    //xxx almost works but must make tore happy again!!!!! and make clothes not dirty. hm, dirty är egenskap på ett plagg, kan få konsekvenser om man sedan ritar på annat plagg
-    menuClothes.focus = false;
-    showSplashScreen();
-    hideClothes();
-}
-
-/** 
- * @summary clothes
- */
-function hideClothes() {
-    "use strict";
-    log("hideClothes()");
-    createjs.Tween.get(clothesGameContainer).to({
-        alpha: 0.0
-    }, gameTransitionTime, createjs.Ease.linear);
-    //createjs.Tween.get(clothesBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
-}
-
-/** 
- * @summary clothes
- */
-function showClothesGame() {
-    "use strict";
-    //createjs.Tween.get(clothesBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
-    changeBackground(clothesBackgroundColor);
-}
-
-/** 
- * @summary ball
- */
-function showBallGame() {
-    "use strict";
-    //ballBackground.alpha = 1.0;//xxx yyy createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
-    changeBackground(ballBackgroundColor);
-}
-
-/** 
- * @summary ball
- */
-function startBallGame(delay) {
-    "use strict";
-    hideStar();
-    nextBallTime = delay + randomFutureMillis(minSecNextBall, maxSecNextBall);
-    nextBallId = setTimeout(handleNextBall, nextBallTime);
-
-    nextBall = null; //decided att next ball time
-    allBalls.forEach(setRandomPosition);
-    var i;
-    for (i = 0; i < allBalls.length; i += 1) {
-        allBalls[i].scaleX = 0.1;
-        allBalls[i].scaleY = 0.1;
-        createjs.Tween.get(allBalls[i]).wait(delay).to({
-            scaleX: 1.0,
-            scaleY: 1.0,
-            alpha: 1.0,
-            rotation: allBalls[i].rotation + randomSpeedAndDirection() * startBallGameNoOfTurns * 360
-        }, startBallGameRotationTime, createjs.Ease.linear);
-    }
-}
-
-/** 
- * @summary ball
- */
-function restoreMenuBall() {
-    "use strict";
-    menuBall.focus = false;
-    nextBallTime = -1;
-    clearTimeout(nextBallId);
-    var i;
-    for (i = 0; i < allBalls.length; i += 1) {
-        createjs.Tween.removeTweens(allBalls[i]);
-    }
-    showSplashScreen();
-    hideBalls();
-}
-
-/** 
- * @summary general
- */
-function addHelp() {
-    "use strict";
-    menuHelp = new createjs.Bitmap(queue.getResult("menuHelp"));
-    stage.addChild(menuHelp);
-    menuHelp.x = menuHelpX;
-    menuHelp.y = menuHelpY;
-    menuHelp.alpha = 1.0;
-    menuHelp.addEventListener("mousedown", handleMenuHelpTouch);
-
-
-    helpContainer = new createjs.Container();
-    helpContainer.x = 100;
-    helpContainer.y = 100;
-    helpContainer.visible = false;
-
-    helpFrame = new createjs.Shape();
-
-    helpFrame.graphics.
-    beginFill("white").
-    beginStroke("orange").setStrokeStyle(20, 'round', 'round').
-    drawRect(0, 0, canvasWidth - 100 * 2, canvasHeight - 100 * 2);
-
-
-
-    helpTextBox = new createjs.Text("", "36px sans-serif", "#000");
-    helpTextBox.lineHeight = 42;
-    helpTextBox.lineWidth = canvasWidth - 4 * 100;
-    helpTextBox.x = 100;
-    helpTextBox.y = 100;
-    helpContainer.addChild(helpFrame);
-    helpContainer.addChild(helpTextBox);
-
-
-    menuHelp.focus = false; //xxx ska detta in som gamerunning? inte riktigt kanke. den ska nog bort
-}
-
-/** 
- * @summary ball
- */
-function addBall() {
-    "use strict";
-    menuBall = new createjs.Bitmap(queue.getResult("menuBall"));
-    stage.addChild(menuBall);
-
-    //these parameters won't change
-    menuBall.x = menuBallX;
-    menuBall.y = menuBallY;
-    menuBall.name = "menuBall";
-
-    //these will change
-    menuBall.alpha = 1.0;
-    menuBall.focus = false;
-
-    menuBall.addEventListener("mousedown", handleMenuBallTouch);
-
-    //here are balls of different colors used in the ball game. 
-    blueBall = new Ball("blueBall", "Blå boll", "blue");
-    redBall = new Ball("redBall", "Röd boll", "red");
-    yellowBall = new Ball("yellowBall", "Gul boll", "yellow");
-    greenBall = new Ball("greenBall", "Grön boll", "green");
-    allBalls = [blueBall, redBall, yellowBall, greenBall];
-}
-
-/** 
- * @summary ball
- */
-function hideBalls() {
-    "use strict";
-    var i;
-    for (i = 0; i < allBalls.length; i += 1) {
-        createjs.Tween.get(allBalls[i]).to({
-            alpha: 0.0
-        }, gameTransitionTime, createjs.Ease.linear);
-    }
-    //createjs.Tween.get(ballBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
-}
-
-/** 
- * @summary ball
- */
-function setRandomPosition(ball) {
-    "use strict";
-    var free = false;
-    var forceField = ballMinDistance / 2;
-    while (!free) { //a for me rare occasion where I would consider repeat instead...
-        ball.x = Math.floor(Math.random() * (canvasWidth - ballMinBorderDistance * 2) + ballMinBorderDistance);
-        ball.y = Math.floor(Math.random() * (canvasHeight - ballMinBorderDistance * 2) + ballMinBorderDistance);
-        free = !detectBallCollision(ball, forceField);
-    }
-    ball.rotation = Math.floor(Math.random() * 360);
-    ball.inside = true;
-    ball.last = false;
-    delete ball.obstacleBall;
-    delete ball.lastObstacleBall;
-}
-
-/** 
- * @summary ball
- */
-function collides(ball1, ball2, forceField) {
-    "use strict";
-    var cathX = ball1.x - ball2.x; //horizontal catheter
-    var cathY = ball1.y - ball2.y;
-    var distanceSquare = cathX * cathX + cathY * cathY;
-    var centerDist = ball1.radius + ball2.radius + forceField;
-    var centerDistSquare = centerDist * centerDist;
-    return (distanceSquare < centerDistSquare);
-}
-
-/** 
- * @summary ball
- */
-function findRandomBall(thisBall) {
-    "use strict";
-    //find random ball  * other than thisBall
-    var allBallsButThis = [];
-    var i;
-    for (i = 0; i < allBalls.length; i += 1) {
-        if (allBalls[i] != thisBall && allBalls[i].inside) {
-            allBallsButThis.push(allBalls[i]);
-        }
-    }
-    var randomIndex = Math.floor(Math.random() * allBallsButThis.length);
-    if (allBallsButThis.length > 0) {
-        return allBallsButThis[randomIndex];
-    } else {
-        return null;
-    }
-}
-
-/** 
- * @summary ball
- */
-function detectBallCollision(thisBall, forceField) {
-    "use strict";
-    //klumpigt kanske, men funkar för bara fyra bollar.
-    var collision = false;
-    var otherBall = {};
-    var i;
-    for (i = 0; i < allBalls.length && !collision; i += 1) {
-        if (allBalls[i] != thisBall && allBalls[i].inside) {
-            otherBall = allBalls[i];
-            collision = collides(thisBall, otherBall, forceField);
-            if (collision) {
-                if (thisBall.hasOwnProperty("obstacleBall")) {
-                    thisBall.lastObstacleBall = thisBall.obstacleBall;
-                }
-                thisBall.obstacleBall = otherBall;
-            }
-        }
-    }
-    return collision;
-}
-
-/** 
- * @summary ball
- */
-function handlePlayBallTouch(event) {
-    "use strict";
-    var ball = event.target;
-
-    if (!isRunning(ballTween)) {
-        if (ball == nextBall) {
-            //correct ball is touched
-            extendAndPlayQueue("ja" + ball.color);
-            var otherBall = findRandomBall(ball);
-            if (otherBall !== null) {
-                var directionX = otherBall.x + 0.35 * otherBall.image.width * randomDirection();
-                var directionY = otherBall.y + 0.35 * otherBall.image.width * randomDirection();
-                ballTween = makeBallTween(ball, directionX, directionY, ballBounceSpeed);
-                nextBall = null;
-                nextBallTime = randomFutureMillis(minSecNextBall, maxSecNextBall);
-                console.log("Next ball time: ", nextBallTime);
-                nextBallId = setTimeout(handleNextBall, nextBallTime);
-            } else {
-                //random direction for last ball
-                var angle = Math.random() * 2 * Math.PI;
-                var x = minBounceDistance * Math.cos(angle);
-                var y = minBounceDistance * Math.sin(angle);
-                ball.last = true;
-                ballTween = makeBallTween(ball, x, y, ballBounceSpeed);
-            }
-        } else if (nextBall !== null) {
-            console.log("next ball", nextBall);
-            console.log("wrong ball touched");
-            //wrong ball is touched
-            var startRotation = ball.rotation;
-            createjs.Tween.get(ball).to({
-                rotation: startRotation + 360 * wrongBallNumberOfTurns
-            }, wrongBallTurnTime, createjs.Ease.sineInOut);
-            //createjs.Tween.get(ball).to({rotation:startRotation + 360 * 4}, 2000,createjs.Ease.sineInOut);
-
-            extendAndPlayQueue(["detju" + ball.color, "var" + nextBall.color]);
-        } else {
-            //nothing should be done here
-        }
     }
 }
 
@@ -1952,121 +1615,6 @@ function addCake(pieceParts, numberOfCakePieces, cakeFiles) {
 }
 
 /** 
- * @summary clothes
- */
-function handlePrePressmoveMousedown(evt) {
-    "use strict";
-    var t;
-    var t2;
-    //make sure t is always linepic, and t2 is extraarea
-    if (evt.target.kind == "linePic") {
-        t = evt.target;
-        t2 = t.clothes.extraArea;
-    } else if (evt.target.kind == "extraArea") {
-        t2 = evt.target;
-        t = t2.clothes.linePic;
-    }
-
-
-    if (!t.tweening) {
-        t.mousedownOffset = {
-            x: evt.stageX - t.x,
-            y: evt.stageY - t.y
-        };
-    }
-}
-
-/** 
- * @summary clothes
- */
-function handlePressmove(evt) {
-    "use strict";
-    var t;
-    var t2;
-    //make sure t is always linepic, and t2 is extraarea
-    if (evt.target.kind == "linePic") {
-        t = evt.target;
-        t2 = t.clothes.extraArea;
-    } else if (evt.target.kind == "extraArea") {
-        t2 = evt.target;
-        t = t2.clothes.linePic;
-    }
-
-    if (!t.tweening) {
-        t.x = evt.stageX - t.mousedownOffset.x;
-        t.y = evt.stageY - t.mousedownOffset.y;
-        t2.x = t.x;
-        t2.y = t.y;
-        if (t.x > tore.x + t.wearX - hitDistance && t.x < tore.x + t.wearX + hitDistance && t.y > tore.y + t.wearY - hitDistance && t.y < tore.y + t.wearY + hitDistance && !t.clothes.onBody) {
-            t.clothes.onBody = true;
-            t.clothes.wearPic.x = t.x;
-            t.clothes.wearPic.y = t.y;
-            t2.alpha = 0;
-            createjs.Tween.get(t).to({
-                x: tore.x + t.wearX,
-                y: tore.y + t.wearY,
-                rotation: 0,
-                alpha: 0.0
-            }, clothesTweenTime, createjs.Ease.linear);
-            createjs.Tween.get(t.clothes.wearPic).to({
-                x: tore.x + t.wearX,
-                y: tore.y + t.wearY,
-                rotation: 0,
-                alpha: 1.0
-            }, clothesTweenTime, createjs.Ease.linear).wait(500).call(checkIfAllClothesOn);
-        }
-        update = true;
-    }
-}
-
-/** 
- * @summary clothes
- */
-function checkIfAllClothesOn() {
-    "use strict";
-    if (shirt.onBody && trousers.onBody && sockLeft.onBody && sockRight.onBody && !tore.dressed) {
-        tore.dressed = true;
-        extendAndPlayQueue("tada");
-        createjs.Tween.get(line).to({
-            alpha: 0
-        }, 500, createjs.Ease.linear).wait(3800).call(enableDrawing);
-    }
-}
-
-/** 
- * @summary clothes
- */
-function handlePostPressmovePressup(evt) {
-    "use strict";
-    var t;
-    var t2;
-    //make sure t is always linepic, and t2 is extraarea
-    if (evt.target.kind == "linePic") {
-        t = evt.target;
-        t2 = t.clothes.extraArea;
-    } else if (evt.target.kind == "extraArea") {
-        t2 = evt.target;
-        t = t2.clothes.linePic;
-    }
-
-    if (!t.tweening && !t.clothes.onBody) {
-        t.tweening = true;
-        var distance = Math.sqrt((t.x - t.startX) * (t.x - t.startX) + (t.y - t.startY) * (t.y - t.startY));
-        var time = distance / returnSpeed;
-        createjs.Tween.get(t).to({
-            x: t.startX,
-            y: t.startY
-        }, time, createjs.Ease.sineInOut).call(function(evt) {
-            t.tweening = false;
-        });
-        createjs.Tween.get(t2).to({
-            x: t2.startX,
-            y: t2.startY
-        }, time, createjs.Ease.sineInOut);
-    }
-}
-
-/** 
  * @summary cake
  */
 function restoreMenuCake() {
@@ -2113,22 +1661,6 @@ function restoreMenuCake() {
 
 }
 
-
-/** 
- * @summary general
- */
-function addBackButton() {
-    "use strict";
-    backButton = new createjs.Bitmap(queue.getResult("backButton"));
-    stage.addChild(backButton);
-    backButton.x = backButtonX;
-    backButton.y = backButtonY;
-    backButton.alpha = 0;
-    //button.regX = button.image.width/2; //should be deleted xxx
-    //button.regY = button.image.height/2;
-    backButton.name = "Back button";
-    backButton.addEventListener("mousedown", handleBackButtonTouch);
-}
 
 /** 
  * @summary cake
@@ -2298,160 +1830,6 @@ function moveCakePiece(piecenumber, x, y, action) {
 }
 
 /** 
- * @summary general
- */
-function extendAndPlayQueue(sounds) {
-    "use strict";
-    var soundQueueLengthBefore = soundQueue.length;
-    soundQueue = soundQueue.concat(sounds);
-    if (soundQueueLengthBefore == 0) { //queue was empty, no sound was playing
-        playQueue();
-    }
-}
-
-/** 
- * @summary general
- */
-function playQueue() {
-    "use strict";
-    console.log("playQueue: ", soundQueue);
-    var sq0;
-    var soundinstance;
-    if (soundQueue.length > 0) {
-        sq0 = soundQueue[0];
-        watchSound(sq0);
-        printDebug(sq0);
-        soundinstance = createjs.Sound.play(sq0);
-        if (soundinstance.playState != "playFailed") {
-            soundinstance.addEventListener("complete", handleNextSound);
-        } else {
-            console.log("play failed");
-            handleNextSound(null);
-        }
-    }
-}
-
-/** 
- * @summary general
- */
-function playSingle(sound) {
-    "use strict";
-    var soundinstance;
-    soundinstance = createjs.Sound.play(sound);
-}
-
-/** 
- * @summary general
- */
-function handleNextSound(evt) {
-    "use strict";
-    soundQueue = soundQueue.splice(1);
-    playQueue();
-}
-
-/** 
- * @summary mixed
- */
-function watchSound(s0) {
-    "use strict";
-    var i;
-    for (i = 0; i < ordinal.length; i += 1) {
-        if (s0 == ordinal[i]) {
-            showNumber(i);
-        }
-    }
-    if (s0 == "varblue" || s0 == "varred" || s0 == "varyellow" || s0 == "vargreen") {
-        pulsate(nextBall, ballPulsateTime);
-
-    }
-    if (s0 == "tada") {
-        showStar();
-    }
-}
-
-/** 
- * @summary general
- */
-function showStar() {
-    "use strict";
-    createjs.Tween.get(star).
-    to({
-        alpha: 0.7,
-        scaleX: 2.3,
-        scaleY: 2.3
-    }, 2000, createjs.Ease.getElasticOut(1, 0.3)).
-    wait(1000).
-    to({
-        alpha: 0
-    }, 1000).
-    to({
-        scaleX: 0.1,
-        scaleY: 0.1
-    }, 10);
-}
-
-/** 
- * @summary general
- */
-function hideStar() {
-    "use strict";
-    createjs.Tween.removeTweens(star);
-    star.alpha = 0;
-    star.scaleX = 0.1;
-    star.scaleY = 0.1;
-}
-
-/** 
- * @summary clothes
- */
-function hideAllNumbers() {
-    "use strict";
-    //basically the same as hideNumber but immediate instead of tween
-    var i;
-    for (i = 0; i < numbers.length; i += 1) {
-        numbers[i].alpha = 0;
-    }
-}
-
-/** 
- * @summary clothes
- */
-function hideNumber() {
-    "use strict";
-    var i;
-    for (i = 0; i < numbers.length; i += 1) {
-        if (numbers[i].alpha > 0.0) {
-            createjs.Tween.get(n).to({
-                alpha: 0.0
-            }, numberTransitionTime / 3, createjs.Ease.linear);
-        }
-    }
-}
-
-/** 
- * @summary clothes
- */
-function showNumber(number) {
-    "use strict";
-    hideNumber();
-    n = numbers[number];
-    createjs.Tween.get(n).to({
-        alpha: 1.0
-    }, numberTransitionTime, createjs.Ease.linear);
-    pulsate(n, numberTransitionTime);
-}
-
-/** 
- * @summary general
- */
-function randomFutureMillis(minSec, maxSec) {
-    "use strict";
-    //note: input in milliseconds and seconds, output in milliseconds
-    var randomSec = minSec + Math.random() * (maxSec - minSec);
-    return 1000 * randomSec;
-}
-
-/** 
  * @summary cake
  */
 function bounceToTable(piecenumber) {
@@ -2544,26 +1922,405 @@ function getCharacter(pieceNumber) {
     return character;
 }
 
+
 /** 
- * @summary general
+ * @summary cake
  */
-function pulsate(bitmap, pulsetime) {
+function Character(pieceNumber, pieceDeltaX, pieceDeltaY, happyPic, hasSadPic, hasHandPic, name, regX, regY) {
     "use strict";
-    //console.log("bitmap",bitmap,"pulsetime",pulsetime);
-    var partTime = Math.floor(pulsetime / 4);
-    createjs.Tween.get(bitmap).to({
-        scaleX: 1.1,
-        scaleY: 1.1
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.0,
-        scaleY: 1.0
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.1,
-        scaleY: 1.1
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.0,
-        scaleY: 1.0
-    }, partTime, createjs.Ease.sineInOut);
+    //constructor for character
+    this.pieceNumber = pieceNumber;
+    this.pieceDeltaX = pieceDeltaX;
+    this.pieceDeltaY = pieceDeltaY;
+    this.happyPic = new createjs.Bitmap(queue.getResult(happyPic));
+    this.happyPic.character = this;
+    //will this circular reference cause garbage? 
+    //Not according to
+    //http://stackoverflow.com/questions/7347203/circular-references-in-javascript-garbage-collector
+
+    this.happyPic.regX = regX;
+    this.happyPic.regY = regY;
+    this.happyPic.x = regX;
+    this.happyPic.y = regY;
+
+    if (hasSadPic) {
+        this.sadPic = new createjs.Bitmap(queue.getResult(happyPic + "Sad"));
+        this.sadPic.character = this;
+        this.sadPic.regX = regX;
+        this.sadPic.regY = regY;
+        this.sadPic.x = regX;
+        this.sadPic.y = regY;
+
+    }
+    if (hasHandPic) {
+        this.handPic = new createjs.Bitmap(queue.getResult(happyPic + "Hand"));
+        this.handPic.character = this;
+        this.handPic.regX = regX;
+        this.handPic.regY = regY;
+        this.handPic.x = regX;
+        this.handPic.y = regY;
+    }
+    this.name = name;
+    addCharacterEventListener(this);
+    makeCharacterHappy(this);
+}
+
+/** 
+ * @summary cake
+ */
+function hideAllNumbers() {
+    "use strict";
+    //basically the same as hideNumber but immediate instead of tween
+    var i;
+    for (i = 0; i < numbers.length; i += 1) {
+        numbers[i].alpha = 0;
+    }
+}
+
+/** 
+ * @summary cake
+ */
+function hideNumber() {
+    "use strict";
+    var i;
+    for (i = 0; i < numbers.length; i += 1) {
+        if (numbers[i].alpha > 0.0) {
+            createjs.Tween.get(n).to({
+                alpha: 0.0
+            }, numberTransitionTime / 3, createjs.Ease.linear);
+        }
+    }
+}
+
+/** 
+ * @summary cake
+ */
+function showNumber(number) {
+    "use strict";
+    hideNumber();
+    n = numbers[number];
+    createjs.Tween.get(n).to({
+        alpha: 1.0
+    }, numberTransitionTime, createjs.Ease.linear);
+    pulsate(n, numberTransitionTime);
+}
+
+
+/* =========== BALL ========== */
+
+/** 
+ * @summary ball
+ */
+function handleNextBall() {
+    "use strict";
+    if (isRunning() || helpContainer.visible) {
+        console.log("not ready for next ball yet");
+        nextBallId = setTimeout(handleNextBall, 2000);
+    } else if (menuBall.focus) {
+        nextBall = findRandomBall();
+        extendAndPlayQueue("var" + nextBall.color); //this sound is "watched" and will trigger pulsating ball
+        nextBallTime = -1; //no new nextBall until this nextBall is touched 
+    }
+}
+
+/** 
+ * @summary ball
+ */
+function checkBallOutsideAndBallBounce() {
+    "use strict";
+    if (ballTween.hasOwnProperty("target")) {
+        var ball = ballTween.target;
+        //check if ball is outside of canvas
+        //if it is, delete it (set .inside to false) so you can't bounce against it
+        var inside = (ball.x - ball.radius) < canvasWidth && (ball.y - ball.radius) < canvasHeight && (ball.x + ball.radius) > 0 && (ball.y + ball.radius) > 0;
+        if (!inside) {
+            ball.inside = false;
+            ball.alpha = 0;
+            ballTween.setPaused(true);
+            if (ball.last) {
+                //restart game if it is the last ball
+                extendAndPlayQueue("tada");
+                startBallGame(timeToNewBallGame);
+            }
+        }
+        //check if ball has bounced into another ball 
+        if (detectBallCollision(ball, 0)) {
+            if (ball.obstacleBall != ball.lastObstacleBall) {
+                //ball has bounced into another ball. stop running tween and start new tween in new direction
+                if (isRunning(ballTween)) {
+                    ballTween.setPaused(true); //funkar nog bäst
+                }
+                //calculate bounce direction
+                var centerToCenterAngle = Math.atan2(ball.y - ball.obstacleBall.y, ball.x - ball.obstacleBall.x);
+                ball.bounceAngle = 2 * centerToCenterAngle - Math.PI - ball.startAngle;
+                var deltaX = minBounceDistance * Math.cos(ball.bounceAngle);
+                var deltaY = minBounceDistance * Math.sin(ball.bounceAngle);
+                var finalX = ball.x + deltaX;
+                var finalY = ball.y + deltaY;
+                ballTween = makeBallTween(ball, finalX, finalY, ballBounceSpeed);
+            }
+        }
+    }
+}
+
+/** 
+ * @summary ball
+ */
+function makeBallTween(ball, x, y, speed) {
+    "use strict";
+    //speed in pixels per millisecond
+    var distance = Math.sqrt((x - ball.x) * (x - ball.x) + (y - ball.y) * (y - ball.y));
+    var time = Math.floor(distance / speed);
+    ball.startAngle = Math.atan2(y - ball.y, x - ball.x);
+    var rotationAngle = randomDirection() * Math.floor(360 * distance / 600.0); //600 deliberately not a setup variable, although it could have been
+    return createjs.Tween.get(ball).to({
+        x: x,
+        y: y,
+        rotation: ball.rotation + rotationAngle
+    }, time, createjs.Ease.linear);
+}
+
+/** 
+ * @summary ball
+ */
+function randomDirection() {
+    "use strict";
+    return (Math.random() < 0.5) ? -1.0 : 1.0;
+}
+
+/** 
+ * @summary ball
+ */
+function randomSpeedAndDirection() {
+    "use strict";
+    //returns random value betwwen -1 and 1
+    return 2 * Math.random() - 1.0;
+}
+
+/** 
+ * @summary ball
+ */
+function handleMenuBallTouch(event) {
+    "use strict";
+    if (noGameRunning()) {
+        menuBall.focus = true;
+        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone.
+        hideSplashScreen();
+        showBallGame();
+        startBallGame(0);
+    }
+}
+
+/** 
+ * @summary ball
+ */
+function showBallGame() {
+    "use strict";
+    //ballBackground.alpha = 1.0;//xxx yyy createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
+    changeBackground(ballBackgroundColor);
+}
+
+/** 
+ * @summary ball
+ */
+function startBallGame(delay) {
+    "use strict";
+    hideStar();
+    nextBallTime = delay + randomFutureMillis(minSecNextBall, maxSecNextBall);
+    nextBallId = setTimeout(handleNextBall, nextBallTime);
+
+    nextBall = null; //decided att next ball time
+    allBalls.forEach(setRandomPosition);
+    var i;
+    for (i = 0; i < allBalls.length; i += 1) {
+        allBalls[i].scaleX = 0.1;
+        allBalls[i].scaleY = 0.1;
+        createjs.Tween.get(allBalls[i]).wait(delay).to({
+            scaleX: 1.0,
+            scaleY: 1.0,
+            alpha: 1.0,
+            rotation: allBalls[i].rotation + randomSpeedAndDirection() * startBallGameNoOfTurns * 360
+        }, startBallGameRotationTime, createjs.Ease.linear);
+    }
+}
+
+/** 
+ * @summary ball
+ */
+function restoreMenuBall() {
+    "use strict";
+    menuBall.focus = false;
+    nextBallTime = -1;
+    clearTimeout(nextBallId);
+    var i;
+    for (i = 0; i < allBalls.length; i += 1) {
+        createjs.Tween.removeTweens(allBalls[i]);
+    }
+    showSplashScreen();
+    hideBalls();
+}
+
+/** 
+ * @summary ball
+ */
+function addBall() {
+    "use strict";
+    menuBall = new createjs.Bitmap(queue.getResult("menuBall"));
+    stage.addChild(menuBall);
+
+    //these parameters won't change
+    menuBall.x = menuBallX;
+    menuBall.y = menuBallY;
+    menuBall.name = "menuBall";
+
+    //these will change
+    menuBall.alpha = 1.0;
+    menuBall.focus = false;
+
+    menuBall.addEventListener("mousedown", handleMenuBallTouch);
+
+    //here are balls of different colors used in the ball game. 
+    blueBall = new Ball("blueBall", "Blå boll", "blue");
+    redBall = new Ball("redBall", "Röd boll", "red");
+    yellowBall = new Ball("yellowBall", "Gul boll", "yellow");
+    greenBall = new Ball("greenBall", "Grön boll", "green");
+    allBalls = [blueBall, redBall, yellowBall, greenBall];
+}
+
+/** 
+ * @summary ball
+ */
+function hideBalls() {
+    "use strict";
+    var i;
+    for (i = 0; i < allBalls.length; i += 1) {
+        createjs.Tween.get(allBalls[i]).to({
+            alpha: 0.0
+        }, gameTransitionTime, createjs.Ease.linear);
+    }
+    //createjs.Tween.get(ballBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+}
+
+/** 
+ * @summary ball
+ */
+function setRandomPosition(ball) {
+    "use strict";
+    var free = false;
+    var forceField = ballMinDistance / 2;
+    while (!free) { //a for me rare occasion where I would consider repeat instead...
+        ball.x = Math.floor(Math.random() * (canvasWidth - ballMinBorderDistance * 2) + ballMinBorderDistance);
+        ball.y = Math.floor(Math.random() * (canvasHeight - ballMinBorderDistance * 2) + ballMinBorderDistance);
+        free = !detectBallCollision(ball, forceField);
+    }
+    ball.rotation = Math.floor(Math.random() * 360);
+    ball.inside = true;
+    ball.last = false;
+    delete ball.obstacleBall;
+    delete ball.lastObstacleBall;
+}
+
+/** 
+ * @summary ball
+ */
+function collides(ball1, ball2, forceField) {
+    "use strict";
+    var cathX = ball1.x - ball2.x; //horizontal catheter
+    var cathY = ball1.y - ball2.y;
+    var distanceSquare = cathX * cathX + cathY * cathY;
+    var centerDist = ball1.radius + ball2.radius + forceField;
+    var centerDistSquare = centerDist * centerDist;
+    return (distanceSquare < centerDistSquare);
+}
+
+/** 
+ * @summary ball
+ */
+function findRandomBall(thisBall) {
+    "use strict";
+    //find random ball  * other than thisBall
+    var allBallsButThis = [];
+    var i;
+    for (i = 0; i < allBalls.length; i += 1) {
+        if (allBalls[i] != thisBall && allBalls[i].inside) {
+            allBallsButThis.push(allBalls[i]);
+        }
+    }
+    var randomIndex = Math.floor(Math.random() * allBallsButThis.length);
+    if (allBallsButThis.length > 0) {
+        return allBallsButThis[randomIndex];
+    } else {
+        return null;
+    }
+}
+
+/** 
+ * @summary ball
+ */
+function detectBallCollision(thisBall, forceField) {
+    "use strict";
+    //klumpigt kanske, men funkar för bara fyra bollar.
+    var collision = false;
+    var otherBall = {};
+    var i;
+    for (i = 0; i < allBalls.length && !collision; i += 1) {
+        if (allBalls[i] != thisBall && allBalls[i].inside) {
+            otherBall = allBalls[i];
+            collision = collides(thisBall, otherBall, forceField);
+            if (collision) {
+                if (thisBall.hasOwnProperty("obstacleBall")) {
+                    thisBall.lastObstacleBall = thisBall.obstacleBall;
+                }
+                thisBall.obstacleBall = otherBall;
+            }
+        }
+    }
+    return collision;
+}
+
+/** 
+ * @summary ball
+ */
+function handlePlayBallTouch(event) {
+    "use strict";
+    var ball = event.target;
+
+    if (!isRunning(ballTween)) {
+        if (ball == nextBall) {
+            //correct ball is touched
+            extendAndPlayQueue("ja" + ball.color);
+            var otherBall = findRandomBall(ball);
+            if (otherBall !== null) {
+                var directionX = otherBall.x + 0.35 * otherBall.image.width * randomDirection();
+                var directionY = otherBall.y + 0.35 * otherBall.image.width * randomDirection();
+                ballTween = makeBallTween(ball, directionX, directionY, ballBounceSpeed);
+                nextBall = null;
+                nextBallTime = randomFutureMillis(minSecNextBall, maxSecNextBall);
+                console.log("Next ball time: ", nextBallTime);
+                nextBallId = setTimeout(handleNextBall, nextBallTime);
+            } else {
+                //random direction for last ball
+                var angle = Math.random() * 2 * Math.PI;
+                var x = minBounceDistance * Math.cos(angle);
+                var y = minBounceDistance * Math.sin(angle);
+                ball.last = true;
+                ballTween = makeBallTween(ball, x, y, ballBounceSpeed);
+            }
+        } else if (nextBall !== null) {
+            console.log("next ball", nextBall);
+            console.log("wrong ball touched");
+            //wrong ball is touched
+            var startRotation = ball.rotation;
+            createjs.Tween.get(ball).to({
+                rotation: startRotation + 360 * wrongBallNumberOfTurns
+            }, wrongBallTurnTime, createjs.Ease.sineInOut);
+            //createjs.Tween.get(ball).to({rotation:startRotation + 360 * 4}, 2000,createjs.Ease.sineInOut);
+
+            extendAndPlayQueue(["detju" + ball.color, "var" + nextBall.color]);
+        } else {
+            //nothing should be done here
+        }
+    }
 }
 
 /** 
@@ -2583,6 +2340,9 @@ function Ball(imageid, name, color) {
     this.radius = this.regX;
     this.last = false;
 }
+
+
+/* =========== CAKE ========== */
 
 /** 
  * @summary clothes
@@ -2644,45 +2404,307 @@ function Clothes(linePicId, wearPicId, name, startRotation, startX, startY, wear
 }
 
 /** 
- * @summary cake
+ * @summary clothes
  */
-function Character(pieceNumber, pieceDeltaX, pieceDeltaY, happyPic, hasSadPic, hasHandPic, name, regX, regY) {
+function addClothes() {
     "use strict";
-    //constructor for character
-    this.pieceNumber = pieceNumber;
-    this.pieceDeltaX = pieceDeltaX;
-    this.pieceDeltaY = pieceDeltaY;
-    this.happyPic = new createjs.Bitmap(queue.getResult(happyPic));
-    this.happyPic.character = this;
-    //will this circular reference cause garbage? 
-    //Not according to
-    //http://stackoverflow.com/questions/7347203/circular-references-in-javascript-garbage-collector
 
-    this.happyPic.regX = regX;
-    this.happyPic.regY = regY;
-    this.happyPic.x = regX;
-    this.happyPic.y = regY;
+    menuClothes = new createjs.Bitmap(queue.getResult("menuClothes"));
+    stage.addChild(menuClothes);
 
-    if (hasSadPic) {
-        this.sadPic = new createjs.Bitmap(queue.getResult(happyPic + "Sad"));
-        this.sadPic.character = this;
-        this.sadPic.regX = regX;
-        this.sadPic.regY = regY;
-        this.sadPic.x = regX;
-        this.sadPic.y = regY;
+    //these parameters won't change
+    menuClothes.x = menuClothesX;
+    menuClothes.y = menuClothesY;
+    menuClothes.name = "menuClothes";
 
+    //these will change
+    menuClothes.alpha = 1.0;
+    menuClothes.focus = false;
+
+    menuClothes.addEventListener("mousedown", handleMenuClothesTouch);
+
+    clothesGameContainer = new createjs.Container();
+    clothesGameContainer.x = clothesGameContainerX;
+    clothesGameContainer.y = clothesGameContainerY;
+    clothesGameContainer.alpha = 0.0;
+    clothesGameContainer.drawingEnabled = false;
+
+    tore = new createjs.Bitmap(queue.getResult("tore"));
+    tore.sad = new createjs.Bitmap(queue.getResult("toreSad"));
+    tore.startX = tore.x = toreX;
+    tore.startY = tore.y = toreY;
+    tore.regX = tore.image.width / 2 | 0;
+    tore.regY = tore.image.height / 2 | 0;
+    tore.sad.x = tore.x - 42;
+    tore.sad.y = tore.y - 156;
+    tore.sad.alpha = 0.0;
+    tore.rotation = 0;
+    tore.dressed = false;
+
+
+    sockRight = new Clothes("sockRightLine", "sockRightWear", "sockRight", sockRightStartRotation, sockRightX, sockRightY, sockRightWearX, sockRightWearY, true);
+    sockLeft = new Clothes("sockLeftLine", "sockLeftWear", "sockLeft", sockLeftStartRotation, sockLeftX, sockLeftY, sockLeftWearX, sockLeftWearY, true);
+    trousers = new Clothes("trousersLine", "trousersWear", "trousers", trousersStartRotation, trousersX, trousersY, trousersWearX, trousersWearY, true);
+    shirt = new Clothes("shirtLine", "shirtWear", "shirt", shirtStartRotation, shirtX, shirtY, shirtWearX, shirtWearY, true);
+    clothesGameContainer.clean = true;
+
+
+    line = new createjs.Bitmap(queue.getResult("line"));
+    line.x = lineX;
+    line.y = lineY;
+
+    //objects that should detect if you paint on them and make Tore sad
+    paintDetect.push(tore);
+    paintDetect.push(shirt.wearPic);
+    paintDetect.push(sockLeft.wearPic);
+    paintDetect.push(sockRight.wearPic);
+    paintDetect.push(trousers.wearPic);
+
+
+    //note shirt and trousers have extraArea but they are not used and not added to clothesGameContainer. 
+    clothesGameContainer.addChild(sockRight.extraArea);
+    clothesGameContainer.addChild(sockLeft.extraArea);
+
+
+    clothesGameContainer.addChild(tore);
+    clothesGameContainer.addChild(tore.sad);
+
+    /* original order - not so good
+        clothes.addChild(sockRight.linePic);
+        clothes.addChild(sockRight.wearPic);
+        clothes.addChild(sockLeft.linePic);
+        clothes.addChild(sockLeft.wearPic);    
+        clothes.addChild(trousers.linePic);
+        clothes.addChild(trousers.wearPic);
+        clothes.addChild(shirt.linePic);
+        clothes.addChild(shirt.wearPic);
+        */
+
+    /* line pics on top of wear pics - much better! */
+    clothesGameContainer.addChild(sockRight.wearPic);
+    clothesGameContainer.addChild(sockLeft.wearPic);
+    clothesGameContainer.addChild(trousers.wearPic);
+    clothesGameContainer.addChild(shirt.wearPic);
+    clothesGameContainer.addChild(sockRight.linePic);
+    clothesGameContainer.addChild(sockLeft.linePic);
+    clothesGameContainer.addChild(trousers.linePic);
+    clothesGameContainer.addChild(shirt.linePic);
+
+
+
+
+    clothesGameContainer.addChild(line);
+    stage.addChild(clothesGameContainer);
+}
+
+/** 
+ * @summary clothes
+ */
+function handleMenuClothesTouch(event) {
+    "use strict";
+    if (noGameRunning()) {
+        menuClothes.focus = true;
+        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone.
+        hideSplashScreen();
+        showClothesGame();
+        startClothesGame(0);
     }
-    if (hasHandPic) {
-        this.handPic = new createjs.Bitmap(queue.getResult(happyPic + "Hand"));
-        this.handPic.character = this;
-        this.handPic.regX = regX;
-        this.handPic.regY = regY;
-        this.handPic.x = regX;
-        this.handPic.y = regY;
+}
+
+/** 
+ * @summary clothes
+ */
+function startClothesGame(delay) {
+    "use strict";
+
+    //xxx mpste snyggas till, detta är quick and dirty
+
+
+    line.alpha = 1.0;
+    tore.alpha = 1.0;
+    tore.dressed = false;
+
+    createjs.Tween.get(clothesGameContainer).to({
+        alpha: 1.0
+    }, gameTransitionTime, createjs.Ease.linear);
+
+}
+
+/** 
+ * @summary clothes
+ */
+function restorePieceOfClothes(c) {
+    "use strict";
+    //xxx this is basically the same as in function Clothes. Should be unified
+    log("restorePieceOfClothes()");
+    createjs.Tween.removeTweens(c.linePic);
+    createjs.Tween.removeTweens(c.wearPic);
+    c.linePic.rotation = c.linePic.startRotation;
+    c.wearPic.rotation = c.wearPic.startRotation;
+    c.linePic.alpha = 1.0;
+    c.wearPic.alpha = 0;
+    c.linePic.x = c.linePic.startX;
+    c.linePic.y = c.linePic.startY;
+    c.extraArea.x = c.extraArea.startX;
+    c.extraArea.y = c.extraArea.startY;
+    c.extraArea.alpha = 1.0;
+    c.onBody = false;
+}
+
+/** 
+ * @summary clothes
+ */
+function restoreMenuClothes() {
+    "use strict";
+    menuClothes.focus = false;
+    log("restoreMenuClothes()");
+    restorePieceOfClothes(shirt);
+    restorePieceOfClothes(trousers);
+    restorePieceOfClothes(sockLeft);
+    restorePieceOfClothes(sockRight);
+    if (clothesGameContainer.drawingEnabled) {
+        disableDrawing();
     }
-    this.name = name;
-    addCharacterEventListener(this);
-    makeCharacterHappy(this);
+    //xxx almost works but must make tore happy again!!!!! and make clothes not dirty. hm, dirty är egenskap på ett plagg, kan få konsekvenser om man sedan ritar på annat plagg
+    menuClothes.focus = false;
+    showSplashScreen();
+    hideClothes();
+}
+
+/** 
+ * @summary clothes
+ */
+function hideClothes() {
+    "use strict";
+    log("hideClothes()");
+    createjs.Tween.get(clothesGameContainer).to({
+        alpha: 0.0
+    }, gameTransitionTime, createjs.Ease.linear);
+    //createjs.Tween.get(clothesBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+}
+
+/** 
+ * @summary clothes
+ */
+function showClothesGame() {
+    "use strict";
+    //createjs.Tween.get(clothesBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
+    changeBackground(clothesBackgroundColor);
+}
+
+/** 
+ * @summary clothes
+ */
+function handlePrePressmoveMousedown(evt) {
+    "use strict";
+    var t;
+    var t2;
+    //make sure t is always linepic, and t2 is extraarea
+    if (evt.target.kind == "linePic") {
+        t = evt.target;
+        t2 = t.clothes.extraArea;
+    } else if (evt.target.kind == "extraArea") {
+        t2 = evt.target;
+        t = t2.clothes.linePic;
+    }
+
+
+    if (!t.tweening) {
+        t.mousedownOffset = {
+            x: evt.stageX - t.x,
+            y: evt.stageY - t.y
+        };
+    }
+}
+
+/** 
+ * @summary clothes
+ */
+function handlePressmove(evt) {
+    "use strict";
+    var t;
+    var t2;
+    //make sure t is always linepic, and t2 is extraarea
+    if (evt.target.kind == "linePic") {
+        t = evt.target;
+        t2 = t.clothes.extraArea;
+    } else if (evt.target.kind == "extraArea") {
+        t2 = evt.target;
+        t = t2.clothes.linePic;
+    }
+
+    if (!t.tweening) {
+        t.x = evt.stageX - t.mousedownOffset.x;
+        t.y = evt.stageY - t.mousedownOffset.y;
+        t2.x = t.x;
+        t2.y = t.y;
+        if (t.x > tore.x + t.wearX - hitDistance && t.x < tore.x + t.wearX + hitDistance && t.y > tore.y + t.wearY - hitDistance && t.y < tore.y + t.wearY + hitDistance && !t.clothes.onBody) {
+            t.clothes.onBody = true;
+            t.clothes.wearPic.x = t.x;
+            t.clothes.wearPic.y = t.y;
+            t2.alpha = 0;
+            createjs.Tween.get(t).to({
+                x: tore.x + t.wearX,
+                y: tore.y + t.wearY,
+                rotation: 0,
+                alpha: 0.0
+            }, clothesTweenTime, createjs.Ease.linear);
+            createjs.Tween.get(t.clothes.wearPic).to({
+                x: tore.x + t.wearX,
+                y: tore.y + t.wearY,
+                rotation: 0,
+                alpha: 1.0
+            }, clothesTweenTime, createjs.Ease.linear).wait(500).call(checkIfAllClothesOn);
+        }
+        update = true;
+    }
+}
+
+/** 
+ * @summary clothes
+ */
+function checkIfAllClothesOn() {
+    "use strict";
+    if (shirt.onBody && trousers.onBody && sockLeft.onBody && sockRight.onBody && !tore.dressed) {
+        tore.dressed = true;
+        extendAndPlayQueue("tada");
+        createjs.Tween.get(line).to({
+            alpha: 0
+        }, 500, createjs.Ease.linear).wait(3800).call(enableDrawing);
+    }
+}
+
+/** 
+ * @summary clothes
+ */
+function handlePostPressmovePressup(evt) {
+    "use strict";
+    var t;
+    var t2;
+    //make sure t is always linepic, and t2 is extraarea
+    if (evt.target.kind == "linePic") {
+        t = evt.target;
+        t2 = t.clothes.extraArea;
+    } else if (evt.target.kind == "extraArea") {
+        t2 = evt.target;
+        t = t2.clothes.linePic;
+    }
+
+    if (!t.tweening && !t.clothes.onBody) {
+        t.tweening = true;
+        var distance = Math.sqrt((t.x - t.startX) * (t.x - t.startX) + (t.y - t.startY) * (t.y - t.startY));
+        var time = distance / returnSpeed;
+        createjs.Tween.get(t).to({
+            x: t.startX,
+            y: t.startY
+        }, time, createjs.Ease.sineInOut).call(function(evt) {
+            t.tweening = false;
+        });
+        createjs.Tween.get(t2).to({
+            x: t2.startX,
+            y: t2.startY
+        }, time, createjs.Ease.sineInOut);
+    }
 }
 
 //drawing functions
@@ -2720,7 +2742,6 @@ function enableDrawing() {
         drawCrayons(crayonColorIndex);
         drawingCanvas = new createjs.Shape(); //xxx probably move to init
         stage.addEventListener("stagemousedown", handleStrokeMouseDown);
-        stage.addEventListener("stagemouseup", handleStrokeMouseUp);
         stage.addChild(drawingCanvas);
         stage.update();
     }
@@ -2839,7 +2860,6 @@ function handleCrayonMouseDown(evt) {
     stage.update();
 }
 
-
 /** 
  * @summary clothes
  */
@@ -2855,6 +2875,8 @@ function handleStrokeMouseDown(evt) {
     stage.update();
 
     stage.addEventListener("stagemousemove", handleStrokeMouseMove);
+    stage.addEventListener("stagemouseup", handleStrokeMouseUp);
+    
 }
 
 /** 
@@ -2892,6 +2914,7 @@ function handleStrokeMouseUp(evt) {
     lineTo(stage.mouseX, stage.mouseY);
     stage.update();
     stage.removeEventListener("stagemousemove", handleStrokeMouseMove);
+    stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
 
 }
 
@@ -2914,11 +2937,3 @@ function detectPaint() {
 }
 
 
-/** 
- * @summary general
- */
-function log(text) {
-    "use strict";
-    console.log(text);
-    console.log("active tweens: " + createjs.Tween.hasActiveTweens());
-}

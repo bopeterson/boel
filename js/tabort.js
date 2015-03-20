@@ -21,9 +21,6 @@
 //balls
 
 //table pics
-//file->scripts->export layers to files, check Trim layers
-//hand pics must be positioned to match body
-// note: almost invisible dot left of dog's back leg, to force same widht as dogsad
 
 
 
@@ -39,7 +36,6 @@ see https://github.com/jsdoc3/jsdoc
 */
 
 //debug settings
-var xxxxxxxxxx;
 var debug = true;
 var debugAlwaysUpdate = false;
 
@@ -77,11 +73,12 @@ var progressBarHeight = 20;
 var progressBarColor = "#060";
 var progressBarErrorColor = "#C00";
 var progressBarFadeTime = 400;
+var enableCakePieceTouch = false; //if true, cake pieces can be distributet by clicking cake
 var useRAF = true;
 var fps = 24; //fps not used if useRAF = true;
 var cakeBounceTime = 6.0; //time for a complete cake bounce cycle in seconds
-var minSecNextSmash = 8.0; //important that this is larger than cakeBounceTime
-var maxSecNextSmash = 14.0;
+var minSecNextSmash = 1000*8.0; //important that this is larger than cakeBounceTime
+var maxSecNextSmash = 1000*14.0;
 var gameTransitionTime = 700;
 var numberX = canvasWidth - 60; //canvas.width - 200;xxx canvaswidth variable
 var numberY = 80; //0; xxx finetune
@@ -156,7 +153,7 @@ var sockRightWearY = 186;
 
 var ballTween = {};
 
-var characters = {}; //to find character connected to piece through getCharacter function. xxx ska nog försvinna
+var characters = {}; //to find character connected to piece through getCharacter function
 
 var cardinal = [
     "noll",
@@ -196,7 +193,6 @@ var cakeHelpSound;
 
 var n; //xxx a global n is evil and must be replaced
 
-var piecesLeft;
 
 var menuClothes;
 var boelToreSplash;
@@ -218,14 +214,12 @@ var offset;
 var update = false;
 var menuBall, menuCake, menuHelp;
 var backButton;
-var cakeNew; //xxx to replace old cake
+var cake;
 var progressBar;
 var blueBall, redBall, yellowBall, greenBall;
 var allBalls;
-var allPieces;
-var allCakes;
-var numberOfCakePieces;
-var cakeFilesNew; //xxx to replace cakeFiles
+var pieceParts, numberOfCakePieces;
+var cakeFiles;
 var cakeBall;
 var table;
 var clothesGameContainer; //a container for all graphics in the clothesgame. xxx maybe rename to clothesContainer
@@ -244,6 +238,7 @@ var tableTore = {};
 var tableDog = {};
 var tableTable;
 var numbers = [];
+var cakeComplete = [];
 var debugText;
 var loadedFiles;
 var filesToLoad;
@@ -293,7 +288,12 @@ function init() {
     // create stage and point it to the canvas:
     canvas = document.getElementById("myCanvas");
 
+
+
+
     changeBackground(splashScreenBackgroundColor);
+
+
 
     //some initial values of "constans"
     //pixels, must be larger than canvas diagonal to make sure ball bounces outside of canvas
@@ -312,16 +312,19 @@ function init() {
     //check to see if we are running in a browser with touch support
     stage = new createjs.Stage(canvas);
 
+
     stage.name = "The Stage";
     // enable touch interactions if supported on the current device:
     createjs.Touch.enable(stage);
 
-    
+
+
+    /*
         var debugbutton1 = new createjs.Shape();
         debugbutton1.graphics.beginFill("blue").drawCircle(30, 0, 30, 30);
         stage.addChild(debugbutton1);
-        debugbutton1.addEventListener("click",function(event){allPieces[xxxxxxxxxx].alpha=0;xxxxxxxxxx++;if(xxxxxxxxxx>5){xxxxxxxxxx=0;};allPieces[xxxxxxxxxx].alpha=1.0;stage.update()});
-        
+        debugbutton1.addEventListener("click",function(event){hideHelp()});
+        */
 
     /*
         var debugbutton2 = new createjs.Shape();
@@ -494,46 +497,6 @@ function init() {
         }
     ];
 
-    var cakeFilesNew = [{
-        id: "piece1",
-        src: "assets/piece1.png"
-    }, {
-        id: "piece2",
-        src: "assets/piece2.png"
-    }, {
-        id: "piece3",
-        src: "assets/piece3.png"
-    }, {
-        id: "piece4",
-        src: "assets/piece4.png"
-    }, {
-        id: "piece5",
-        src: "assets/piece5.png"
-    }, {
-        id: "piece6",
-        src: "assets/piece6.png"
-    }, {
-        id: "cake0",
-        src: "assets/cake0.png"
-    }, {
-        id: "cake1",
-        src: "assets/cake1.png"
-    }, {
-        id: "cake2",
-        src: "assets/cake2.png"
-    }, {
-        id: "cake3",
-        src: "assets/cake3.png"
-    }, {
-        id: "cake4",
-        src: "assets/cake4.png"
-    }, {
-        id: "cake5",
-        src: "assets/cake5.png"
-    }, {
-        id: "cake6",
-        src: "assets/cake6.png"
-    }];
 
     //simple as opposed to the more complex files making a cake and a table
     var simpleImageFiles = [{
@@ -554,6 +517,9 @@ function init() {
     }, {
         id: "backButton",
         src: "assets/backbutton.png"
+    }, {
+        id: "cakePlate",
+        src: "assets/cake_plate.png"
     }, {
         id: "line",
         src: "assets/line.png"
@@ -616,7 +582,9 @@ function init() {
         });
     }
 
-    numberOfCakePieces = 6; //xxx move to setup
+    pieceParts = ["smashed_piece", "cake_base", "cake_outsidelines"]; //these are filenames for differnent parts of a cake. Filenames should never be in camelCase. 
+    numberOfCakePieces = 6;
+    cakeFiles = buildCakeFiles(pieceParts, numberOfCakePieces);
 
     //no camelCase in filenames (might lead to cross platform issues...)
     var tableFiles = [{
@@ -675,7 +643,7 @@ function init() {
         src: "assets/tablegranddadhand.png"
     }];
 
-    var files = simpleImageFiles.concat(cakeFilesNew, numberFiles, tableFiles, soundFiles);
+    var files = simpleImageFiles.concat(cakeFiles, numberFiles, tableFiles, soundFiles);
 
 
     queue = new createjs.LoadQueue(false);
@@ -743,13 +711,14 @@ function handleComplete(event) {
     stage.addChild(debugText);
     addHelp();
     addTable();
+    addCake(pieceParts, numberOfCakePieces, cakeFiles);
     addBall();
     addClothes();
     addBackButton();
     addNumbers();
     addStar();
     addBackground();
-    
+
     //setup almost complete, start the ticker
 
     if (useRAF) {
@@ -1307,10 +1276,8 @@ function selectNextCharacter() {
                 }
             }*/
 
+        cakeComplete.forEach(pushNotMovedPiece);
 
-        //cakeComplete.forEach(pushNotMovedPiece);
-        //xxxxxxxxxx notMoved must get value here
-        //notMoved=[1]; //xxxxxxxxxx fix this
         if (notMoved.length > 0) {
             var randomIndex = Math.floor(Math.random() * notMoved.length);
             selectedNameNumber = notMoved[randomIndex];
@@ -1359,8 +1326,8 @@ function smashNextPiece() {
                 }
             }*/
 
-        //cakeComplete.forEach(pushMovedAndNotSmashedPiece);
-        //xxx movedAndNotSmashed must get value here
+        cakeComplete.forEach(pushMovedAndNotSmashedPiece);
+
         if (movedAndNotSmashed.length > 0) {
             //decide which piece to smash
             var randomIndex = Math.floor(Math.random() * movedAndNotSmashed.length);
@@ -1384,8 +1351,17 @@ function handleCharacterTouch(event) {
     "use strict";
     //ok, vi har ett event. detta är en bitmapimage. men hur veta vilken character den hör till?
     var c = event.target.character;
-    //moveCakePiece(c.pieceNumber, c.pieceDeltaX, c.pieceDeltaY, "character");
-    moveCakePieceNew(c.pieceNumber,c.pieceX,c.pieceY);
+    moveCakePiece(c.pieceNumber, c.pieceDeltaX, c.pieceDeltaY, "character");
+}
+
+/** 
+ * @summary cake
+ */
+function handleCakePieceTouch(event) {
+    "use strict";
+    var pieceNumber = event.target.number;
+    var c = getCharacter(pieceNumber);
+    moveCakePiece(c.pieceNumber, c.pieceDeltaX, c.pieceDeltaY, "piece");
 }
 
 /** 
@@ -1404,6 +1380,9 @@ function handleMenuCakeTouch(event) {
         console.log("---->next random check at ", nextRandomCheck);
         //no need to clear previous timeout here (I think xxx)
         randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
+        createjs.Tween.get(cake).to({
+            alpha: 1.0
+        }, gameTransitionTime, createjs.Ease.linear);
         createjs.Tween.get(table).to({
             alpha: 1.0
         }, gameTransitionTime, createjs.Ease.linear);
@@ -1436,27 +1415,19 @@ function addNumbers() {
  */
 function addTable() {
     "use strict";
-    
-    addCake(numberOfCakePieces);
-    addCakeBall();
-    
     table = new createjs.Container();
 
     //xxx borde ha en array allCharacters som allBalls.
 
     //anticlockwise around table
-    //function Character(x ,y ,pieceNumber, pieceDeltaX, pieceDeltaY, happyPic, hasSadPic, hasHandPic, handPicX, handPicY, name, regX, regY) {
-    
-    tableDog = new Character(181,605,0, 417, 535, "tableDog", true, false, 0, 0, "Hunden");
-    tableTore = new Character(719,490,1, 594, 475, "tableTore", true, true, 0, 163, "Tore");
-    tableDad = new Character(654,266,2, 587, 319, "tableDad", true, true, 2, 295, "Pappa");
-    tableGrandDad = new Character(411,179,3, 527, 265, "tableGrandDad", true, true, 0, 254, "Morfar");
-    tableMom = new Character(249,285,4, 324, 332, "tableMom", true, true, 81, 202, "Mamma");
-    tableBoel = new Character(191,417,5, 310, 444, "tableBoel", true, true, 107, 121, "Boel");
+    tableDog = new Character(0, -60, 140, "tableDog", true, false, "Hunden", 180, 610);
+    tableTore = new Character(1, 115, 100, "tableTore", true, true, "Tore", 730, 500);
+    tableDad = new Character(2, 118, -38, "tableDad", true, true, "Pappa", 680, 310);
+    tableGrandDad = new Character(3, 100, -90, "tableGrandDad", true, true, "Morfar", 460, 210);
+    tableMom = new Character(4, -95, -55, "tableMom", true, true, "Mamma", 210, 320);
+    tableBoel = new Character(5, -120, 35, "tableBoel", true, true, "Boel", 170, 470);
 
     tableTable = new createjs.Bitmap(queue.getResult("tableTable"));
-    tableTable.x=139;
-    tableTable.y=267;
 
     table.addChild(tableMom.happyPic,
         tableMom.sadPic,
@@ -1475,16 +1446,7 @@ function addTable() {
         tableGrandDad.handPic,
         tableBoel.handPic,
         tableDad.handPic,
-        tableTore.handPic,
-        cakeNew,
-        allPieces[0],
-        allPieces[1],
-        allPieces[2],
-        allPieces[3],
-        allPieces[4],
-        allPieces[5],
-        cakeBall
-    );
+        tableTore.handPic);
 
     table.x = tableX;
     table.y = tableY;
@@ -1492,7 +1454,6 @@ function addTable() {
 
     //make an object (with integer id-s, making it look like an array) used for looking up character 
     //associated to cake piece
-    //xxx ska nog tas bort
     characters[tableMom.pieceNumber] = tableMom;
     characters[tableGrandDad.pieceNumber] = tableGrandDad;
     characters[tableBoel.pieceNumber] = tableBoel;
@@ -1507,7 +1468,6 @@ function addTable() {
 }
 
 //gjort trimvariabler hit
-
 
 /** 
  * @summary cake
@@ -1565,7 +1525,7 @@ function makeCharacterSad(character) {
 /** 
  * @summary cake
  */
-function addCake(numberOfCakePieces) {
+function addCake(pieceParts, numberOfCakePieces, cakeFiles) {
     "use strict";
     //these won't change
     menuCake = new createjs.Bitmap(queue.getResult("menuCake"));
@@ -1582,87 +1542,77 @@ function addCake(numberOfCakePieces) {
 
     menuCake.addEventListener("mousedown", handleMenuCakeTouch);
 
-    //brand new cake!!!!!! xxxx
-    var missingPiece=[{x:30,y:-6},{x:21,y:-26},{x:-23,y:-25},{x:-29,y:0},{x:-17,y:14},{x:27,y:14},{x:0,y:0}];
-    cakeNew = new createjs.Container();
-    
-    allCakes=[];
-    var i;
-    for (i=0; i < numberOfCakePieces+1; i += 1) {
-        var c = new createjs.Bitmap(queue.getResult("cake"+i));
-        c.regX = c.image.width / 2 | 0;
-        c.regY = c.image.height / 2 | 0; 
-        //xxx eventhandler only in development stage
-        c.on("mousedown",function(evt) {
-            var x=evt.currentTarget.x;
-            var y=evt.currentTarget.y;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            stage.update();   
-        });
-        c.on("pressmove",function(evt) {
-            var x=evt.stageX;
-            var y=evt.stageY;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            evt.currentTarget.x = evt.stageX;
-            evt.currentTarget.y = evt.stageY;
-            stage.update();   
-        });
-        c.alpha=0.0;
-        c.missingPieceX = missingPiece[i].x;
-        c.missingPieceY = missingPiece[i].y;
-        //cakeNew.addChild(c); xxx try add and remove instead of alpha 0 or 1
-        allCakes.push(c);
-        cakeNew.addChild(c);
-    }
-    piecesLeft=numberOfCakePieces;
-    allCakes[piecesLeft].alpha=1.0;
-    
-    cakeNew.x=450;
-    cakeNew.y=380;
-    //stage.addChild(cakeNew);
-    
-    allPieces=[];
-    i;
-    for (i = 1; i < numberOfCakePieces+1; i += 1) {
-        //move to function
-        var p=new createjs.Bitmap(queue.getResult("piece"+i));
-        console.log(p);
-        p.regX = p.image.width / 2 | 0;
-        p.regY = p.image.height / 2 | 0;
-        
-        //xxx eventhandler only in development stage
-        p.on("mousedown",function(evt) {
-            var x=evt.currentTarget.x;
-            var y=evt.currentTarget.y;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            stage.update();   
-        });
-        p.on("pressmove",function(evt) {
-            var x=evt.stageX;
-            var y=evt.stageY;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            evt.currentTarget.x = evt.stageX-table.x;
-            evt.currentTarget.y = evt.stageY-table.y;
-            stage.update();   
-        });
-        
-        //stage.addChild(p);
-        allPieces.push(p);
+    cake = new createjs.Container();
+
+    //alltså, behöver en cake som är en multidimensionell array, som dels består av alla bitar och varje bit av 5? delar
+    //första index är bit, andra index är del. 
+
+    //xxx bättre göra varje bit till en container istället för hela tårtan väl...
+    //nu finns det en 2-dim array cakeComplete som pieces och parts
+    //sedan är varje part child till cake, istället för att varje part är child till piece som 
+    //är child till part. 
+    //eg skulle jag inte behöva cakeComplete
+    var k = 0;
+    var onePiece;
+    var part;
+    var i, j;
+    for (i = 0; i < numberOfCakePieces; i += 1) {
+        onePiece = [];
+        for (j = 0; j < pieceParts.length + 1; j += 1) { // + 1 because cake_outsidelines doubled
+            part = new createjs.Bitmap(queue.getResult(cakeFiles[k]["id"]));
+            k += 1;
+            part.number = i; //first piece has number 0, all parts get number i
+            part.name = "part" + j + "piece" + i;
+            onePiece.push(part);
+            if (enableCakePieceTouch) {
+                part.addEventListener("mousedown", handleCakePieceTouch);
+            }
+        }
+        cakeComplete.push(onePiece);
+        restoreCakePiece(i);
     }
 
-}
+    var cakePlate = new createjs.Bitmap(queue.getResult("cakePlate"));
+    cake.addChild(cakePlate);
 
-function addCakeBall() {
+
+    var pieceOrder = [3, 4, 2, 5, 1, 6];
+    for (i = 0; i < cakeComplete.length; i += 1) {
+        for (j = 0; j < cakeComplete[i].length; j += 1) {
+            cake.addChild(cakeComplete[pieceOrder[i] - 1][j]); //-1 because piece 1 has index 0 etc
+        }
+    }
+
+    //ok, hyfsat, men skulle behöva samla kakkonstruktion istället för att ha det så utspritt. 
+    stage.addChild(cake);
+    cake.scaleStart = 1.0;
+    cake.scaleX = cake.scaleY = cake.scale = cake.scaleStart;
+
+    cake.width = cakeComplete[0][0].image.width;
+    cake.height = cakeComplete[0][0].image.height;
+
+
+    cake.relativeTableX = 450;
+    cake.relativeTableY = 380;
+
+    cake.x = table.x + cake.relativeTableX;
+    cake.y = table.y + cake.relativeTableY;
+    cake.regX = cake.width / 2;
+    cake.regY = cake.height / 2;
+    cake.name = "Tårta";
+
+    cake.alpha = 0.0;
+
+
     cakeBall = new createjs.Bitmap(queue.getResult("cakeBall"));
     cakeBall.regX = cakeBall.image.width / 2 | 0;
     cakeBall.regY = cakeBall.image.height / 2 | 0;
+
     restoreCakeBall(); //place in initial position
 
-    
-    
-    
-}
+    stage.addChild(cakeBall);
 
+}
 
 /** 
  * @summary cake
@@ -1687,8 +1637,11 @@ function restoreMenuCake() {
         makeCharacterHappy(tableDog);
         restoreCakeBall();
 
-//xxxxxxxxxx här ska nya tårtbitar restoras
-        
+        var i;
+        for (i = 0; i < cakeComplete.length; i += 1) {
+            restoreCakePiece(i);
+        }
+
         menuCake.focus = false;
 
     }
@@ -1698,9 +1651,9 @@ function restoreMenuCake() {
     showSplashScreen();
 
     //hide
-
-//xxxxxxxxxx här ska cakeNew gömmas
-
+    createjs.Tween.get(cake).to({
+        alpha: 0.0
+    }, gameTransitionTime, createjs.Ease.linear);
     createjs.Tween.get(table).to({
         alpha: 0.0
     }, gameTransitionTime, createjs.Ease.linear);
@@ -1709,99 +1662,157 @@ function restoreMenuCake() {
 }
 
 
+/** 
+ * @summary cake
+ */
+function buildCakeFiles(pieceParts, numberOfCakePieces) {
+    "use strict";
+    var cakeFiles = []; //((pieceParts.length + 1) * numberOfCakePieces); // + 1 because cake_outsidelines doubled
+    var shared = pieceParts[pieceParts.length - 1];
+    var first, second, third, index;
+    var k = 0;
+    var i, j;
+    for (i = 1; i < numberOfCakePieces + 1; i += 1) {
+        for (j = 0; j < pieceParts.length - 1; j += 1) {
+            cakeFiles.push({
+                id: pieceParts[j] + i,
+                src: "assets/" + pieceParts[j] + i + ".png"
+            });
+            k += 1;
+        }
+        //here is some tricky code to find outside lines...
+        first = i;
+        second = ((i % numberOfCakePieces) + 1);
+        third = (i - 2 + numberOfCakePieces) % numberOfCakePieces + 1;
+        index = first + "" + second;
+        cakeFiles.push({
+            id: shared + index,
+            src: "assets/" + shared + index + ".png"
+        });
+        k += 1;
+        index = first + "" + third;
+        cakeFiles.push({
+            id: shared + index,
+            src: "assets/" + shared + index + ".png"
+        });
+        k += 1;
+    }
+    return cakeFiles;
+}
 
 /** 
  * @summary cake
  */
 function restoreCakePiece(piecenumber) {
     "use strict";
+    var piece = cakeComplete[piecenumber];
 
-//xxxxxxxxxx här ska nog nya tårtbitar restoras
-
+    var j;
+    for (j = 0; j < piece.length; j += 1) {
+        if (j == 0 || j == 2 || j == 3) {
+            piece[j].visible = false;
+        } else {
+            piece[j].visible = true;
+        }
+        piece[j].x = 0;
+        piece[j].y = 0;
+    }
     piece.smashed = false;
     piece.moved = false;
 }
 
-
-//xxxxxxxxxx
-function moveCakePieceNew(piecenumber, x, y) {
-    if (menuCake.focus && soundQueue.length == 0) {
-        var oldc=allCakes[piecesLeft];
-        piecesLeft-=1;
-        var c=allCakes[piecesLeft]; //c kan vara global men med bättre namn
-        c.alpha = 1;
-        createjs.Tween.get(oldc).to({alpha:0.0},400, createjs.Ease.linear);
-        var p=allPieces[piecenumber];
-        p.alpha=0;
-        p.x = c.missingPieceX+cakeNew.x;
-        p.y = c.missingPieceY+cakeNew.y;
-        createjs.Tween.get(p).to({alpha:1.0},200, createjs.Ease.linear).wait(10).to({x:x,y:y},700, createjs.Ease.linear);
-
-        var nameClicked = getCharacterNameSound(piecenumber);
-        var nameSelected = getCharacterNameSound(selectedNameNumber);
-    }
-    
-}
-
-
 /** 
  * @summary cake
  */
-
-/*
-
 function moveCakePiece(piecenumber, x, y, action) {
     "use strict";
     //action can be character eller piece men för närvarande används endast character
+
+
+    var movePerformed = false;
     if (menuCake.focus && soundQueue.length == 0) {
-        //xxxxxxxxxx move to cakePieceNew? xxx 
-        var oldc=allCakes[piecesLeft];
-        piecesLeft-=1;
-        var c=allCakes[piecesLeft]; //c kan vara global men med bättre namn
-        c.alpha = 1;
-        createjs.Tween.get(oldc).to({alpha:0.0},400, createjs.Ease.linear);
-        var p=allPieces[piecenumber];
-        p.alpha=0;
-        p.x = c.missingPieceX+cakeNew.x;
-        p.y = c.missingPieceY+cakeNew.y;
-        createjs.Tween.get(p).to({alpha:1.0},200, createjs.Ease.linear).wait(10).to({x:x,y:y},700, createjs.Ease.linear);
+        var piece = cakeComplete[piecenumber];
+
+        if (!piece.moved) {
+            var j;
+            for (j = 0; j < piece.length; j += 1) {
+
+                createjs.Tween.get(piece[j]).to({
+                    x: x,
+                    y: y
+                }, pieceMoveTime, createjs.Ease.sineInOut);
+                piece.moved = true;
+                movePerformed = true;
+            }
+        }
+        var movedPieces = 0;
+        var nextPiece;
+        var prevPiece;
+        var k;
+        for (k = 0; k < cakeComplete.length; k += 1) {
+            //om bit är på plats men nästa bit ej på plats: visa skiljelinje
+            piece = cakeComplete[k];
+            nextPiece = cakeComplete[(k + 1) % cakeComplete.length];
+            if (!piece.moved && nextPiece.moved) {
+                piece[2].visible = true;
+            } else {
+                piece[2].visible = false;
+            }
+            prevPiece = cakeComplete[(k - 1 + cakeComplete.length) % cakeComplete.length];
+            if (!piece.moved && prevPiece.moved) {
+                piece[3].visible = true;
+            } else {
+                piece[3].visible = false;
+            }
+
+            if (piece.moved) {
+                //flyttad bit
+                movedPieces += 1;
+                if (!piece.smashed) {
+                    piece[2].visible = true;
+                    piece[3].visible = true;
+                }
+            }
+        }
 
         var nameClicked = getCharacterNameSound(piecenumber);
         var nameSelected = getCharacterNameSound(selectedNameNumber);
 
-        //här bestämmer vi tid för nästa smash. Vilken bit som smashas bestäms dock inte här
-        //utan i handleTick
-        nextSmash = randomFutureMillis(minSecNextSmash, maxSecNextSmash); //note: nextSmash is also updated when a cake bounce is started
+        if (movePerformed) {
+            //här bestämmer vi tid för nästa smash. Vilken bit som smashas bestäms dock inte här
+            //utan i handleTick
+            nextSmash = randomFutureMillis(minSecNextSmash, maxSecNextSmash); //note: nextSmash is also updated when a cake bounce is started
 
-        clearTimeout(nextSmashId);
-        nextSmashId = setTimeout(smashNextPiece, nextSmash);
+            clearTimeout(nextSmashId);
+            nextSmashId = setTimeout(smashNextPiece, nextSmash);
 
-        console.log("move: next smash in ", (nextSmash - 0 * nowMillis) / 1000, " seconds", nextSmashId);
-        if (selectedNameNumber == piecenumber) {
-            //"rätt" person klickad
-            if (action == "character") {
-                extendAndPlayQueue(["ja"]);
-            }
-            extendAndPlayQueue([nameClicked + "start", "faar", ordinal[movedPieces]]);
-            selectedNameNumber = -1;
-            nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
-            console.log("2---->next random check at ", nextRandomCheck);
+            console.log("move: next smash in ", (nextSmash - 0 * nowMillis) / 1000, " seconds", nextSmashId);
 
-            clearTimeout(randomCheckId);
-            randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
-        } else if (selectedNameNumber == -1) {
-            //person utan tårtbit klickad
-            extendAndPlayQueue([nameClicked + "start", "faar", ordinal[movedPieces]]); //somma som föregående
-            nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
-            console.log("3---->next random check at ", nextRandomCheck);
-            clearTimeout(randomCheckId);
-            randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
-        } else {
-            //"fel" person som inte än fått tårtbit klickad
-            extendAndPlayQueue(["detvarvaelinte", nameSelected + "slut"]);
-        if (action == "character") {
-            extendAndPlayQueue(["detaerju", nameClicked + "start", "somfaar", ordinal[movedPieces]]); //xxx inte helt nöjd med denna
-               } else if (action == "piece") {
+            if (selectedNameNumber == piecenumber) {
+                //"rätt" person klickad
+                if (action == "character") {
+                    extendAndPlayQueue(["ja"]);
+                }
+                extendAndPlayQueue([nameClicked + "start", "faar", ordinal[movedPieces]]);
+                selectedNameNumber = -1;
+                nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
+                console.log("2---->next random check at ", nextRandomCheck);
+
+                clearTimeout(randomCheckId);
+                randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
+            } else if (selectedNameNumber == -1) {
+                //person utan tårtbit klickad
+                extendAndPlayQueue([nameClicked + "start", "faar", ordinal[movedPieces]]); //somma som föregående
+                nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
+                console.log("3---->next random check at ", nextRandomCheck);
+                clearTimeout(randomCheckId);
+                randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
+            } else {
+                //"fel" person som inte än fått tårtbit klickad
+                extendAndPlayQueue(["detvarvaelinte", nameSelected + "slut"]);
+                if (action == "character") {
+                    extendAndPlayQueue(["detaerju", nameClicked + "start", "somfaar", ordinal[movedPieces]]); //xxx inte helt nöjd med denna
+                } else if (action == "piece") {
                     extendAndPlayQueue(["detaerju", ordinal[movedPieces]]);
                 }
             }
@@ -1818,9 +1829,6 @@ function moveCakePiece(piecenumber, x, y, action) {
     }
 }
 
-
-*/
-
 /** 
  * @summary cake
  */
@@ -1829,8 +1837,8 @@ function bounceToTable(piecenumber) {
     var time = Math.floor(1000 * cakeBounceTime / 4);
     var startX = cakeBall.x;
     var startY = cakeBall.y;
-    var smashX = allPieces[piecenumber].x
-    var smashY = allPieces[piecenumber].y;   //+table.y; //cake.y + cakeComplete[piecenumber][0].y;
+    var smashX = cake.x + cakeComplete[piecenumber][0].x;
+    var smashY = cake.y + cakeComplete[piecenumber][0].y;
     var endX = startX + (smashX - startX) * 3.9;
     //should be 4 but this only affects movement outside canvas
     //it is slightly less than 4 to ensure that x tween finishes before y tween
@@ -1858,19 +1866,17 @@ function bounceToTable(piecenumber) {
  */
 function restoreCakeBall() {
     "use strict";
-    if (cakeBall.x > canvasWidth + 100 - tableX) {
-        cakeBall.x = canvasWidth + 100 - tableX;
-        cakeBall.y = 100-tableY;
-    } else if (cakeBall.x < -100 - tableX) {
-        cakeBall.x = -100 - tableX;
-        cakeBall.y = 100 - tableY;
+    if (cakeBall.x > canvasWidth + 100) {
+        cakeBall.x = canvasWidth + 100;
+        cakeBall.y = 100;
+    } else if (cakeBall.x < -100) {
+        cakeBall.x = -100;
+        cakeBall.y = 100;
     } else {
-        cakeBall.x = canvasWidth + 100 - tableX;
-        cakeBall.y = 100 - tableY;
+        cakeBall.x = canvasWidth + 100;
+        cakeBall.y = 100;
     }
     cakeBall.rotation = 0;
-    console.log("local position:",cakeBall.x,cakeBall.y);
-    console.log("global position:",cakeBall.x+tableX,cakeBall.y+tableY);
 }
 
 /** 
@@ -1909,7 +1915,6 @@ function getCharacterNameSound(pieceNumber) {
  */
 function getCharacter(pieceNumber) {
     "use strict";
-    //xxx denna ska nog försvinna
     var character = {};
     if (characters.hasOwnProperty(pieceNumber)) {
         character = characters[pieceNumber];
@@ -1920,54 +1925,44 @@ function getCharacter(pieceNumber) {
 
 /** 
  * @summary cake
-
- * x position of center of characeter relative to table container
- * handPicX pos of left upper corner of handpic relative left upper of happypic
- * pieceX relative to table
  */
-function Character(x ,y ,pieceNumber, pieceX, pieceY, happyPic, hasSadPic, hasHandPic, handPicX, handPicY, name) {
+function Character(pieceNumber, pieceDeltaX, pieceDeltaY, happyPic, hasSadPic, hasHandPic, name, regX, regY) {
     "use strict";
     //constructor for character
     this.pieceNumber = pieceNumber;
-    this.pieceDeltaX = pieceX; //xxx to be deleted
-    this.pieceDeltaY = pieceY; //xxx to be deleted
-    
-    this.pieceX = pieceX;
-    this.pieceY = pieceY;
-    
+    this.pieceDeltaX = pieceDeltaX;
+    this.pieceDeltaY = pieceDeltaY;
     this.happyPic = new createjs.Bitmap(queue.getResult(happyPic));
     this.happyPic.character = this;
     //will this circular reference cause garbage? 
     //Not according to
     //http://stackoverflow.com/questions/7347203/circular-references-in-javascript-garbage-collector
 
-    this.happyPic.regX = this.happyPic.image.width / 2 | 0;
-    this.happyPic.regY = this.happyPic.image.height / 2 | 0;
-    this.happyPic.x = x;//+this.happyPic.image.width / 2 | 0;
-    this.happyPic.y = y;//+this.happyPic.image.height / 2 | 0;
+    this.happyPic.regX = regX;
+    this.happyPic.regY = regY;
+    this.happyPic.x = regX;
+    this.happyPic.y = regY;
 
     if (hasSadPic) {
         this.sadPic = new createjs.Bitmap(queue.getResult(happyPic + "Sad"));
         this.sadPic.character = this;
-        this.sadPic.regX = this.happyPic.regX;
-        this.sadPic.regY = this.happyPic.regY;
-        this.sadPic.x = this.happyPic.x;
-        this.sadPic.y = this.happyPic.y;
+        this.sadPic.regX = regX;
+        this.sadPic.regY = regY;
+        this.sadPic.x = regX;
+        this.sadPic.y = regY;
 
     }
     if (hasHandPic) {
         this.handPic = new createjs.Bitmap(queue.getResult(happyPic + "Hand"));
         this.handPic.character = this;
-        this.handPic.regX = this.happyPic.regX-handPicX;
-        this.handPic.regY = this.happyPic.regY-handPicY;
-        this.handPic.x = this.happyPic.x;
-        this.handPic.y = this.happyPic.y;
-        console.log(this.handPic.x,this.handPic.regX);
+        this.handPic.regX = regX;
+        this.handPic.regY = regY;
+        this.handPic.x = regX;
+        this.handPic.y = regY;
     }
     this.name = name;
     addCharacterEventListener(this);
     makeCharacterHappy(this);
-    console.log("NOTE:",this.name,this.happyPic.x,this.happyPic.y);
 }
 
 /** 

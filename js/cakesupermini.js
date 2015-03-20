@@ -78,7 +78,7 @@ var progressBarErrorColor = "#C00";
 var progressBarFadeTime = 400;
 var enableCakePieceTouch = false; //if true, cake pieces can be distributet by clicking cake
 var useRAF = false;
-var fps = 10; //fps not used if useRAF = true;
+var fps = 30; //fps not used if useRAF = true;
 var cakeBounceTime = 6.0; //time for a complete cake bounce cycle in seconds
 var minSecNextSmash = 1.0; //important that this is larger than cakeBounceTime. xxx but should be fixed so it can be shorter. min=8, max=14
 var maxSecNextSmash = 2.0;
