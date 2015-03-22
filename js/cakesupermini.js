@@ -1226,6 +1226,7 @@ function smashNextPiece() {
             //decide which piece to smash
             var randomIndex = Math.floor(Math.random() * movedAndNotSmashed.length);
             var randomPiece = movedAndNotSmashed[randomIndex];
+            console.log("RANDOM PIECE",randomPiece);
             bounceToTable(randomPiece);
             nextSmash = randomFutureMillis(minSecNextSmash, maxSecNextSmash); //note: nextSmash is also updated when a cake piece is moved
 
