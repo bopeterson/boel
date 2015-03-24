@@ -719,22 +719,13 @@ function handleComplete(event) {
     //event triggered even if file not loaded
     if (loadedFiles < filesToLoad) {
         progressBar.graphics.beginFill(progressBarErrorColor).drawRect(0, 0, canvasWidth, progressBar.height);
-        //xxx the loader div is only for debugging and should be deleted
-        //var div = document.getElementById("loader");
-        //div.innerHTML = "Some resources were not loaded: " + (filesToLoad - loadedFiles);
     } else {
         createjs.Tween.get(progressBar).to({
             alpha: 0.0
-        }, progressBarFadeTime);
+        }, progressBarFadeTime).call(function(evt){stage.removeChild(progressBar)});
     }
 
     addBoelToreSplash();
-    stage.removeChild(progressBar); //to make it visible on top of BoelToreSplash
-    stage.addChild(progressBar);
-    stage.removeChild(debugText); //to make it visible on top of BoelToreSplash
-    stage.addChild(debugText);
-    stage.removeChild(debugbutton1); //to make it visible on top of BoelToreSplash
-    stage.addChild(debugbutton1);
 
     addHelp();
     addTable();
@@ -1118,7 +1109,7 @@ function addBoelToreSplash() {
     "use strict";
     boelToreSplash = new createjs.Bitmap(queue.getResult("boelToreSplash"));
     boelToreSplash.name = "Splash screen";
-    stage.addChild(boelToreSplash);
+    stage.addChildAt(boelToreSplash, 0); //add at the bottom, behind progress bar
 }
 
 /** 
