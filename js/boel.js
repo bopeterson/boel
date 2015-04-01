@@ -79,14 +79,18 @@ var progressBarColor = "#060";
 var progressBarErrorColor = "#C00";
 var progressBarFadeTime = 400;
 var useRAF = true;
-var fps = 24; //fps not used if useRAF = true;
+var fps = 30; //fps not used if useRAF = true;
 var cakeBounceTime = 6.0; //time for a complete cake bounce cycle in seconds
 var minSecNextSmash = 8.0; //important that this is larger than cakeBounceTime
 var maxSecNextSmash = 14.0;
 var gameTransitionTime = 700;
 var numberX = canvasWidth - 60; //canvas.width - 200;xxx canvaswidth variable
 var numberY = 80; //0; xxx finetune
-var numberTransitionTime = 1000;
+var numberAppearTime = 400;
+var numberWaitTime = 2000;
+var numberMoveTime = 400;
+var numberBackgroundWidth = 380;
+var numberBackgroundHeight = 460;
 var startBallGameRotationTime = 2000;
 var startBallGameNoOfTurns = 2;
 
@@ -246,6 +250,7 @@ var tableTore = {};
 var tableDog = {};
 var tableTable;
 var numbers = [];
+var numberBackground;
 var debugText;
 var loadedFiles;
 var filesToLoad;
@@ -677,6 +682,7 @@ function init() {
     queue.installPlugin(createjs.Sound);
     queue.addEventListener("complete", handleComplete);
     queue.addEventListener("error", handleFileError);
+    //queue.addEventListener("fileerror", handleFileError);
     queue.addEventListener("fileload", handleFileLoad);
 
     queue.loadManifest(files);
@@ -755,46 +761,6 @@ function handleComplete(event) {
         fpsLabel.x = 10;
         fpsLabel.y = 160;
     }
-
-}
-
-/** 
- * @summary mixed
- */
-function changeSplashScreen(alpha) {
-    "use strict";
-    createjs.Tween.get(menuCake).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(menuBall).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(menuClothes).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(backButton).to({
-        alpha: (1 - alpha)
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(boelToreSplash).to({
-        alpha: alpha
-    }, gameTransitionTime / 2, createjs.Ease.linear);
-    //splashScreenBackground.alpha = alpha;//xxxyyy createjs.Tween.get(splashScreenBackground).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
-
-
-
-    if (alpha > 0.9) {
-        changeBackground(splashScreenBackgroundColor);
-        createjs.Tween.get(menuHelp).to({
-            x: menuHelpX,
-            y: menuHelpY
-        }, gameTransitionTime / 2, createjs.Ease.linear);
-    } else {
-        createjs.Tween.get(menuHelp).to({
-            x: menuHelpRunningX,
-            y: menuHelpRunningY
-        }, gameTransitionTime / 2, createjs.Ease.linear);
-    }
-
 }
 
 /** 
@@ -902,6 +868,7 @@ function handleFileError(event) {
     //var div = document.getElementById("loader");
     //div.innerHTML = "File load error";
     //div.style.backgroundColor = "#FF0000";
+    console.log("########FILE LOAD ERROR");
 }
 
 /** 
@@ -1035,7 +1002,33 @@ function addDebugText() {
  */
 function showSplashScreen() {
     "use strict";
-    changeSplashScreen(1.0);
+    stage.addChildAt(boelToreSplash, 0); //add at the bottom, behind progress bar
+    stage.addChild(menuCake);
+    stage.addChild(menuBall);
+    stage.addChild(menuClothes);
+    var alpha=1.0;
+    createjs.Tween.get(menuCake).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(menuBall).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(menuClothes).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(backButton).to({
+        alpha: (1 - alpha)
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(boelToreSplash).to({
+        alpha: alpha
+    }, gameTransitionTime / 2, createjs.Ease.linear);
+    
+    
+    changeBackground(splashScreenBackgroundColor);
+    createjs.Tween.get(menuHelp).to({
+        x: menuHelpX,
+        y: menuHelpY
+    }, gameTransitionTime / 2, createjs.Ease.linear);
 }
 
 /** 
@@ -1043,7 +1036,26 @@ function showSplashScreen() {
  */
 function hideSplashScreen() {
     "use strict";
-    changeSplashScreen(0.0);
+    var alpha=0.0;
+    createjs.Tween.get(menuCake).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuCake)});
+    createjs.Tween.get(menuBall).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuBall)});
+    createjs.Tween.get(menuClothes).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuClothes)});
+    createjs.Tween.get(backButton).to({
+        alpha: (1 - alpha)
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(boelToreSplash).to({
+        alpha: alpha
+    }, gameTransitionTime / 2, createjs.Ease.linear).call(function (evt) {stage.removeChild(boelToreSplash)});
+    createjs.Tween.get(menuHelp).to({
+        x: menuHelpRunningX,
+        y: menuHelpRunningY
+    }, gameTransitionTime / 2, createjs.Ease.linear);
 }
 
 /** 
@@ -1471,7 +1483,7 @@ function hideCakeGame() {
     selectedCharacterIndex = -1;
     selectedName = "";
 
-    hideAllNumbers(); //fixxx
+    hideAllNumbers();
 
     showSplashScreen();
 
@@ -1497,9 +1509,33 @@ function addNumbers() {
         number.alpha = 0.0;
         number.name = i + "";
         numbers.push(number);
-        stage.addChild(numbers[i]);
+        
+        //xxx eventhandler only in development stage
+        number.on("mousedown",function(evt) {
+            var x=evt.currentTarget.x;
+            var y=evt.currentTarget.y;
+            printDebug(" x:"+(x|0)+",y:"+(y|0));
+            stage.update();   
+        });
+        number.on("pressmove",function(evt) {
+            var x=evt.stageX;
+            var y=evt.stageY;
+            printDebug(" x:"+(x|0)+",y:"+(y|0));
+            evt.currentTarget.x = evt.stageX;
+            evt.currentTarget.y = evt.stageY;
+            stage.update();   
+        });
+        
+        numberBackground = new createjs.Shape();
+        numberBackground.graphics.beginFill("white").drawEllipse(canvasWidth / 2, canvasHeight / 2, numberBackgroundWidth, numberBackgroundHeight);
+        numberBackground.regX = numberBackgroundWidth / 2;
+        numberBackground.regY = numberBackgroundHeight / 2;
+        numberBackground.alpha = 0.6;
+        numberBackground.name = "Number background";
     }
 }
+
+
 
 /** 
  * @summary cake
@@ -1611,21 +1647,6 @@ function addCake(numberOfCakePieces) {
         var c = new createjs.Bitmap(queue.getResult("cake"+i));
         c.regX = c.image.width / 2 | 0;
         c.regY = c.image.height / 2 | 0; 
-        //xxx eventhandler only in development stage
-        c.on("mousedown",function(evt) {
-            var x=evt.currentTarget.x;
-            var y=evt.currentTarget.y;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            stage.update();   
-        });
-        c.on("pressmove",function(evt) {
-            var x=evt.stageX;
-            var y=evt.stageY;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            evt.currentTarget.x = evt.stageX;
-            evt.currentTarget.y = evt.stageY;
-            stage.update();   
-        });
         c.missingPieceX = missingPiece[i].x;
         c.missingPieceY = missingPiece[i].y;
         c.name = "cake with " + i + " pieces"; 
@@ -1912,17 +1933,17 @@ function Character(x ,y ,pieceNumber, pieceX, pieceY, happyPic, hasSadPic, hasHa
  */
 function hideAllNumbers() {
     "use strict";
-    //basically the same as hideNumber but immediate instead of tween
     var i;
     for (i = 0; i < numbers.length; i += 1) {
-        numbers[i].alpha = 0;
+        stage.removeChild(numbers[i]);
     }
+    stage.removeChild(numberBackground);
 }
 
 /** 
  * @summary cake
  */
-function hideNumber() {
+function hideNumberOld() {
     "use strict";
     var i;
     for (i = 0; i < numbers.length; i += 1) {
@@ -1934,18 +1955,32 @@ function hideNumber() {
     }
 }
 
+
 /** 
  * @summary cake
  */
 function showNumber(number) {
-    "use strict";
-    hideNumber();
-    n = numbers[number];
-    createjs.Tween.get(n).to({
-        alpha: 1.0
-    }, numberTransitionTime, createjs.Ease.linear);
-    pulsate(n, numberTransitionTime);
-}
+    "use strict"
+    var n = numbers[number];
+    if (number > 1) {
+        stage.removeChild(numbers[number-1]);
+    }
+    n.x = canvasWidth / 2;//880;
+    n.y = canvasHeight / 2; //220;
+    n.scaleX = 3.0;
+    n.scaleY = 3.0;
+    
+    
+    stage.addChild(numberBackground);
+    
+    stage.addChild(n);
+    
+    createjs.Tween.get(n).to({alpha: 1.0}, numberAppearTime, createjs.Ease.linear).wait(numberWaitTime).call(function (evt){stage.removeChild(numberBackground)}).to({x:numberX,y:numberY,scaleX:1.0,scaleY:1.0}, numberMoveTime, createjs.Ease.linear);
+} 
+
+var numberAppearTime = 400;
+var numberWaitTime = 2000;
+var numberMoveTime = 400;
 
 
 /* =========== BALL ========== */
