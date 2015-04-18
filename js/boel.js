@@ -25,14 +25,10 @@
 //hand pics must be positioned to match body
 // note: almost invisible dot left of dog's back leg, to force same widht as dogsad
 
-
-
-
 /*make documentation with 
 
 cd Sites/djallo/boel/js
 /Users/k3bope/node_modules/.bin/jsdoc boel.js
-
 
 see https://github.com/jsdoc3/jsdoc
 
@@ -53,10 +49,10 @@ var canvasHeight = 768;
 Ball.prototype = Object.create(createjs.Bitmap.prototype);
 
 //setup parameters
-var splashScreenBackgroundColor = "#86DBD5";
-var ballBackgroundColor = "#FFFF00";
-var tableBackgroundColor = "#FF95CB";
-var clothesBackgroundColor = "#93D4F2";
+var splashScreenBackgroundColor = ["#86DBD5","#B5E7EF"]; //canvas color and a more pale canvasholder color
+var ballBackgroundColor = ["#FFFF00","#F8FF88"];
+var tableBackgroundColor = ["#FF95CB","#FFC7E5"];
+var clothesBackgroundColor = ["#93D4F2","#BFEAF8"];
 
 /**time between forced stage update in milliseconds*/
 var wakeInterval = 20 * 1000;
@@ -68,12 +64,14 @@ var timeToNewBallGame = 5000;
 /** ball bounce speed in pixels per milliseconds */
 var ballBounceSpeed = 0.4;
 /** min random time before voice "x vill ha tårta, var är x" for first character after start.*/
-var minSecSelectFirstName = 5*1.5;
-var maxSecSelectFirstName = 5*1.6;
-var minSecSelectName = 4.0; //min random time before voice: "x vill ha tårta, var är x" for characters after first character
-var maxSecSelectName = 5.0; //max random time...
+var minSecSelectFirstName = 1.5;
+var maxSecSelectFirstName = 2.0;
+var minSecSelectName = 6.0; //min random time before voice: "x vill ha tårta, var är x" for characters after first character xxx should be longer than time it takes to say"ja, x fick första tårtbiten"
+var maxSecSelectName = 8.0; //max random time... xxx
 var minSecNextBall = 3.0;
 var maxSecNextBall = 3.2;
+var showNumberDelay = 2000; //delay before number is shown after sound "nn gets cake piece number n" is started
+var tadaDelay = 6000; //delay before tada and star is shown when all cake pieces delivered
 var progressBarHeight = 20;
 var progressBarColor = "#060";
 var progressBarErrorColor = "#C00";
@@ -81,12 +79,12 @@ var progressBarFadeTime = 400;
 var useRAF = true;
 var fps = 30; //fps not used if useRAF = true;
 var cakeBounceTime = 6.0; //time for a complete cake bounce cycle in seconds
-var minSecNextSmash = 8.0; //important that this is larger than cakeBounceTime
-var maxSecNextSmash = 14.0;
+var minSecNextSmash = 18.0; //important that this is larger than cakeBounceTime
+var maxSecNextSmash = 26.0; //
 var gameTransitionTime = 700;
 var numberX = canvasWidth - 60; //canvas.width - 200;xxx canvaswidth variable
 var numberY = 80; //0; xxx finetune
-var numberAppearTime = 400;
+var numberAppearTime = 600;
 var numberWaitTime = 2000;
 var numberMoveTime = 400;
 var numberBackgroundWidth = 380;
@@ -117,8 +115,8 @@ var clothesGameContainerX = (canvasWidth - 768); //768 is width of line.png, whi
 var clothesGameContainerY = 0;
 
 var pieceMoveTime = 1000;
-var ballPulsateTime = 1000;
-var characterPulsateTime = 1000;
+var ballPulsateTime = 2000;
+var characterPulsateTime = 1500;
 var cakeBallNoOfTurns = 6; //xxxx was 4
 
 var clothesTweenTime = 600;
@@ -173,6 +171,7 @@ var cardinal = [
     "sex"
 ];
 
+//xxxx don't think this is used anymore
 var ordinal = [
     "nolltetaartbiten",
     "foerstataartbiten",
@@ -199,8 +198,6 @@ var cakeHelpSound;
 
 //Here follows global variable definitions
 
-var n; //xxx a global n is evil and must be replaced
-
 var piecesLeft;
 
 var menuClothes;
@@ -209,6 +206,8 @@ var boelToreSplash;
 var nextSmashId;
 var nextBallId;
 var randomCheckId;
+var showNumberId;
+var tadaId;
 
 var helpFrame;
 var helpTextBox;
@@ -293,7 +292,6 @@ var stroke;
  *  */
 function init() {
     "use strict";
-    console.log("almost passes jslint");
     console.log("Boel game starting at " + new Date());
     console.log("TweenJS version " + createjs.TweenJS.version);
 
@@ -335,143 +333,86 @@ function init() {
 
     //loading assets
 
-    var soundFiles = [{
-            id: "andrataartbiten",
-            src: "assets/andrataartbiten.mp3"
-        }, {
-            id: "boelslut",
-            src: "assets/boelslut.mp3"
-        }, {
-            id: "boelstart",
-            src: "assets/boelstart.mp3"
-        }, {
-            id: "boelvill_",
-            src: "assets/boelvill_.mp3"
-        }, {
-            id: "detaerju",
-            src: "assets/detaerju.mp3"
-        }, {
-            id: "detaerjuentaartbit",
-            src: "assets/detaerjuentaartbit.mp3"
-        }, {
-            id: "detvarvaelinte",
-            src: "assets/detvarvaelinte.mp3"
-        }, {
-            id: "faar",
-            src: "assets/faar.mp3"
-        }, {
-            id: "femtetaartbiten",
-            src: "assets/femtetaartbiten.mp3"
-        }, {
-            id: "fjaerdetaartbiten",
-            src: "assets/fjaerdetaartbiten.mp3"
-        }, {
-            id: "foerstataartbiten",
-            src: "assets/foerstataartbiten.mp3"
-        }, {
-            id: "hundenslut",
-            src: "assets/hundenslut.mp3"
-        }, {
-            id: "hundenstart",
-            src: "assets/hundenstart.mp3"
-        }, {
-            id: "hundenvill_",
-            src: "assets/hundenvill_.mp3"
-        }, {
-            id: "ja",
-            src: "assets/ja.mp3"
-        }, {
-            id: "mammaslut",
-            src: "assets/mammaslut.mp3"
-        }, {
-            id: "mammastart",
-            src: "assets/mammastart.mp3"
-        }, {
-            id: "mammavill_",
-            src: "assets/mammavill_.mp3"
-        }, {
-            id: "morfarslut",
-            src: "assets/morfarslut.mp3"
-        }, {
-            id: "morfarstart",
-            src: "assets/morfarstart.mp3"
-        }, {
-            id: "morfarvill_",
-            src: "assets/morfarvill_.mp3"
-        }, {
-            id: "pappaslut",
-            src: "assets/pappaslut.mp3"
-        }, {
-            id: "pappastart",
-            src: "assets/pappastart.mp3"
-        }, {
-            id: "pappavill_",
-            src: "assets/pappavill_.mp3"
-        }, {
-            id: "sjaettetaartbiten",
-            src: "assets/sjaettetaartbiten.mp3"
-        }, {
-            id: "somfaar",
-            src: "assets/somfaar.mp3"
-        }, {
-            id: "toreslut",
-            src: "assets/toreslut.mp3"
-        }, {
-            id: "torestart",
-            src: "assets/torestart.mp3"
-        }, {
-            id: "torevill_",
-            src: "assets/torevill_.mp3"
-        }, {
-            id: "tredjetaartbiten",
-            src: "assets/tredjetaartbiten.mp3"
-        }, {
-            id: "tyst1000",
-            src: "assets/tyst1000.mp3"
-        }, {
-            id: "cakebounce",
-            src: "assets/cakebounce.mp3"
-        }, {
-            id: "detjublue",
-            src: "assets/detjublue.mp3"
-        }, {
-            id: "detjuyellow",
-            src: "assets/detjuyellow.mp3"
-        }, {
-            id: "detjugreen",
-            src: "assets/detjugreen.mp3"
-        }, {
-            id: "detjured",
-            src: "assets/detjured.mp3"
-        }, {
-            id: "jagreen",
-            src: "assets/jagreen.mp3"
-        }, {
-            id: "jablue",
-            src: "assets/jablue.mp3"
-        }, {
-            id: "jared",
-            src: "assets/jared.mp3"
-        }, {
-            id: "jayellow",
-            src: "assets/jayellow.mp3"
-        }, {
-            id: "vargreen",
-            src: "assets/vargreen.mp3"
-        }, {
-            id: "varblue",
-            src: "assets/varblue.mp3"
-        }, {
-            id: "varyellow",
-            src: "assets/varyellow.mp3"
-        }, {
-            id: "varred",
-            src: "assets/varred.mp3"
-        }, {
-            id: "tada",
-            src: "assets/tada.mp3"
-        }
+    var soundFiles = [
+        {id: "boelgets1", src: "assets/boelgets1.mp3"},
+        {id: "boelgets2", src: "assets/boelgets2.mp3"},
+        {id: "boelgets3", src: "assets/boelgets3.mp3"},
+        {id: "boelgets4", src: "assets/boelgets4.mp3"},
+        {id: "boelgets5", src: "assets/boelgets5.mp3"},
+        {id: "boelgets6", src: "assets/boelgets6.mp3"},
+        {id: "dadgets1", src: "assets/dadgets1.mp3"},
+        {id: "dadgets2", src: "assets/dadgets2.mp3"},
+        {id: "dadgets3", src: "assets/dadgets3.mp3"},
+        {id: "dadgets4", src: "assets/dadgets4.mp3"},
+        {id: "dadgets5", src: "assets/dadgets5.mp3"},
+        {id: "dadgets6", src: "assets/dadgets6.mp3"},
+        {id: "doggets1", src: "assets/doggets1.mp3"},
+        {id: "doggets2", src: "assets/doggets2.mp3"},
+        {id: "doggets3", src: "assets/doggets3.mp3"},
+        {id: "doggets4", src: "assets/doggets4.mp3"},
+        {id: "doggets5", src: "assets/doggets5.mp3"},
+        {id: "doggets6", src: "assets/doggets6.mp3"},
+        {id: "granddadgets1", src: "assets/granddadgets1.mp3"},
+        {id: "granddadgets2", src: "assets/granddadgets2.mp3"},
+        {id: "granddadgets3", src: "assets/granddadgets3.mp3"},
+        {id: "granddadgets4", src: "assets/granddadgets4.mp3"},
+        {id: "granddadgets5", src: "assets/granddadgets5.mp3"},
+        {id: "granddadgets6", src: "assets/granddadgets6.mp3"},
+        {id: "mumgets1", src: "assets/mumgets1.mp3"},
+        {id: "mumgets2", src: "assets/mumgets2.mp3"},
+        {id: "mumgets3", src: "assets/mumgets3.mp3"},
+        {id: "mumgets4", src: "assets/mumgets4.mp3"},
+        {id: "mumgets5", src: "assets/mumgets5.mp3"},
+        {id: "mumgets6", src: "assets/mumgets6.mp3"},
+        {id: "toregets1", src: "assets/toregets1.mp3"},
+        {id: "toregets2", src: "assets/toregets2.mp3"},
+        {id: "toregets3", src: "assets/toregets3.mp3"},
+        {id: "toregets4", src: "assets/toregets4.mp3"},
+        {id: "toregets5", src: "assets/toregets5.mp3"},
+        {id: "toregets6", src: "assets/toregets6.mp3"},
+        {id: "tada", src: "assets/tada.mp3"},
+        {id: "yesblue", src: "assets/yesblue.mp3"},
+        {id: "yesgreen", src: "assets/yesgreen.mp3"},
+        {id: "yesred", src: "assets/yesred.mp3"},
+        {id: "yesyellow", src: "assets/yesyellow.mp3"},
+        {id: "thatwasblue", src: "assets/thatwasblue.mp3"},
+        {id: "thatwasgreen", src: "assets/thatwasgreen.mp3"},
+        {id: "thatwasred", src: "assets/thatwasred.mp3"},
+        {id: "thatwasyellow", src: "assets/thatwasyellow.mp3"},
+        {id: "cakebounce", src: "assets/cakebounce.mp3"},
+        {id: "silence1000", src: "assets/silence1000.mp3"},
+        {id: "silence300", src: "assets/silence300.mp3"},
+        {id: "whereblue", src: "assets/whereblue.mp3"},
+        {id: "wheregreen", src: "assets/wheregreen.mp3"},
+        {id: "wherered", src: "assets/wherered.mp3"},
+        {id: "whereyellow", src: "assets/whereyellow.mp3"},
+        {id: "boeltap", src: "assets/boeltap.mp3"},
+        {id: "boelwhereis", src: "assets/boelwhereis.mp3"},
+        {id: "boelwouldlike", src: "assets/boelwouldlike.mp3"},
+        {id: "dadtap", src: "assets/dadtap.mp3"},
+        {id: "dadwhereis", src: "assets/dadwhereis.mp3"},
+        {id: "dadwouldlike", src: "assets/dadwouldlike.mp3"},
+        {id: "dogtap", src: "assets/dogtap.mp3"},
+        {id: "dogwhereis", src: "assets/dogwhereis.mp3"},
+        {id: "dogwouldlike", src: "assets/dogwouldlike.mp3"},
+        {id: "granddadtap", src: "assets/granddadtap.mp3"},
+        {id: "granddadwhereis", src: "assets/granddadwhereis.mp3"},
+        {id: "granddadwouldlike", src: "assets/granddadwouldlike.mp3"},
+        {id: "mumtap", src: "assets/mumtap.mp3"},
+        {id: "mumwhereis", src: "assets/mumwhereis.mp3"},
+        {id: "mumwouldlike", src: "assets/mumwouldlike.mp3"},
+        {id: "toretap", src: "assets/toretap.mp3"},
+        {id: "torewhereis", src: "assets/torewhereis.mp3"},
+        {id: "torewouldlike", src: "assets/torewouldlike.mp3"},
+        {id: "boelbut", src: "assets/boelbut.mp3"},
+        {id: "torebut", src: "assets/torebut.mp3"},
+        {id: "granddadbut", src: "assets/granddadbut.mp3"},
+        {id: "dogbut", src: "assets/dogbut.mp3"},
+        {id: "mumbut", src: "assets/mumbut.mp3"},
+        {id: "dadbut", src: "assets/dadbut.mp3"},
+        {id: "yes", src: "assets/yes.mp3"}
     ];
+
 
     var cakeFilesNew = [{
         id: "piece1",
@@ -604,16 +545,17 @@ function init() {
         src: "assets/cake_ball.png"
     }];
 
+
+    numberOfCakePieces = 6; //xxx move to setup
+
     var numberFiles = [];
     var i;
-    for (i = 0; i < 10; i += 1) {
+    for (i = 0; i <= numberOfCakePieces; i += 1) {
         numberFiles.push({
             id: i + "",
             src: "assets/" + i + ".png"
         });
     }
-
-    numberOfCakePieces = 6; //xxx move to setup
 
     //no camelCase in filenames (might lead to cross platform issues...)
     var tableFiles = [{
@@ -694,18 +636,29 @@ function init() {
  */
 function watchSound(s0) {
     "use strict";
-    var i;
-    for (i = 0; i < ordinal.length; i += 1) {
-        if (s0 == ordinal[i]) {
-            showNumber(i);
+    
+    if (s0.slice(-7) == "whereis") {
+        var character = getCharacter(selectedCharacterIndex);
+        if (character.hasOwnProperty("happyPic")) {
+            pulsate(character.happyPic, characterPulsateTime);
+        }
+        if (character.hasOwnProperty("handPic")) {
+            pulsate(character.handPic, characterPulsateTime);
         }
     }
-    if (s0 == "varblue" || s0 == "varred" || s0 == "varyellow" || s0 == "vargreen") {
-        pulsate(nextBall, ballPulsateTime);
 
+    if (s0 == "whereblue" || s0 == "wherered" || s0 == "whereyellow" || s0 == "wheregreen") {
+        if (nextBall != null) {
+            pulsate(nextBall, ballPulsateTime);
+        } else {
+            console.log("################################");
+        }
     }
-    if (s0 == "tada") {
+    else if (s0 == "tada") {
         showStar();
+    } else if (s0.slice(-5,-1)=="gets") {
+        var currentNumber = parseInt(s0.slice(-1),10);
+        showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
     }
 }
 
@@ -814,7 +767,9 @@ function handleBackButtonTouch(event) {
  * */
 function changeBackground(color) {
     "use strict";
-    canvas.style.backgroundColor = color;
+    canvas.style.backgroundColor = color[0];
+    var frame = document.getElementById("canvasHolder");
+    frame.style.backgroundColor = color[1];
 }
 
 /** Creates a Background of certain color and alpha. Used to create transparent overlay when help is shown. 
@@ -852,10 +807,9 @@ function handleBackgroundTouch(event) {
  */
 function printDebug(text) {
     "use strict";
-    //console.log("printDebug ",text);
     if (debug) {
         debugText.text += text;
-        debugText.text = debugText.text.substring(debugText.text.length - 68, debugText.text.length);
+        debugText.text = debugText.text.substring(debugText.text.length - 68, debugText.text.length); //could use slice instead of substring
         //stage.update();
     }
 }
@@ -868,7 +822,6 @@ function handleFileError(event) {
     //var div = document.getElementById("loader");
     //div.innerHTML = "File load error";
     //div.style.backgroundColor = "#FF0000";
-    console.log("########FILE LOAD ERROR");
 }
 
 /** 
@@ -876,7 +829,6 @@ function handleFileError(event) {
  */
 function handleFileLoad(event) {
     "use strict";
-    console.log(event.item.src);
     printDebug(event.item.src + ',');
 
     loadedFiles += 1;
@@ -971,7 +923,6 @@ function addHelp() {
 function addStar() {
     "use strict";
     star = new createjs.Bitmap(queue.getResult("star"));
-    stage.addChild(star);
     star.regX = star.image.width / 2 | 0;
     star.regY = star.image.height / 2 | 0;
     star.x = canvasWidth / 2 | 0;
@@ -1079,7 +1030,6 @@ function handleMenuHelpTouch(evt) {
  */
 function showHelp(text, sound) {
     "use strict";
-    console.log("showHelp");
     //xxx ska man pausa tweens? pausa ljud? blir lite knepigt...
     helpTextBox.text = text;
     helpContainer.visible = true;
@@ -1141,6 +1091,7 @@ function addBackButton() {
 }
 
 /** 
+sounds can be a string or array of strings
  * @summary general
  */
 function extendAndPlayQueue(sounds) {
@@ -1174,6 +1125,20 @@ function playQueue() {
     }
 }
 
+
+/** 
+ * @summary general
+ */
+
+function getPlayingSound() {
+    "use strict";
+    if (soundQueue.length > 0) {
+        return soundQueue[0];
+    } else {
+        return "";
+    }    
+}
+
 /** 
  * @summary general
  */
@@ -1188,8 +1153,17 @@ function playSingle(sound) {
  */
 function handleNextSound(evt) {
     "use strict";
-    soundQueue = soundQueue.splice(1);
+    soundQueue.splice(0,1); //removes first element in soundQueue
     playQueue();
+}
+/** 
+ * @summary general
+ */
+function removeNextSound() {
+    "use strict";
+    soundQueue.splice(1,1); //removes second element in soundQueue
+    var i;
+    
 }
 
 /** 
@@ -1197,6 +1171,7 @@ function handleNextSound(evt) {
  */
 function showStar() {
     "use strict";
+    stage.addChild(star);
     createjs.Tween.get(star).
     to({
         alpha: 0.7,
@@ -1222,6 +1197,7 @@ function hideStar() {
     star.alpha = 0;
     star.scaleX = 0.1;
     star.scaleY = 0.1;
+    stage.removeChild(star);
 }
 
 
@@ -1235,27 +1211,42 @@ function randomFutureMillis(minSec, maxSec) {
     return 1000 * randomSec;
 }
 
+
 /** 
  * @summary general
  */
 function pulsate(bitmap, pulsetime) {
     "use strict";
-    //console.log("bitmap",bitmap,"pulsetime",pulsetime);
-    var partTime = Math.floor(pulsetime / 4);
-    createjs.Tween.get(bitmap).to({
-        scaleX: 1.1,
-        scaleY: 1.1
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.0,
-        scaleY: 1.0
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.1,
-        scaleY: 1.1
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.0,
-        scaleY: 1.0
-    }, partTime, createjs.Ease.sineInOut);
+    var cycles = Math.floor(pulsetime/500+0.5)
+    
+    var partTime = Math.floor(pulsetime / 2 / cycles);
+    
+    pulsateOne(bitmap, partTime, cycles);
 }
+
+/** 
+ * @summary general
+ */
+function pulsateOne(bitmap, partTime, cycles) {
+    if (cycles <= 1) {
+        createjs.Tween.get(bitmap).to({
+            scaleX: 1.1,
+            scaleY: 1.1
+        }, partTime, createjs.Ease.sineInOut).to({
+            scaleX: 1.0,
+            scaleY: 1.0
+        }, partTime, createjs.Ease.sineInOut);
+    } else {
+        createjs.Tween.get(bitmap).to({
+            scaleX: 1.1,
+            scaleY: 1.1
+        }, partTime, createjs.Ease.sineInOut).to({
+            scaleX: 1.0,
+            scaleY: 1.0
+        }, partTime, createjs.Ease.sineInOut).call(function (evt) {pulsateOne(bitmap, partTime,  cycles - 1)});
+    }
+}
+
 
 /** 
  * @summary general
@@ -1276,7 +1267,7 @@ function log(text) {
 function checkCharacter() {
     "use strict";
     console.log("checking character");
-    if (helpContainer.visible) {
+    if (soundQueue.length > 0 || helpContainer.visible) {
         console.log("not ready to check character");
         randomCheckId = setTimeout(checkCharacter, 2000);
     } else {
@@ -1292,16 +1283,18 @@ function checkCharacter() {
 /** 
  * @summary cake
     returns true if a character is selected, false otherwise
-    also pulsates a character and plays sound, if there is a character to select
+    "selected" means that the character is the next in turn to
+    supposedly receive a piece of cake.
+    It also also pulsates a character and plays sound, if there is a character to select
  
  */
 function selectNextCharacter() {
-    
     "use strict";
+    console.log("selecting next charavter");
+    
     var notMoved = [];
 
     function pushNotMovedPiece(piece, pieceNumber, array) {
-        console.log("piece: ", pieceNumber, piece);
         if (!piece.moved) {
             notMoved.push(pieceNumber);
         }
@@ -1309,21 +1302,24 @@ function selectNextCharacter() {
 
     //who has no cake yet?
     var characterSelected = false;
-    if (soundQueue.length == 0 && selectedCharacterIndex == -1) {
+    if (selectedCharacterIndex == -1) {
 
         allPieces.forEach(pushNotMovedPiece);
-                
         if (notMoved.length > 0) {
             var randomIndex = Math.floor(Math.random() * notMoved.length);
             selectedCharacterIndex = notMoved[randomIndex];
-            console.log("1306");
             selectedName = getCharacterNameSound(selectedCharacterIndex);
+ 
+/*
             var character = getCharacter(selectedCharacterIndex);
             pulsate(character.happyPic, characterPulsateTime);
             if (character.hasOwnProperty("handPic")) {
                 pulsate(character.handPic, characterPulsateTime);
             }
-            extendAndPlayQueue([selectedName + "vill_"]); //namn vill ha tårta, var är namn?
+ */
+ 
+ 
+            extendAndPlayQueue([selectedName + "wouldlike",selectedName + "whereis",selectedName + "tap"]); //namn vill ha tårta, var är namn?
             characterSelected = true;
         }
     }
@@ -1340,7 +1336,6 @@ function smashNextPiece() {
 
     function pushMovedAndNotSmashedPiece(piece, pieceNumber, array) {
         if (piece.moved && !piece.smashed) {
-            console.log("======= moved and not smashed: ", pieceNumber);
             movedAndNotSmashed.push(pieceNumber);
         }
     }
@@ -1360,16 +1355,13 @@ function smashNextPiece() {
             //decide which piece to smash
             var randomIndex = Math.floor(Math.random() * movedAndNotSmashed.length);
             var randomPiece = movedAndNotSmashed[randomIndex];
-            console.log("RANDOM PIECE",randomPiece);
             bounceToTable(randomPiece);
             nextSmash = randomFutureMillis(minSecNextSmash, maxSecNextSmash); //note: nextSmash is also updated when a cake piece is moved
 
             //there might not be a piece to smash now, but might be at nextSmash. If there is no piece to smash at nextSmash, nextSmash will get a new value
             clearTimeout(nextSmashId);
             nextSmashId = setTimeout(smashNextPiece, nextSmash);
-            console.log("smashNextPiece: next smash in ", (nextSmash - 0 * nowMillis) / 1000, " seconds", nextSmashId);
         }
-
     }
 }
 
@@ -1381,7 +1373,10 @@ function handleCharacterTouch(event) {
     //ok, vi har ett event. detta är en bitmapimage. men hur veta vilken character den hör till?
     var c = event.target.character;
     //moveCakePiece(c.pieceNumber, c.pieceDeltaX, c.pieceDeltaY, "character");
-    moveCakePieceNew(c.pieceNumber,c.pieceX,c.pieceY);
+    
+    if (c.hasCake === false) { //more safe than !c.hasCake if hasCake is undefined
+        moveCakePiece(c);
+    }
 }
 
 /** 
@@ -1391,7 +1386,7 @@ function handleMenuCakeTouch(event) {
     "use strict";
     if (noGameRunning()) {
         menuCake.focus = true;
-        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone. 
+        extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone. 
         hideSplashScreen();
         showCakeGame();
         startCakeGame();
@@ -1445,11 +1440,13 @@ function showTable() {
     cakeContainer.removeAllChildren();
     cakeContainer.addChild(allCakes[piecesLeft])
 
-    //gör figurer glada
+    //gör figurer glada mm
     for (i = 0; i < allCharacters.length; i += 1) {
         var ch=allCharacters[i];
         restoreCharacter(ch);
     }
+
+    restoreCakeBall();
 
     stage.addChild(table);
     
@@ -1463,7 +1460,6 @@ function showTable() {
  */
 function startCakeGame() {
     nextRandomCheck = randomFutureMillis(minSecSelectFirstName, maxSecSelectFirstName);
-    console.log("---->next random check at ", nextRandomCheck);
     //no need to clear previous timeout here (I think xxx)
     randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
 }
@@ -1479,12 +1475,14 @@ function hideCakeGame() {
     soundQueue = [];
     clearTimeout(nextSmashId);
     clearTimeout(randomCheckId);
+    clearTimeout(showNumberId);
+    clearTimeout(tadaId);
     nextRandomCheck = -1;
     selectedCharacterIndex = -1;
     selectedName = "";
 
     hideAllNumbers();
-
+    hideStar();
     showSplashScreen();
 
     createjs.Tween.get(table).to({
@@ -1500,7 +1498,7 @@ function addNumbers() {
     "use strict";
     var i;
     var number;
-    for (i = 0; i < 10; i += 1) {
+    for (i = 0; i <= numberOfCakePieces; i += 1) {
         number = new createjs.Bitmap(queue.getResult(i + ""));
         number.x = numberX;
         number.y = numberY;
@@ -1550,11 +1548,11 @@ function addTable() {
     table.name = "Table container";
 
     //anticlockwise around table
-    tableDog = new Character(181,605,0, 417, 535, "tableDog", true, false, 0, 0, "Hunden");
+    tableDog = new Character(181,605,0, 417, 535, "tableDog", true, false, 0, 0, "Dog");
     tableTore = new Character(719,490,1, 594, 475, "tableTore", true, true, 0, 163, "Tore");
-    tableDad = new Character(654,266,2, 587, 319, "tableDad", true, true, 2, 295, "Pappa");
-    tableGrandDad = new Character(411,179,3, 527, 265, "tableGrandDad", true, true, 0, 254, "Morfar");
-    tableMom = new Character(249,285,4, 324, 332, "tableMom", true, true, 81, 202, "Mamma");
+    tableDad = new Character(658,266,2, 587, 319, "tableDad", true, true, 2, 295, "Dad");
+    tableGrandDad = new Character(411,175,3, 527, 265, "tableGrandDad", true, true, 0, 254, "Granddad");
+    tableMom = new Character(249,285,4, 324, 332, "tableMom", true, true, 81, 202, "Mum");
     tableBoel = new Character(191,417,5, 310, 444, "tableBoel", true, true, 107, 121, "Boel");
 
     allCharacters=[tableDog,tableTore,tableDad,tableGrandDad,tableMom,tableBoel];
@@ -1577,7 +1575,7 @@ function addTable() {
  */
 function handleTableTouch(event) {
     "use strict";
-    //console.log("xxx not used right now, but prevents from clicking through table");
+    //not used right now, but prevents from clicking through table
 }
 
 /** 
@@ -1603,6 +1601,7 @@ function addCharacterEventListener(character) {
 function restoreCharacter(character) {
     "use strict";
     character.mood = "happy";
+    character.hasCake = false;
 }
 
 /** 
@@ -1664,7 +1663,6 @@ function addCake(numberOfCakePieces) {
         //move to function
         var p=new createjs.Bitmap(queue.getResult("piece"+i));
         var sp=new createjs.Bitmap(queue.getResult("smashedPiece"+i));
-        console.log(p);
         p.regX = p.image.width / 2 | 0;
         p.regY = p.image.height / 2 | 0;
         p.x = 0;
@@ -1710,65 +1708,92 @@ function addCakeBall() {
 /** 
  * @summary cake
  */
-function moveCakePieceNew(piecenumber, x, y) {
+function moveCakePiece(character) {
     "use strict";
-    console.log("trying to move ", piecenumber);
-    var movePerformed = false;
-    if (menuCake.focus && soundQueue.length == 0) {
-        var p=allPieces[piecenumber];
-        if (!p.moved) {
-            var oldc=allCakes[piecesLeft];
-            piecesLeft-=1;
-            var c=allCakes[piecesLeft];
-            cakeContainer.addChildAt(c,cakeContainer.getChildIndex(oldc));
-            p.x = c.missingPieceX+cakeContainer.x;
-            p.y = c.missingPieceY+cakeContainer.y;
-            table.addChild(p);
-            createjs.Tween.get(oldc).to({alpha:0.0},400, createjs.Ease.linear).call(function(evt){cakeContainer.removeChild(oldc)});
-            createjs.Tween.get(p).to({alpha:1.0},200, createjs.Ease.linear).wait(10).to({x:x,y:y},700, createjs.Ease.linear);
-            p.moved = true;
-            movePerformed = true;
+    var pieceNumber = character.pieceNumber;
+    var x = character.pieceX;
+    var y = character.pieceY;
+    var playingSound = getPlayingSound();
+    var piece=allPieces[pieceNumber];
+    var nameClicked = getCharacterNameSound(pieceNumber); //xxx better to get directly from character    
+    var nameSelected = getCharacterNameSound(selectedCharacterIndex);
+    var correctCharacterClicked = (selectedCharacterIndex == pieceNumber);
+
+
+    if (menuCake.focus &&
+            (playingSound == "" || 
+            (correctCharacterClicked && playingSound.slice(-3) == "but") ||
+            (correctCharacterClicked && playingSound.slice(-9) == "wouldlike") ||
+            (correctCharacterClicked && playingSound.slice(-7) == "whereis") ||
+            (correctCharacterClicked && playingSound.slice(-3) == "tap"))) {
+            //the condition above can be simplified
+
+        if (playingSound.slice(-3) == "but") {
+            removeNextSound();
+            removeNextSound();
+        } else if (playingSound.slice(-9) == "wouldlike") {
+            removeNextSound();
+            removeNextSound();
+        } else if (playingSound.slice(-7) == "whereis") {
+            removeNextSound();
         }
-        var nameClicked = getCharacterNameSound(piecenumber);
-        var nameSelected = getCharacterNameSound(selectedCharacterIndex);
-        if (movePerformed) {
-            nextSmash = randomFutureMillis(minSecNextSmash, maxSecNextSmash); //note: nextSmash is also updated when a cake bounce is started
-            clearTimeout(nextSmashId);
-            nextSmashId = setTimeout(smashNextPiece, nextSmash);
-            console.log("move: next smash in ", (nextSmash - 0 * nowMillis) / 1000, " seconds", nextSmashId);
 
-            if (selectedCharacterIndex == piecenumber) {
-                //"rätt" person klickad
-                extendAndPlayQueue(["ja"]);
-                extendAndPlayQueue([nameClicked + "start", "faar", ordinal[numberOfCakePieces-piecesLeft]]);
-                selectedCharacterIndex = -1;
-                nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
-                console.log("2---->next random check at ", nextRandomCheck);
+        var oldCake = allCakes[piecesLeft];
+        piecesLeft -= 1;
+        var newCake = allCakes[piecesLeft];
+        cakeContainer.addChildAt(newCake, cakeContainer.getChildIndex(oldCake));
+        piece.x = newCake.missingPieceX + cakeContainer.x;
+        piece.y = newCake.missingPieceY + cakeContainer.y;
+        table.addChild(piece);
+        createjs.Tween.get(oldCake).to({
+            alpha: 0.0
+        }, 400, createjs.Ease.linear).call(function(evt) {
+            cakeContainer.removeChild(oldCake)
+        });
+        createjs.Tween.get(piece).to({
+            alpha: 1.0
+        }, 200, createjs.Ease.linear).wait(10).to({
+            x: x,
+            y: y
+        }, 700, createjs.Ease.linear);
+        piece.moved = true;
+        character.hasCake = true;
 
-                clearTimeout(randomCheckId);
-                randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
-            } else if (selectedCharacterIndex == -1) {
-                //person utan tårtbit klickad
-                extendAndPlayQueue([nameClicked + "start", "faar", ordinal[numberOfCakePieces-piecesLeft]]); //samma som föregående
-                nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
-                console.log("3---->next random check at ", nextRandomCheck);
+        nextSmash = randomFutureMillis(minSecNextSmash, maxSecNextSmash); //note: nextSmash is also updated when a cake bounce is started
+        clearTimeout(nextSmashId);
+        nextSmashId = setTimeout(smashNextPiece, nextSmash);
 
-                clearTimeout(randomCheckId);
-                randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
-            } else {
-                console.log("4--->");
-                //"fel" person som inte än fått tårtbit klickad
-                extendAndPlayQueue(["detvarvaelinte", nameSelected + "slut"]);
-                extendAndPlayQueue(["detaerju", nameClicked + "start", "somfaar", ordinal[numberOfCakePieces-piecesLeft]]); //xxx inte helt nöjd med denna
-            }
-        } else if (selectedCharacterIndex != piecenumber && selectedCharacterIndex != -1) {
-            //"fel" person som redan fått tårtbit klickad
-            console.log("5--->");
-            extendAndPlayQueue(["detvarvaelinte", nameSelected + "slut"]);
-            extendAndPlayQueue(["detaerju", nameClicked + "start"]);
+        if (correctCharacterClicked) {
+            //"rätt" person klickad
+            extendAndPlayQueue(["yes"]);
+            var currentNumber = numberOfCakePieces - piecesLeft;
+            extendAndPlayQueue([nameClicked + "gets" + currentNumber]);
+            //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
+            selectedCharacterIndex = -1;
+            nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
+            clearTimeout(randomCheckId);
+            randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
+        } else if (selectedCharacterIndex == -1) {
+            //person utan tårtbit klickad, ingen person i kö för att bli klickad
+            //exakt samma som tidigare, men ingen yes
+            var currentNumber = numberOfCakePieces - piecesLeft;
+            extendAndPlayQueue([nameClicked + "gets" + currentNumber]);
+            //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
+            selectedCharacterIndex = -1;
+            nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
+            clearTimeout(randomCheckId);
+            randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
+        } else {
+            //"fel" person som inte än fått tårtbit klickad
+            var currentNumber = numberOfCakePieces - piecesLeft;
+            extendAndPlayQueue([nameClicked + "gets" + currentNumber, "silence300", nameSelected + "but", selectedName + "whereis", selectedName + "tap"]);
+            //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
         }
-        
-    }    
+        if (piecesLeft == 0) {
+            extendAndPlayQueue(["tada"]);
+            //tadaId=setTimeout(extendAndPlayQueue,tadaDelay,"tada");
+        }
+    }
 }
 
 /** 
@@ -1805,6 +1830,7 @@ function bounceToTable(piecenumber) {
 }
 
 /** 
+    table must exist when this function is called. At least I think so...
  * @summary cake
  */
 function restoreCakeBall() {
@@ -1821,8 +1847,6 @@ function restoreCakeBall() {
         cakeBall.y = 100 - tableY;
     }
     cakeBall.rotation = 0;
-    console.log("local position:",cakeBall.x,cakeBall.y);
-    console.log("global position:",cakeBall.x+tableX,cakeBall.y+tableY);
 }
 
 /** 
@@ -1830,14 +1854,11 @@ function restoreCakeBall() {
  */
 function smashPiece() {
     "use strict";
-    console.log("pieceNumberToSmash:",pieceNumberToSmash);
     var p = allPieces[pieceNumberToSmash];
     playSingle("cakebounce");
 
     var character = getCharacter(pieceNumberToSmash);
     makeCharacterSad(character);
-    console.log(p);
-    console.log(p.smashed);
     p.smashed = true;
     var sp = allSmashedPieces[pieceNumberToSmash];
     sp.x=p.x;
@@ -1851,7 +1872,6 @@ function smashPiece() {
  */
 function getCharacterNameSound(pieceNumber) {
     "use strict";
-    console.log("getCharacterNameSound",pieceNumber);
     var character = getCharacter(pieceNumber);
     if (character.hasOwnProperty("name")) {
         return character.name.toLowerCase();
@@ -1919,13 +1939,11 @@ function Character(x ,y ,pieceNumber, pieceX, pieceY, happyPic, hasSadPic, hasHa
         this.handPic.regY = this.happyPic.regY-handPicY;
         this.handPic.x = this.happyPic.x;
         this.handPic.y = this.happyPic.y;
-        console.log(this.handPic.x,this.handPic.regX);
         this.handPic.name = name + " hand";
     }
     this.name = name;
-    this.mood = "happy";
+    restoreCharacter(this);
     addCharacterEventListener(this);
-    console.log("NOTE:",this.name,this.happyPic.x,this.happyPic.y);
 }
 
 /** 
@@ -1935,6 +1953,7 @@ function hideAllNumbers() {
     "use strict";
     var i;
     for (i = 0; i < numbers.length; i += 1) {
+        numbers[i].alpha = 0;
         stage.removeChild(numbers[i]);
     }
     stage.removeChild(numberBackground);
@@ -1962,26 +1981,26 @@ function hideNumberOld() {
 function showNumber(number) {
     "use strict"
     var n = numbers[number];
+    
+    //xxx lite säkrare att gömma alla nummer, men tar mer resurser
+    //hideAllNumbers();
+    
     if (number > 1) {
+        numbers[number-1].alpha = 0;
         stage.removeChild(numbers[number-1]);
     }
+
     n.x = canvasWidth / 2;//880;
     n.y = canvasHeight / 2; //220;
     n.scaleX = 3.0;
     n.scaleY = 3.0;
-    
-    
+        
     stage.addChild(numberBackground);
     
     stage.addChild(n);
     
     createjs.Tween.get(n).to({alpha: 1.0}, numberAppearTime, createjs.Ease.linear).wait(numberWaitTime).call(function (evt){stage.removeChild(numberBackground)}).to({x:numberX,y:numberY,scaleX:1.0,scaleY:1.0}, numberMoveTime, createjs.Ease.linear);
 } 
-
-var numberAppearTime = 400;
-var numberWaitTime = 2000;
-var numberMoveTime = 400;
-
 
 /* =========== BALL ========== */
 
@@ -1995,7 +2014,7 @@ function handleNextBall() {
         nextBallId = setTimeout(handleNextBall, 2000);
     } else if (menuBall.focus) {
         nextBall = findRandomBall();
-        extendAndPlayQueue("var" + nextBall.color); //this sound is "watched" and will trigger pulsating ball
+        extendAndPlayQueue("where" + nextBall.color); //this sound is "watched" and will trigger pulsating ball
         nextBallTime = -1; //no new nextBall until this nextBall is touched 
     }
 }
@@ -2024,7 +2043,7 @@ function checkBallOutsideAndBallBounce() {
         if (detectBallCollision(ball, 0)) {
             if (ball.obstacleBall != ball.lastObstacleBall) {
                 //ball has bounced into another ball. stop running tween and start new tween in new direction
-                if (isRunning(ballTween)) {
+                if (isRunning(ballTween)) { //note isRunning(ballTween) is checking ALL running tweens due to a bug in tweenjs
                     ballTween.setPaused(true); //funkar nog bäst
                 }
                 //calculate bounce direction
@@ -2081,7 +2100,7 @@ function handleMenuBallTouch(event) {
     "use strict";
     if (noGameRunning()) {
         menuBall.focus = true;
-        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone.
+        extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone.
         hideSplashScreen();
         showBallGame();
         startBallGame(0);
@@ -2135,6 +2154,7 @@ function hideBallGame() {
         createjs.Tween.removeTweens(allBalls[i]);
     }
     hideBalls();
+    hideStar();
     showSplashScreen();
 }
 
@@ -2271,10 +2291,11 @@ function handlePlayBallTouch(event) {
     "use strict";
     var ball = event.target;
 
-    if (!isRunning(ballTween)) {
+    //if (!isRunning(ballTween)) { //note isRunning(ballTween) is checking ALL running tweens due to a bug in tweenjs
+    if (getPlayingSound() == "") {
         if (ball == nextBall) {
             //correct ball is touched
-            extendAndPlayQueue("ja" + ball.color);
+            extendAndPlayQueue("yes" + ball.color);
             var otherBall = findRandomBall(ball);
             if (otherBall !== null) {
                 var directionX = otherBall.x + 0.35 * otherBall.image.width * randomDirection();
@@ -2282,7 +2303,6 @@ function handlePlayBallTouch(event) {
                 ballTween = makeBallTween(ball, directionX, directionY, ballBounceSpeed);
                 nextBall = null;
                 nextBallTime = randomFutureMillis(minSecNextBall, maxSecNextBall);
-                console.log("Next ball time: ", nextBallTime);
                 nextBallId = setTimeout(handleNextBall, nextBallTime);
             } else {
                 //random direction for last ball
@@ -2293,8 +2313,6 @@ function handlePlayBallTouch(event) {
                 ballTween = makeBallTween(ball, x, y, ballBounceSpeed);
             }
         } else if (nextBall !== null) {
-            console.log("next ball", nextBall);
-            console.log("wrong ball touched");
             //wrong ball is touched
             var startRotation = ball.rotation;
             createjs.Tween.get(ball).to({
@@ -2302,8 +2320,9 @@ function handlePlayBallTouch(event) {
             }, wrongBallTurnTime, createjs.Ease.sineInOut);
             //createjs.Tween.get(ball).to({rotation:startRotation + 360 * 4}, 2000,createjs.Ease.sineInOut);
 
-            extendAndPlayQueue(["detju" + ball.color, "var" + nextBall.color]);
+            extendAndPlayQueue(["thatwas" + ball.color, "where" + nextBall.color]);
         } else {
+            //no ball chosen yet
             //nothing should be done here
         }
     }
@@ -2358,7 +2377,7 @@ function Clothes(linePicId, wearPicId, name, startRotation, startX, startY, wear
 
 
     this.extraArea = new createjs.Shape();
-    this.extraArea.graphics.beginFill(clothesBackgroundColor).drawCircle(0, 0, 50, 50);
+    this.extraArea.graphics.beginFill(clothesBackgroundColor[0]).drawCircle(0, 0, 50, 50);
     this.extraArea.x = startX;
     this.extraArea.y = startY;
     this.extraArea.clothes = this;
@@ -2487,7 +2506,7 @@ function handleMenuClothesTouch(event) {
     "use strict";
     if (noGameRunning()) {
         menuClothes.focus = true;
-        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone.
+        extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone.
         hideSplashScreen();
         showClothesGame();
         startClothesGame(0);
@@ -2550,8 +2569,9 @@ function restoreMenuClothes() {
     }
     //xxx almost works but must make tore happy again!!!!! and make clothes not dirty. hm, dirty är egenskap på ett plagg, kan få konsekvenser om man sedan ritar på annat plagg
     menuClothes.focus = false;
-    showSplashScreen();
     hideClothes();
+    hideStar();
+    showSplashScreen();
 }
 
 /** 
@@ -2699,7 +2719,6 @@ function enableDrawing() {
     "use strict";
     if (helpContainer.visible) {
         //wait until helpContainer is gone
-        console.log("not ready to enable drawing");
         setTimeout(enableDrawing, 2000);
     } else if (menuClothes.focus) {
         clothesGameContainer.drawingEnabled = true;
@@ -2798,7 +2817,6 @@ function makeCrayon(color, outlineColor, outlineWidth) {
 function handleClothesPaint() {
     "use strict";
     if (clothesGameContainer.clean) {
-        console.log("paint on clothes");
         clothesGameContainer.clean = false;
         tore.sad.alpha = 1.0; //xxx eller tween?
         stage.update();
@@ -2812,7 +2830,6 @@ function handleClothesPaint() {
  */
 function drawCrayons(index) {
     "use strict";
-    console.log("drawCrayons", index);
     var crayonDelta = 50; //xxx to setup
     var number = crayons.length;
     var crayonTop = canvasHeight - (number + 1) * crayonDelta;

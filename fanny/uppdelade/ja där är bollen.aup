@@ -1,0 +1,34 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="ja d&#x00e4;r &#x00e4;r bollen_data" version="1.3.0" audacityversion="2.0.0" sel0="0.0000000000" sel1="0.0000000000" vpos="0" h="0.0000000000" zoom="151.0433214139" rate="32000.0">
+	<tags/>
+	<wavetrack name="ja d&#x00e4;r &#x00e4;r bollen" channel="2" linked="0" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="790025">
+				<waveblock start="0">
+					<simpleblockfile filename="e00005dc.au" len="262144" min="-0.601568" max="0.821364" rms="0.101049"/>
+				</waveblock>
+				<waveblock start="262144">
+					<simpleblockfile filename="e0000858.au" len="262144" min="-0.634949" max="0.805164" rms="0.108464"/>
+				</waveblock>
+				<waveblock start="524288">
+					<simpleblockfile filename="e0000d08.au" len="262144" min="-0.772062" max="0.976348" rms="0.104732"/>
+				</waveblock>
+				<waveblock start="786432">
+					<simpleblockfile filename="e000046f.au" len="3593" min="-0.001312" max="0.001214" rms="0.000088"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<labeltrack name="Label Track" numlabels="8" height="73" minimized="0">
+		<label t="0.23172160" t1="0.23172160" title="yesred"/>
+		<label t="3.59499510" t1="3.59499510" title="pause1"/>
+		<label t="4.62119075" t1="4.62119075" title="yesyellow"/>
+		<label t="7.78584574" t1="7.78584574" title="pause2"/>
+		<label t="9.08348669" t1="9.08348669" title="yesblue"/>
+		<label t="12.08262625" t1="12.08262625" title="puase3"/>
+		<label t="13.02937450" t1="13.02937450" title="yesgreen"/>
+		<label t="15.97554912" t1="15.97554912" title="pause4"/>
+	</labeltrack>
+</project>

@@ -1,0 +1,31 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="dog1_data" version="1.3.0" audacityversion="2.0.0" sel0="0.0000000000" sel1="0.0000000000" vpos="0" h="0.0000000000" zoom="164.2324515726" rate="48000.0">
+	<tags/>
+	<wavetrack name="dog1" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="296945">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000e82.au" len="152564" min="-0.998053" max="0.604993" rms="0.073906"/>
+				</waveblock>
+				<waveblock start="152564">
+					<simpleblockfile filename="e0000bda.au" len="144381" min="-0.464647" max="0.602067" rms="0.050455"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="dog1" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="296945">
+				<waveblock start="0">
+					<simpleblockfile filename="e000021f.au" len="152564" min="-0.998053" max="0.604993" rms="0.073906"/>
+				</waveblock>
+				<waveblock start="152564">
+					<simpleblockfile filename="e00005b2.au" len="144381" min="-0.464647" max="0.602067" rms="0.050455"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+</project>

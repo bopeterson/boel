@@ -1,0 +1,25 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="granddad2_data" version="1.3.0" audacityversion="2.0.0" sel0="5.4516006324" sel1="5.4516006324" vpos="0" h="0.1601841518" zoom="187.2844452186" rate="48000.0">
+	<tags/>
+	<wavetrack name="granddad2" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="261677">
+				<waveblock start="0">
+					<simpleblockfile filename="e000057f.au" len="261677" min="-0.562663" max="0.564195" rms="0.0746"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="granddad2" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="261677">
+				<waveblock start="0">
+					<simpleblockfile filename="e000090e.au" len="261677" min="-0.562663" max="0.564195" rms="0.0746"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+</project>

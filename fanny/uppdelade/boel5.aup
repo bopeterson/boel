@@ -1,0 +1,31 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="boelfive_data" version="1.3.0" audacityversion="2.0.0" sel0="0.0000000000" sel1="0.0000000000" vpos="0" h="4.3727044017" zoom="859.8797573700" rate="48000.0">
+	<tags/>
+	<wavetrack name="boelfive" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="270177">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000a8b.au" len="135088" min="-0.506404" max="0.570744" rms="0.08006"/>
+				</waveblock>
+				<waveblock start="135088">
+					<simpleblockfile filename="e0000b62.au" len="135089" min="-0.360528" max="0.480261" rms="0.046546"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="boelfive" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="270177">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000448.au" len="135088" min="-0.506404" max="0.570744" rms="0.08006"/>
+				</waveblock>
+				<waveblock start="135088">
+					<simpleblockfile filename="e0000190.au" len="135089" min="-0.360528" max="0.480261" rms="0.046546"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+</project>

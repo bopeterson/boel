@@ -1,0 +1,31 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="pappathree_data" version="1.3.0" audacityversion="2.0.0" sel0="0.0000000000" sel1="0.0000000000" vpos="0" h="0.0000000000" zoom="201.4710293176" rate="48000.0">
+	<tags/>
+	<wavetrack name="pappathree" channel="0" linked="1" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="268505">
+				<waveblock start="0">
+					<simpleblockfile filename="e000040a.au" len="134252" min="-0.615279" max="0.586147" rms="0.058183"/>
+				</waveblock>
+				<waveblock start="134252">
+					<simpleblockfile filename="e00006d9.au" len="134253" min="-0.382809" max="0.394101" rms="0.041523"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<wavetrack name="pappathree" channel="1" linked="0" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="268505">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000d09.au" len="134252" min="-0.615279" max="0.586147" rms="0.058183"/>
+				</waveblock>
+				<waveblock start="134252">
+					<simpleblockfile filename="e00005bd.au" len="134253" min="-0.382809" max="0.394101" rms="0.041523"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+</project>
