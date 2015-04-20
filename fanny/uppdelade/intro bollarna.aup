@@ -1,0 +1,26 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="intro bollarna_data" version="1.3.0" audacityversion="2.0.0" sel0="7.7392508143" sel1="7.7392508143" vpos="0" h="0.0000000000" zoom="100.6557377049" rate="32000.0">
+	<tags/>
+	<wavetrack name="intro bollarna" channel="2" linked="0" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="585600">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000ef3.au" len="262144" min="-0.79081" max="0.787211" rms="0.178948"/>
+				</waveblock>
+				<waveblock start="262144">
+					<simpleblockfile filename="e0000cae.au" len="262144" min="-0.761244" max="0.786531" rms="0.175648"/>
+				</waveblock>
+				<waveblock start="524288">
+					<simpleblockfile filename="e00001c4.au" len="61312" min="-0.761548" max="0.77899" rms="0.171634"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<labeltrack name="Label Track" numlabels="3" height="73" minimized="0">
+		<label t="0.26824104" t1="0.26824104" title="ballhelp1"/>
+		<label t="3.70570033" t1="3.70570033" title="ballhelp2"/>
+		<label t="7.73925081" t1="7.73925081" title="ballhelp3"/>
+	</labeltrack>
+</project>

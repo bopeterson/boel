@@ -1,0 +1,30 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="info t&#x00e5;rta_data" version="1.3.0" audacityversion="2.0.0" sel0="16.8019378393" sel1="16.8019378393" vpos="0" h="3.7772882736" zoom="71.4798502105" rate="32000.0">
+	<tags/>
+	<wavetrack name="info t&#x00e5;rta" channel="2" linked="0" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="806493">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000949.au" len="262144" min="-0.428383" max="0.476293" rms="0.072932"/>
+				</waveblock>
+				<waveblock start="262144">
+					<simpleblockfile filename="e00009b3.au" len="262144" min="-0.4096" max="0.515489" rms="0.061282"/>
+				</waveblock>
+				<waveblock start="524288">
+					<simpleblockfile filename="e0000cff.au" len="141102" min="-0.347697" max="0.444718" rms="0.057013"/>
+				</waveblock>
+				<waveblock start="665390">
+					<simpleblockfile filename="e0000a3c.au" len="141103" min="-0.31075" max="0.398537" rms="0.059093"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<labeltrack name="Label Track" numlabels="4" height="73" minimized="0">
+		<label t="0.78343757" t1="0.78343757" title="cakehelp1"/>
+		<label t="3.21769001" t1="3.21769001" title="cakehelp2"/>
+		<label t="8.47791368" t1="8.47791368" title="cakehelp3"/>
+		<label t="11.77954343" t1="11.77954343" title="cakehelp4"/>
+	</labeltrack>
+</project>

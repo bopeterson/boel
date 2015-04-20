@@ -1,0 +1,30 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE project PUBLIC "-//audacityproject-1.3.0//DTD//EN" "http://audacity.sourceforge.net/xml/audacityproject-1.3.0.dtd" >
+<project xmlns="http://audacity.sourceforge.net/xml/" projname="intro 1_data" version="1.3.0" audacityversion="2.0.0" sel0="19.5599750611" sel1="19.5599750611" vpos="0" h="2.4388996336" zoom="61.5031459009" rate="32000.0">
+	<tags/>
+	<wavetrack name="intro 1" channel="2" linked="0" mute="0" solo="0" height="150" minimized="0" rate="48000" gain="1.0" pan="0.0">
+		<waveclip offset="0.00000000">
+			<sequence maxsamples="262144" sampleformat="262159" numsamples="938879">
+				<waveblock start="0">
+					<simpleblockfile filename="e0000859.au" len="262144" min="-0.426941" max="0.499383" rms="0.076321"/>
+				</waveblock>
+				<waveblock start="262144">
+					<simpleblockfile filename="e00002f6.au" len="262144" min="-0.495708" max="0.701905" rms="0.065166"/>
+				</waveblock>
+				<waveblock start="524288">
+					<simpleblockfile filename="e0000c40.au" len="262144" min="-0.387839" max="0.589525" rms="0.085785"/>
+				</waveblock>
+				<waveblock start="786432">
+					<simpleblockfile filename="e0000885.au" len="152447" min="-0.441671" max="0.645991" rms="0.076996"/>
+				</waveblock>
+			</sequence>
+			<envelope numpoints="0"/>
+		</waveclip>
+	</wavetrack>
+	<labeltrack name="Label Track" numlabels="4" height="73" minimized="0">
+		<label t="0.47152060" t1="0.47152060" title="generalhelp1"/>
+		<label t="3.49575614" t1="3.49575614" title="generalhelp2"/>
+		<label t="10.79619571" t1="10.79619571" title="generalhelp3"/>
+		<label t="16.60077684" t1="16.60077684" title="generalhelp4"/>
+	</labeltrack>
+</project>

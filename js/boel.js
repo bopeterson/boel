@@ -35,7 +35,7 @@ see https://github.com/jsdoc3/jsdoc
 */
 
 //debug settings
-var debug = true;
+var debug = false;
 var debugAlwaysUpdate = false;
 var fpsLabel;
 var debugbutton1;
@@ -185,15 +185,15 @@ var ordinal = [
 
 //help texts
 var generalHelpText = "Det finns tre olika spel, tårtspelet, bollspelet och klädspelet. Tårtspelet och bollspelet fungerar bäst om ljudet är på. Peka på knapparna för att välja ett av spelen. ";
-var ballHelpText = "Du ska försöka få bort alla bollarna från skärmen. Lyssna på rösten och peka på bollen med rätt färg. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
-var clothesHelpText = "Dra kläderna från tvättlinan till Tore. Sätt de olika plaggen på rätt ställe på kroppen. När Tore har alla kläder på sig kan du rita på skärmen. Men rita inte på Tore, för då blir han ledsen. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel eller börja om det här spelet. ";
-var cakeHelpText = "Alla vill ha tårta. Rösten berättar vems tur det är att få tårta. Peka på den personen som rösten säger vill ha tårta. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
+var ballHelpText = "Du ska försöka få bort alla bollarna. Lyssna på rösten och peka på bollen med rätt färg. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
+var clothesHelpText = "Dra kläderna från tvättlinan till Tore. Sätt kläderna på rätt ställe på kroppen. När Tore har alla kläder på sig kan du rita på skärmen. Men rita inte på Tore, då blir han ledsen. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel eller börja om det här spelet. ";
+var cakeHelpText = "Alla vill ha tårta. Rösten berättar vems tur det är att få tårta. Peka på den personen som vill ha tårta. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
 
 //help sounds
-var generalHelpSound;
-var ballHelpSound;
-var clothesHelpSound;
-var cakeHelpSound;
+var generalHelpSounds = ["generalhelp1","generalhelp2","generalhelp3","generalhelp4"];
+var ballHelpSounds = ["ballhelp1","ballhelp2","ballhelp3"];
+var clothesHelpSounds = ["clotheshelp1","clotheshelp2","clotheshelp3","clotheshelp4","clotheshelp5"];
+var cakeHelpSounds = ["cakehelp1","cakehelp2","cakehelp3","cakehelp4"];
 
 
 //Here follows global variable definitions
@@ -216,7 +216,7 @@ var helpContainer;
 var canvas;
 var minBounceDistance;
 var stage;
-var background; //xxx only for debug, should be deleted. No, revitalized as a cover when help is shown.
+var helpBackground; //cover when help is shown.
 var queue;
 var offset;
 var update = false;
@@ -294,6 +294,9 @@ function init() {
     "use strict";
     console.log("Boel game starting at " + new Date());
     console.log("TweenJS version " + createjs.TweenJS.version);
+    console.log("EaselJS version " + createjs.EaselJS.version);
+    setTimeout(printDebug,5000,createjs.TweenJS.version+" "+createjs.EaselJS.version);
+    
 
     // create stage and point it to the canvas:
     canvas = document.getElementById("myCanvas");
@@ -321,13 +324,14 @@ function init() {
     // enable touch interactions if supported on the current device:
     createjs.Touch.enable(stage);
 
-
+/*
     debugbutton1 = new createjs.Shape();
     debugbutton1.graphics.beginFill("blue").drawCircle(30, 0, 30, 30);
     debugbutton1.name = "debugbutton";
     stage.addChild(debugbutton1);
     debugbutton1.addEventListener("click",function(event){var i;for (i=0;i<table.children.length;i++){console.log(table.children[i].name)};console.log("----");for (i=0;i<cakeContainer.children.length;i++){console.log(cakeContainer.children[i].name)};console.log("----");for (i=0;i<stage.children.length;i++){console.log(stage.children[i].name)}});
-
+*/
+    
     addProgressBar();
     addDebugText();
 
@@ -410,9 +414,24 @@ function init() {
         {id: "dogbut", src: "assets/dogbut.mp3"},
         {id: "mumbut", src: "assets/mumbut.mp3"},
         {id: "dadbut", src: "assets/dadbut.mp3"},
+        {id: "ballhelp1", src: "assets/ballhelp1.mp3"},
+        {id: "ballhelp2", src: "assets/ballhelp2.mp3"},
+        {id: "ballhelp3", src: "assets/ballhelp3.mp3"},
+        {id: "generalhelp1", src: "assets/generalhelp1.mp3"},
+        {id: "generalhelp2", src: "assets/generalhelp2.mp3"},
+        {id: "generalhelp3", src: "assets/generalhelp3.mp3"},
+        {id: "generalhelp4", src: "assets/generalhelp4.mp3"},
+        {id: "cakehelp1", src: "assets/cakehelp1.mp3"},
+        {id: "cakehelp2", src: "assets/cakehelp2.mp3"},
+        {id: "cakehelp3", src: "assets/cakehelp3.mp3"},
+        {id: "cakehelp4", src: "assets/cakehelp4.mp3"},
+        {id: "clotheshelp1", src: "assets/clotheshelp1.mp3"},
+        {id: "clotheshelp2", src: "assets/clotheshelp2.mp3"},
+        {id: "clotheshelp3", src: "assets/clotheshelp3.mp3"},
+        {id: "clotheshelp4", src: "assets/clotheshelp4.mp3"},
+        {id: "clotheshelp5", src: "assets/clotheshelp5.mp3"},
         {id: "yes", src: "assets/yes.mp3"}
     ];
-
 
     var cakeFilesNew = [{
         id: "piece1",
@@ -681,7 +700,7 @@ function handleComplete(event) {
     } else {
         createjs.Tween.get(progressBar).to({
             alpha: 0.0
-        }, progressBarFadeTime).call(function(evt){stage.removeChild(progressBar)});
+        }, progressBarFadeTime).call(function(evt){stage.removeChild(progressBar);});
     }
 
     addBoelToreSplash();
@@ -693,7 +712,7 @@ function handleComplete(event) {
     addBackButton();
     addNumbers();
     addStar();
-    addBackground();
+    addHelpBackground();
     
     //setup almost complete, start the ticker
 
@@ -791,12 +810,12 @@ function createBackground(color, alpha) {
 /** Detects mousedown events on transparent overlay when help is shown. Used to hide the help dialog.
  * @summary general
  * @param event */
-function handleBackgroundTouch(event) {
+function handleHelpBackgroundTouch(event) {
     "use strict";
     if (debug) {
         console.log("background touch", event.stageX, event.stageY);
-        background.touchX = event.stageX;
-        background.touchY = event.stageY;
+        helpBackground.touchX = event.stageX;
+        helpBackground.touchY = event.stageY;
         stage.update();
     }
     hideHelp();
@@ -866,15 +885,12 @@ function addProgressBar() {
 /** 
  * @summary general
  */
-function addBackground() {
+function addHelpBackground() {
     "use strict";
-    //the background is an almost invisible object, there to be able to click the background
-    //currently only used for testing and debugging
-    //UPDATE: not so invisible anymore, there for preventing clicks behind it when help is shown. 
-    background = createBackground("#FFFFFF", 0.5); //should be less
+    helpBackground = createBackground("#FFFFFF", 0.5); //should be less
 
     //stage.addChild(background); xxx done when help is shown
-    background.addEventListener("mousedown", handleBackgroundTouch);
+    helpBackground.addEventListener("mousedown", handleHelpBackgroundTouch);
 }
 
 /** 
@@ -990,19 +1006,19 @@ function hideSplashScreen() {
     var alpha=0.0;
     createjs.Tween.get(menuCake).to({
         alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuCake)});
+    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuCake);});
     createjs.Tween.get(menuBall).to({
         alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuBall)});
+    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuBall);});
     createjs.Tween.get(menuClothes).to({
         alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuClothes)});
+    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuClothes);});
     createjs.Tween.get(backButton).to({
         alpha: (1 - alpha)
     }, gameTransitionTime, createjs.Ease.linear);
     createjs.Tween.get(boelToreSplash).to({
         alpha: alpha
-    }, gameTransitionTime / 2, createjs.Ease.linear).call(function (evt) {stage.removeChild(boelToreSplash)});
+    }, gameTransitionTime / 2, createjs.Ease.linear).call(function (evt) {stage.removeChild(boelToreSplash);});
     createjs.Tween.get(menuHelp).to({
         x: menuHelpRunningX,
         y: menuHelpRunningY
@@ -1015,27 +1031,28 @@ function hideSplashScreen() {
 function handleMenuHelpTouch(evt) {
     "use strict";
     if (noGameRunning()) {
-        showHelp(generalHelpText, generalHelpSound);
+        showHelp(generalHelpText, generalHelpSounds);
     } else if (menuCake.focus) {
-        showHelp(cakeHelpText, cakeHelpSound);
+        showHelp(cakeHelpText, cakeHelpSounds);
     } else if (menuBall.focus) {
-        showHelp(ballHelpText, ballHelpSound);
+        showHelp(ballHelpText, ballHelpSounds);
     } else if (menuClothes.focus) {
-        showHelp(clothesHelpText, clothesHelpSound);
+        showHelp(clothesHelpText, clothesHelpSounds);
     }
 }
 
 /** 
  * @summary general
  */
-function showHelp(text, sound) {
+function showHelp(text, sounds) {
     "use strict";
     //xxx ska man pausa tweens? pausa ljud? blir lite knepigt...
     helpTextBox.text = text;
     helpContainer.visible = true;
-    stage.addChild(background);
+    stage.addChild(helpBackground);
     stage.addChild(helpContainer);
     stage.update();
+    extendAndPlayQueue(sounds);
 }
 
 /** 
@@ -1045,8 +1062,9 @@ function hideHelp() {
     "use strict";
     helpTextBox.text = "";
     stage.removeChild(helpContainer);
-    stage.removeChild(background);
+    stage.removeChild(helpBackground);
     helpContainer.visible = false;
+    removeAllButFirstSound(); //do not remove currently playing sound
     stage.update();
 }
 
@@ -1162,8 +1180,11 @@ function handleNextSound(evt) {
 function removeNextSound() {
     "use strict";
     soundQueue.splice(1,1); //removes second element in soundQueue
-    var i;
-    
+}
+
+function removeAllButFirstSound() {
+    "use strict";
+    soundQueue = soundQueue.splice(0,1); //removes all but first sound
 }
 
 /** 
@@ -1217,7 +1238,7 @@ function randomFutureMillis(minSec, maxSec) {
  */
 function pulsate(bitmap, pulsetime) {
     "use strict";
-    var cycles = Math.floor(pulsetime/500+0.5)
+    var cycles = Math.floor(pulsetime/500+0.5);
     
     var partTime = Math.floor(pulsetime / 2 / cycles);
     
@@ -1228,6 +1249,7 @@ function pulsate(bitmap, pulsetime) {
  * @summary general
  */
 function pulsateOne(bitmap, partTime, cycles) {
+    "use strict";
     if (cycles <= 1) {
         createjs.Tween.get(bitmap).to({
             scaleX: 1.1,
@@ -1243,7 +1265,7 @@ function pulsateOne(bitmap, partTime, cycles) {
         }, partTime, createjs.Ease.sineInOut).to({
             scaleX: 1.0,
             scaleY: 1.0
-        }, partTime, createjs.Ease.sineInOut).call(function (evt) {pulsateOne(bitmap, partTime,  cycles - 1)});
+        }, partTime, createjs.Ease.sineInOut).call(function (evt) {pulsateOne(bitmap, partTime,  cycles - 1);});
     }
 }
 
@@ -1403,6 +1425,7 @@ function showCakeGame() {
 }
 
 function showTable() {
+    "use strict";
     table.removeAllChildren();
     table.addChild(
         tableMom.happyPic,
@@ -1425,24 +1448,27 @@ function showTable() {
         tableTore.handPic,
         cakeContainer
     );
+    var p;
     var i;
     for (i = 0;i < allPieces.length; i += 1) {
-        var p = allPieces[i];
+        p = allPieces[i];
         p.smashed = false;
         p.moved = false;
     }
 
+    var c;
     for (i=0; i < numberOfCakePieces+1; i += 1) {
-        var c = allCakes[i];
+        c = allCakes[i];
         c.alpha = 1.0;
     }
     piecesLeft=numberOfCakePieces;
     cakeContainer.removeAllChildren();
-    cakeContainer.addChild(allCakes[piecesLeft])
+    cakeContainer.addChild(allCakes[piecesLeft]);
 
     //gör figurer glada mm
+    var ch;
     for (i = 0; i < allCharacters.length; i += 1) {
-        var ch=allCharacters[i];
+        ch=allCharacters[i];
         restoreCharacter(ch);
     }
 
@@ -1459,6 +1485,7 @@ function showTable() {
  * @summary cake
  */
 function startCakeGame() {
+    "use strict";
     nextRandomCheck = randomFutureMillis(minSecSelectFirstName, maxSecSelectFirstName);
     //no need to clear previous timeout here (I think xxx)
     randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
@@ -1487,7 +1514,7 @@ function hideCakeGame() {
 
     createjs.Tween.get(table).to({
         alpha: 0.0
-    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(table)});
+    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(table);});
 }
 
 
@@ -1507,23 +1534,6 @@ function addNumbers() {
         number.alpha = 0.0;
         number.name = i + "";
         numbers.push(number);
-        
-        //xxx eventhandler only in development stage
-        number.on("mousedown",function(evt) {
-            var x=evt.currentTarget.x;
-            var y=evt.currentTarget.y;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            stage.update();   
-        });
-        number.on("pressmove",function(evt) {
-            var x=evt.stageX;
-            var y=evt.stageY;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            evt.currentTarget.x = evt.stageX;
-            evt.currentTarget.y = evt.stageY;
-            stage.update();   
-        });
-        
         numberBackground = new createjs.Shape();
         numberBackground.graphics.beginFill("white").drawEllipse(canvasWidth / 2, canvasHeight / 2, numberBackgroundWidth, numberBackgroundHeight);
         numberBackground.regX = numberBackgroundWidth / 2;
@@ -1566,16 +1576,6 @@ function addTable() {
     table.y = tableY;
     table.alpha = 0.0;
 
-    //xxx only a test
-    table.addEventListener("mousedown", handleTableTouch);
-}
-
-/** 
- * @summary cake
- */
-function handleTableTouch(event) {
-    "use strict";
-    //not used right now, but prevents from clicking through table
 }
 
 /** 
@@ -1642,8 +1642,9 @@ function addCake(numberOfCakePieces) {
     
     allCakes=[];
     var i;
+    var c;
     for (i=0; i < numberOfCakePieces+1; i += 1) {
-        var c = new createjs.Bitmap(queue.getResult("cake"+i));
+        c = new createjs.Bitmap(queue.getResult("cake"+i));
         c.regX = c.image.width / 2 | 0;
         c.regY = c.image.height / 2 | 0; 
         c.missingPieceX = missingPiece[i].x;
@@ -1658,11 +1659,12 @@ function addCake(numberOfCakePieces) {
 
     allPieces=[];
     allSmashedPieces=[];
-    i;
+    var p;
+    var sp;
     for (i = 1; i < numberOfCakePieces+1; i += 1) {
         //move to function
-        var p=new createjs.Bitmap(queue.getResult("piece"+i));
-        var sp=new createjs.Bitmap(queue.getResult("smashedPiece"+i));
+        p=new createjs.Bitmap(queue.getResult("piece"+i));
+        sp=new createjs.Bitmap(queue.getResult("smashedPiece"+i));
         p.regX = p.image.width / 2 | 0;
         p.regY = p.image.height / 2 | 0;
         p.x = 0;
@@ -1674,21 +1676,6 @@ function addCake(numberOfCakePieces) {
         sp.regX = sp.image.width / 2 | 0;
         sp.regY = sp.image.height / 2 | 0;
         sp.name = "smashed piece " + i;
-        //xxx eventhandler only in development stage
-        p.on("mousedown",function(evt) {
-            var x=evt.currentTarget.x;
-            var y=evt.currentTarget.y;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            stage.update();   
-        });
-        p.on("pressmove",function(evt) {
-            var x=evt.stageX;
-            var y=evt.stageY;
-            printDebug(" x:"+(x|0)+",y:"+(y|0));
-            evt.currentTarget.x = evt.stageX-table.x;
-            evt.currentTarget.y = evt.stageY-table.y;
-            stage.update();   
-        });
         
         //stage.addChild(p);
         allPieces.push(p);
@@ -1698,6 +1685,7 @@ function addCake(numberOfCakePieces) {
 }
 
 function addCakeBall() {
+    "use strict";
     cakeBall = new createjs.Bitmap(queue.getResult("cakeBall"));
     cakeBall.regX = cakeBall.image.width / 2 | 0;
     cakeBall.regY = cakeBall.image.height / 2 | 0;
@@ -1748,7 +1736,7 @@ function moveCakePiece(character) {
         createjs.Tween.get(oldCake).to({
             alpha: 0.0
         }, 400, createjs.Ease.linear).call(function(evt) {
-            cakeContainer.removeChild(oldCake)
+            cakeContainer.removeChild(oldCake);
         });
         createjs.Tween.get(piece).to({
             alpha: 1.0
@@ -1763,10 +1751,10 @@ function moveCakePiece(character) {
         clearTimeout(nextSmashId);
         nextSmashId = setTimeout(smashNextPiece, nextSmash);
 
+        var currentNumber = numberOfCakePieces - piecesLeft;
         if (correctCharacterClicked) {
             //"rätt" person klickad
             extendAndPlayQueue(["yes"]);
-            var currentNumber = numberOfCakePieces - piecesLeft;
             extendAndPlayQueue([nameClicked + "gets" + currentNumber]);
             //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
             selectedCharacterIndex = -1;
@@ -1776,7 +1764,6 @@ function moveCakePiece(character) {
         } else if (selectedCharacterIndex == -1) {
             //person utan tårtbit klickad, ingen person i kö för att bli klickad
             //exakt samma som tidigare, men ingen yes
-            var currentNumber = numberOfCakePieces - piecesLeft;
             extendAndPlayQueue([nameClicked + "gets" + currentNumber]);
             //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
             selectedCharacterIndex = -1;
@@ -1785,7 +1772,6 @@ function moveCakePiece(character) {
             randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
         } else {
             //"fel" person som inte än fått tårtbit klickad
-            var currentNumber = numberOfCakePieces - piecesLeft;
             extendAndPlayQueue([nameClicked + "gets" + currentNumber, "silence300", nameSelected + "but", selectedName + "whereis", selectedName + "tap"]);
             //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
         }
@@ -1804,13 +1790,12 @@ function bounceToTable(piecenumber) {
     var time = Math.floor(1000 * cakeBounceTime / 4);
     var startX = cakeBall.x;
     var startY = cakeBall.y;
-    var smashX = allPieces[piecenumber].x
+    var smashX = allPieces[piecenumber].x;
     var smashY = allPieces[piecenumber].y;   //+table.y; //cake.y + cakeComplete[piecenumber][0].y;
     var endX = startX + (smashX - startX) * 3.9;
     //should be 4 but this only affects movement outside canvas
     //it is slightly less than 4 to ensure that x tween finishes before y tween
     //as handleComplete is done by y tween and the x tween should be finished
-    var endY = startY;
     pieceNumberToSmash = piecenumber;
     table.addChild(cakeBall);
     createjs.Tween.get(cakeBall).to({
@@ -1962,24 +1947,8 @@ function hideAllNumbers() {
 /** 
  * @summary cake
  */
-function hideNumberOld() {
-    "use strict";
-    var i;
-    for (i = 0; i < numbers.length; i += 1) {
-        if (numbers[i].alpha > 0.0) {
-            createjs.Tween.get(n).to({
-                alpha: 0.0
-            }, numberTransitionTime / 3, createjs.Ease.linear);
-        }
-    }
-}
-
-
-/** 
- * @summary cake
- */
 function showNumber(number) {
-    "use strict"
+    "use strict";
     var n = numbers[number];
     
     //xxx lite säkrare att gömma alla nummer, men tar mer resurser
@@ -1999,7 +1968,7 @@ function showNumber(number) {
     
     stage.addChild(n);
     
-    createjs.Tween.get(n).to({alpha: 1.0}, numberAppearTime, createjs.Ease.linear).wait(numberWaitTime).call(function (evt){stage.removeChild(numberBackground)}).to({x:numberX,y:numberY,scaleX:1.0,scaleY:1.0}, numberMoveTime, createjs.Ease.linear);
+    createjs.Tween.get(n).to({alpha: 1.0}, numberAppearTime, createjs.Ease.linear).wait(numberWaitTime).call(function (evt){stage.removeChild(numberBackground);}).to({x:numberX,y:numberY,scaleX:1.0,scaleY:1.0}, numberMoveTime, createjs.Ease.linear);
 } 
 
 /* =========== BALL ========== */
@@ -2867,11 +2836,13 @@ function handleCrayonMouseDown(evt) {
  */
 function handleStrokeMouseDown(evt) {
     "use strict";
-    console.log(">>>>> handleStrokeMouseDown", stage.mouseX | 0, stage.mouseY | 0);
-    detectPaint();
+    var x = evt.stageX;
+    var y = evt.stageY;
+    console.log("vvvvv handleStrokeMouseDown", x | 0, y | 0);
+    detectPaint(x,y);
     stroke = 10; //xxx to setup
-    oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
-    oldMidPt = new createjs.Point(stage.mouseX, stage.mouseY);
+    oldPt = new createjs.Point(x, y);
+    oldMidPt = new createjs.Point(x, y);
 
     drawingCanvas.graphics.clear().beginFill(crayonColor).drawCircle(oldPt.x, oldPt.y, stroke / 2, stroke / 2);
     stage.update();
@@ -2886,17 +2857,19 @@ function handleStrokeMouseDown(evt) {
  */
 function handleStrokeMouseMove(evt) {
     "use strict";
-    console.log(" *  *  *  *  *  handleStrokeMouseMove");
-    detectPaint();
+    var x = evt.stageX;
+    var y = evt.stageY;
+    console.log("<< >> handleStrokeMouseMove", x | 0, y | 0);
+    detectPaint(x,y);
 
-    var midPt = new createjs.Point(oldPt.x + stage.mouseX >> 1, oldPt.y + stage.mouseY >> 1);
+    var midPt = new createjs.Point(oldPt.x + x >> 1, oldPt.y + y >> 1);
 
     drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
     moveTo(midPt.x, midPt.y).
     curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
 
-    oldPt.x = stage.mouseX;
-    oldPt.y = stage.mouseY;
+    oldPt.x = x;
+    oldPt.y = y;
 
     oldMidPt.x = midPt.x;
     oldMidPt.y = midPt.y;
@@ -2909,11 +2882,13 @@ function handleStrokeMouseMove(evt) {
  */
 function handleStrokeMouseUp(evt) {
     "use strict";
-    console.log(" *  *  *  *  *  handleStrokeMouseUp", stage.mouseX | 0, stage.mouseY | 0);
+    var x = evt.stageX;
+    var y = evt.stageY;
+    console.log("^^^^^ handleStrokeMouseUp  ", x | 0, y | 0);
 
     drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
     moveTo(oldMidPt.x, oldMidPt.y).
-    lineTo(stage.mouseX, stage.mouseY);
+    lineTo(x, y);
     stage.update();
     stage.removeEventListener("stagemousemove", handleStrokeMouseMove);
     stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
@@ -2923,13 +2898,13 @@ function handleStrokeMouseUp(evt) {
 /** 
  * @summary clothes
  */
-function detectPaint() {
+function detectPaint(x,y) {
     "use strict";
     var detected = false;
     var pt;
     var i;
     for (i = 0; i < paintDetect.length && !detected; i += 1) {
-        pt = paintDetect[i].globalToLocal(stage.mouseX, stage.mouseY); //xxx kan inte detta göras en gång för alla?
+        pt = paintDetect[i].globalToLocal(x, y); //xxx kan inte detta göras en gång för alla?
         if (paintDetect[i].hitTest(pt.x, pt.y)) {
             detected = true;
             handleClothesPaint();
