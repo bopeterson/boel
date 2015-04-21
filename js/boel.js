@@ -42,8 +42,8 @@ var debugbutton1;
 
 //variables that must be the same as attributes in index.html
 //they could be retrived as canvas.height etc, but must sometimes be used before they can be retrieved. 
-var canvasWidth = 1024;
-var canvasHeight = 768;
+var canvasWidth = 1024; //optimised for iPad aspect ratio
+var canvasHeight = 768; //optimised for iPad aspect ratio
 
 //prototypes for subclasses
 Ball.prototype = Object.create(createjs.Bitmap.prototype);
@@ -324,13 +324,13 @@ function init() {
     // enable touch interactions if supported on the current device:
     createjs.Touch.enable(stage);
 
-/*
+
     debugbutton1 = new createjs.Shape();
     debugbutton1.graphics.beginFill("blue").drawCircle(30, 0, 30, 30);
     debugbutton1.name = "debugbutton";
     stage.addChild(debugbutton1);
     debugbutton1.addEventListener("click",function(event){var i;for (i=0;i<table.children.length;i++){console.log(table.children[i].name)};console.log("----");for (i=0;i<cakeContainer.children.length;i++){console.log(cakeContainer.children[i].name)};console.log("----");for (i=0;i<stage.children.length;i++){console.log(stage.children[i].name)}});
-*/
+
     
     addProgressBar();
     addDebugText();
@@ -768,13 +768,13 @@ function handleTick(event) {
  */
 function handleBackButtonTouch(event) {
     "use strict";
-    //update = true; //xxxtick nu funkar det att gå tillbaka men utan tween, istället pang på!
+    log("---handleBackButtonTouch");
     if (menuBall.focus) {
         hideBallGame();
     } else if (menuCake.focus) {
         hideCakeGame();
     } else if (menuClothes.focus) {
-        restoreMenuClothes();
+        hideClothesGame();
     }
 }
 
@@ -786,6 +786,7 @@ function handleBackButtonTouch(event) {
  * */
 function changeBackground(color) {
     "use strict";
+    log("---changeBackground");
     canvas.style.backgroundColor = color[0];
     var frame = document.getElementById("canvasHolder");
     frame.style.backgroundColor = color[1];
@@ -969,6 +970,7 @@ function addDebugText() {
  */
 function showSplashScreen() {
     "use strict";
+    log("---showSplashScreen");
     stage.addChildAt(boelToreSplash, 0); //add at the bottom, behind progress bar
     stage.addChild(menuCake);
     stage.addChild(menuBall);
@@ -982,9 +984,6 @@ function showSplashScreen() {
     }, gameTransitionTime, createjs.Ease.linear);
     createjs.Tween.get(menuClothes).to({
         alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(backButton).to({
-        alpha: (1 - alpha)
     }, gameTransitionTime, createjs.Ease.linear);
     createjs.Tween.get(boelToreSplash).to({
         alpha: alpha
@@ -1003,6 +1002,7 @@ function showSplashScreen() {
  */
 function hideSplashScreen() {
     "use strict";
+    log("---hidesplashScreen");
     var alpha=0.0;
     createjs.Tween.get(menuCake).to({
         alpha: alpha
@@ -1013,9 +1013,6 @@ function hideSplashScreen() {
     createjs.Tween.get(menuClothes).to({
         alpha: alpha
     }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(menuClothes);});
-    createjs.Tween.get(backButton).to({
-        alpha: (1 - alpha)
-    }, gameTransitionTime, createjs.Ease.linear);
     createjs.Tween.get(boelToreSplash).to({
         alpha: alpha
     }, gameTransitionTime / 2, createjs.Ease.linear).call(function (evt) {stage.removeChild(boelToreSplash);});
@@ -1023,6 +1020,28 @@ function hideSplashScreen() {
         x: menuHelpRunningX,
         y: menuHelpRunningY
     }, gameTransitionTime / 2, createjs.Ease.linear);
+}
+
+/** 
+ * @summary general
+ */
+function showBackButton() {
+    "use strict";
+    stage.addChild(backButton);
+    createjs.Tween.get(backButton).to({
+        alpha: 1
+    }, gameTransitionTime, createjs.Ease.linear);
+}
+
+
+/** 
+ * @summary general
+ */
+function hideBackButton() {
+    "use strict";
+    createjs.Tween.get(backButton).to({
+        alpha: 0
+    }, gameTransitionTime, createjs.Ease.linear).call(function (evt) {stage.removeChild(backButton);});
 }
 
 /** 
@@ -1214,6 +1233,7 @@ function showStar() {
  */
 function hideStar() {
     "use strict";
+    log("---hideStar");
     createjs.Tween.removeTweens(star);
     star.alpha = 0;
     star.scaleX = 0.1;
@@ -1406,7 +1426,7 @@ function handleCharacterTouch(event) {
  */
 function handleMenuCakeTouch(event) {
     "use strict";
-    if (noGameRunning()) {
+    if (noGameRunning() && !isRunning()) {
         menuCake.focus = true;
         extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone. 
         hideSplashScreen();
@@ -1422,6 +1442,7 @@ function showCakeGame() {
     "use strict";
     changeBackground(tableBackgroundColor);
     showTable();
+    showBackButton();
 }
 
 function showTable() {
@@ -1510,6 +1531,7 @@ function hideCakeGame() {
 
     hideAllNumbers();
     hideStar();
+    hideBackButton();
     showSplashScreen();
 
     createjs.Tween.get(table).to({
@@ -1575,7 +1597,18 @@ function addTable() {
     table.x = tableX;
     table.y = tableY;
     table.alpha = 0.0;
+    table.addEventListener("mousedown", handleTableTouch);
+}
 
+
+/** 
+ * @summary cake
+ */
+function handleTableTouch(evt) {
+    "use strict";
+    //not used right now, but prevents from clicking through table
+    var x=evt.stageX;
+    var y=evt.stageY;
 }
 
 /** 
@@ -2067,7 +2100,8 @@ function randomSpeedAndDirection() {
  */
 function handleMenuBallTouch(event) {
     "use strict";
-    if (noGameRunning()) {
+    log("---handleMenuBallTouch");
+    if (noGameRunning() && !isRunning()) {
         menuBall.focus = true;
         extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone.
         hideSplashScreen();
@@ -2081,15 +2115,18 @@ function handleMenuBallTouch(event) {
  */
 function showBallGame() {
     "use strict";
+    log("---showBallGame");
     //ballBackground.alpha = 1.0;//xxx yyy createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
     changeBackground(ballBackgroundColor);
     showBalls();
+    showBackButton();
 }
 
 /** 
  * @summary ball
  */
 function startBallGame(delay) {
+    log("---startBallGame");
     "use strict";
     hideStar();
     nextBallTime = delay + randomFutureMillis(minSecNextBall, maxSecNextBall);
@@ -2115,15 +2152,20 @@ function startBallGame(delay) {
  */
 function hideBallGame() {
     "use strict";
+    log("---hideBallGame");
     menuBall.focus = false;
+    createjs.Tween.removeAllTweens();
     nextBallTime = -1;
     clearTimeout(nextBallId);
     var i;
+    /* xxx not needed anymore now that all tweens are removed 
     for (i = 0; i < allBalls.length; i += 1) {
         createjs.Tween.removeTweens(allBalls[i]);
     }
+    */
     hideBalls();
     hideStar();
+    hideBackButton();
     showSplashScreen();
 }
 
@@ -2159,6 +2201,7 @@ function addBall() {
  */
 function showBalls() {
     "use strict";
+    log("---showBalls");
     var i;
     for (i = 0; i < allBalls.length; i += 1) {
         stage.addChild(allBalls[i]);
@@ -2170,6 +2213,7 @@ function showBalls() {
  */
 function hideBalls() {
     "use strict";
+    log("---hideBalls");
     var i;
     for (i = 0; i < allBalls.length; i += 1) {
         stage.removeChild(allBalls[i]);
@@ -2465,7 +2509,6 @@ function addClothes() {
 
     clothesGameContainer.addChild(line);
     clothesGameContainer.name = "clothes game container";
-    stage.addChild(clothesGameContainer);
 }
 
 /** 
@@ -2473,28 +2516,24 @@ function addClothes() {
  */
 function handleMenuClothesTouch(event) {
     "use strict";
-    if (noGameRunning()) {
+    if (noGameRunning() && !isRunning()) {
         menuClothes.focus = true;
         extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone.
         hideSplashScreen();
         showClothesGame();
-        startClothesGame(0);
+        startClothesGame();
     }
 }
 
 /** 
  * @summary clothes
  */
-function startClothesGame(delay) {
+function startClothesGame() {
     "use strict";
-
-    //xxx mpste snyggas till, detta är quick and dirty
-
 
     line.alpha = 1.0;
     tore.alpha = 1.0;
     tore.dressed = false;
-
     createjs.Tween.get(clothesGameContainer).to({
         alpha: 1.0
     }, gameTransitionTime, createjs.Ease.linear);
@@ -2525,10 +2564,10 @@ function restorePieceOfClothes(c) {
 /** 
  * @summary clothes
  */
-function restoreMenuClothes() {
+function hideClothesGame() {
     "use strict";
     menuClothes.focus = false;
-    log("restoreMenuClothes()");
+    createjs.Tween.removeAllTweens();
     restorePieceOfClothes(shirt);
     restorePieceOfClothes(trousers);
     restorePieceOfClothes(sockLeft);
@@ -2536,10 +2575,10 @@ function restoreMenuClothes() {
     if (clothesGameContainer.drawingEnabled) {
         disableDrawing();
     }
-    //xxx almost works but must make tore happy again!!!!! and make clothes not dirty. hm, dirty är egenskap på ett plagg, kan få konsekvenser om man sedan ritar på annat plagg
-    menuClothes.focus = false;
+
     hideClothes();
     hideStar();
+    hideBackButton();
     showSplashScreen();
 }
 
@@ -2548,11 +2587,9 @@ function restoreMenuClothes() {
  */
 function hideClothes() {
     "use strict";
-    log("hideClothes()");
     createjs.Tween.get(clothesGameContainer).to({
         alpha: 0.0
     }, gameTransitionTime, createjs.Ease.linear);
-    //createjs.Tween.get(clothesBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
 }
 
 /** 
@@ -2562,6 +2599,16 @@ function showClothesGame() {
     "use strict";
     //createjs.Tween.get(clothesBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
     changeBackground(clothesBackgroundColor);
+    showTore();
+    showBackButton();
+}
+
+/** 
+ * @summary clothes
+ */
+function showTore() {
+    "use strict";
+    stage.addChild(clothesGameContainer);
 }
 
 /** 
