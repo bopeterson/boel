@@ -35,10 +35,9 @@ see https://github.com/jsdoc3/jsdoc
 */
 
 //debug settings
-var debug = false;
+var debug = true;
 var debugAlwaysUpdate = false;
 var fpsLabel;
-var debugbutton1;
 
 //variables that must be the same as attributes in index.html
 //they could be retrived as canvas.height etc, but must sometimes be used before they can be retrieved. 
@@ -76,7 +75,7 @@ var progressBarHeight = 20;
 var progressBarColor = "#060";
 var progressBarErrorColor = "#C00";
 var progressBarFadeTime = 400;
-var useRAF = true;
+var useRAF = false;
 var fps = 30; //fps not used if useRAF = true;
 var cakeBounceTime = 6.0; //time for a complete cake bounce cycle in seconds
 var minSecNextSmash = 18.0; //important that this is larger than cakeBounceTime
@@ -278,7 +277,7 @@ var crayonStroke;
 var crayonColors;
 var crayonColorIndex;
 var crayons = [];
-var crayonsOverlay = [];
+var crayonOverlay; //xxx was crayonsOverlay = [];
 var stroke;
 
 
@@ -324,13 +323,13 @@ function init() {
     // enable touch interactions if supported on the current device:
     createjs.Touch.enable(stage);
 
-
-    debugbutton1 = new createjs.Shape();
-    debugbutton1.graphics.beginFill("blue").drawCircle(30, 0, 30, 30);
+    
+    var debugbutton1 = new createjs.Shape();
+    debugbutton1.graphics.beginFill("blue").drawCircle(1024-30, 30, 30, 30);
     debugbutton1.name = "debugbutton";
     stage.addChild(debugbutton1);
-    debugbutton1.addEventListener("click",function(event){var i;for (i=0;i<table.children.length;i++){console.log(table.children[i].name)};console.log("----");for (i=0;i<cakeContainer.children.length;i++){console.log(cakeContainer.children[i].name)};console.log("----");for (i=0;i<stage.children.length;i++){console.log(stage.children[i].name)}});
-
+    debugbutton1.addEventListener("click",function(event){var i;console.log("----");for (i=0;i<stage.children.length;i++){console.log(stage.children[i].name)}});
+    
     
     addProgressBar();
     addDebugText();
@@ -560,10 +559,9 @@ function init() {
         id: "greenBall",
         src: "assets/greenball.png"
     }, {
-        id: "cakeBall",
-        src: "assets/cake_ball.png"
+       id: "cakeBall",
+       src: "assets/cake_ball.png"
     }];
-
 
     numberOfCakePieces = 6; //xxx move to setup
 
@@ -648,6 +646,7 @@ function init() {
 
     queue.loadManifest(files);
     filesToLoad = files.length;
+    console.log(createjs.Sound.activePlugin.toString());
 } //init
 
 /** 
@@ -669,8 +668,6 @@ function watchSound(s0) {
     if (s0 == "whereblue" || s0 == "wherered" || s0 == "whereyellow" || s0 == "wheregreen") {
         if (nextBall != null) {
             pulsate(nextBall, ballPulsateTime);
-        } else {
-            console.log("################################");
         }
     }
     else if (s0 == "tada") {
@@ -768,7 +765,6 @@ function handleTick(event) {
  */
 function handleBackButtonTouch(event) {
     "use strict";
-    log("---handleBackButtonTouch");
     if (menuBall.focus) {
         hideBallGame();
     } else if (menuCake.focus) {
@@ -786,7 +782,6 @@ function handleBackButtonTouch(event) {
  * */
 function changeBackground(color) {
     "use strict";
-    log("---changeBackground");
     canvas.style.backgroundColor = color[0];
     var frame = document.getElementById("canvasHolder");
     frame.style.backgroundColor = color[1];
@@ -970,7 +965,6 @@ function addDebugText() {
  */
 function showSplashScreen() {
     "use strict";
-    log("---showSplashScreen");
     stage.addChildAt(boelToreSplash, 0); //add at the bottom, behind progress bar
     stage.addChild(menuCake);
     stage.addChild(menuBall);
@@ -1002,7 +996,6 @@ function showSplashScreen() {
  */
 function hideSplashScreen() {
     "use strict";
-    log("---hidesplashScreen");
     var alpha=0.0;
     createjs.Tween.get(menuCake).to({
         alpha: alpha
@@ -1233,7 +1226,6 @@ function showStar() {
  */
 function hideStar() {
     "use strict";
-    log("---hideStar");
     createjs.Tween.removeTweens(star);
     star.alpha = 0;
     star.scaleX = 0.1;
@@ -1308,7 +1300,6 @@ function log(text) {
  */
 function checkCharacter() {
     "use strict";
-    console.log("checking character");
     if (soundQueue.length > 0 || helpContainer.visible) {
         console.log("not ready to check character");
         randomCheckId = setTimeout(checkCharacter, 2000);
@@ -1332,7 +1323,6 @@ function checkCharacter() {
  */
 function selectNextCharacter() {
     "use strict";
-    console.log("selecting next charavter");
     
     var notMoved = [];
 
@@ -1373,7 +1363,6 @@ function selectNextCharacter() {
  */
 function smashNextPiece() {
     "use strict";
-    console.log("trying to smash next piece");
     var movedAndNotSmashed = [];
 
     function pushMovedAndNotSmashedPiece(piece, pieceNumber, array) {
@@ -2100,7 +2089,6 @@ function randomSpeedAndDirection() {
  */
 function handleMenuBallTouch(event) {
     "use strict";
-    log("---handleMenuBallTouch");
     if (noGameRunning() && !isRunning()) {
         menuBall.focus = true;
         extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone.
@@ -2115,7 +2103,6 @@ function handleMenuBallTouch(event) {
  */
 function showBallGame() {
     "use strict";
-    log("---showBallGame");
     //ballBackground.alpha = 1.0;//xxx yyy createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
     changeBackground(ballBackgroundColor);
     showBalls();
@@ -2126,7 +2113,6 @@ function showBallGame() {
  * @summary ball
  */
 function startBallGame(delay) {
-    log("---startBallGame");
     "use strict";
     hideStar();
     nextBallTime = delay + randomFutureMillis(minSecNextBall, maxSecNextBall);
@@ -2152,7 +2138,6 @@ function startBallGame(delay) {
  */
 function hideBallGame() {
     "use strict";
-    log("---hideBallGame");
     menuBall.focus = false;
     createjs.Tween.removeAllTweens();
     nextBallTime = -1;
@@ -2201,7 +2186,6 @@ function addBall() {
  */
 function showBalls() {
     "use strict";
-    log("---showBalls");
     var i;
     for (i = 0; i < allBalls.length; i += 1) {
         stage.addChild(allBalls[i]);
@@ -2213,7 +2197,6 @@ function showBalls() {
  */
 function hideBalls() {
     "use strict";
-    log("---hideBalls");
     var i;
     for (i = 0; i < allBalls.length; i += 1) {
         stage.removeChild(allBalls[i]);
@@ -2546,7 +2529,6 @@ function startClothesGame() {
 function restorePieceOfClothes(c) {
     "use strict";
     //xxx this is basically the same as in function Clothes. Should be unified
-    log("restorePieceOfClothes()");
     createjs.Tween.removeTweens(c.linePic);
     createjs.Tween.removeTweens(c.wearPic);
     c.linePic.rotation = c.linePic.startRotation;
@@ -2728,43 +2710,6 @@ function handlePostPressmovePressup(evt) {
 
 //drawing functions
 
-/** 
- * @summary clothes
- */
-function enableDrawing() {
-    "use strict";
-    if (helpContainer.visible) {
-        //wait until helpContainer is gone
-        setTimeout(enableDrawing, 2000);
-    } else if (menuClothes.focus) {
-        clothesGameContainer.drawingEnabled = true;
-        menuHelp.alpha = 0.0;
-        stage.update();
-        stage.autoClear = false;
-        crayonColors = ["red", "yellow", "green", "#FFAABB", "blue", "orange", "brown", "purple"]; //xxx till setup
-        crayonColorIndex = 0;
-        crayonColor = crayonColors[crayonColorIndex];
-
-        var i;
-        for (i = 0; i < crayonColors.length; i += 1) {
-            crayons[i] = makeCrayon(crayonColors[i], "black", 3); //xxx possibly move to init
-            crayonsOverlay[i] = makeCrayon("lightblue", "lightblue", 4);
-            crayons[i].index = i;
-            crayonsOverlay[i].index = i;
-            stage.addChild(crayonsOverlay[i]);
-            stage.addChild(crayons[i]);
-            crayons[i].addEventListener("mousedown", handleCrayonMouseDown);
-            crayonsOverlay[i].addEventListener("mousedown", handleCrayonMouseDown);
-        }
-
-        drawCrayons(crayonColorIndex);
-        drawingCanvas = new createjs.Shape(); //xxx probably move to init
-        drawingCanvas.name = "drawing canvas";
-        stage.addEventListener("stagemousedown", handleStrokeMouseDown);
-        stage.addChild(drawingCanvas);
-        stage.update();
-    }
-}
 
 /** 
  * @summary clothes
@@ -2791,9 +2736,198 @@ function removeCrayons() {
     "use strict";
     var i;
     for (i = 0; i < crayonColors.length; i += 1) {
-        stage.removeChild(crayonsOverlay[i]);
+        stage.removeChild(crayonOverlay);
         stage.removeChild(crayons[i]);
     }
+}
+
+
+
+
+
+
+/** 
+ * @summary clothes
+ */
+function handleClothesPaint() {
+    "use strict";
+    if (clothesGameContainer.clean) {
+        clothesGameContainer.clean = false;
+        tore.sad.alpha = 1.0; //xxx eller tween?
+        stage.update();
+        clothesGameContainer.alpha = 0.0;
+    }
+
+}
+
+
+/** 
+ * @summary clothes
+ */
+function handleCrayonMouseDown(evt) {
+    "use strict";
+    crayonColorIndex = evt.target.index;
+    crayonColor = crayonColors[crayonColorIndex];
+    drawCrayons(crayonColorIndex,false);
+    stage.update();
+}
+
+
+/** 
+ * @summary clothes
+ */
+function handleInvisibleCrayonButton(evt) {
+    "use strict";
+    
+    var crayonDelta = 50; //xxx to setup
+    var number = 8;
+    var crayonTop = canvasHeight - (number + 1) * crayonDelta;
+    var crayonShowLength = 100; //xxx to setup
+    
+    var x = evt.stageX;
+    var y = evt.stageY;
+    var hit = false;
+    console.log("check if there's an invisible button here");
+    
+    if (x >= canvasWidth-crayonShowLength && x<=canvasWidth &&
+        y >= crayonTop && y <= crayonTop + number * crayonDelta) {
+        hit = true;
+        console.log("we have a hit!");
+        var oldCrayonColorIndex = crayonColorIndex;
+        crayonColorIndex = Math.floor((y - crayonTop) / crayonDelta);
+        console.log("cci",crayonColorIndex);
+        crayonColor = crayonColors[crayonColorIndex];
+        drawCrayons(crayonColorIndex,oldCrayonColorIndex,false);
+        stage.update();
+    }
+}
+
+/** 
+ * @summary clothes
+ */
+function handleStrokeMouseDown(evt) {
+    "use strict";
+    console.log("handleStrokeMouseDown")
+    var x = evt.stageX;
+    var y = evt.stageY;
+    detectPaint(x,y);
+    stroke = 10; //xxx to setup
+    oldPt = new createjs.Point(x, y);
+    oldMidPt = new createjs.Point(x, y);
+
+    drawingCanvas.graphics.clear().beginFill(crayonColor).drawCircle(oldPt.x, oldPt.y, stroke / 2, stroke / 2);
+    stage.update();
+
+    stage.addEventListener("stagemousemove", handleStrokeMouseMove);
+    stage.addEventListener("stagemouseup", handleStrokeMouseUp);
+    
+}
+
+/** 
+ * @summary clothes
+ */
+function handleStrokeMouseMove(evt) {
+    "use strict";
+    var x = evt.stageX;
+    var y = evt.stageY;
+    detectPaint(x,y);
+
+    var midPt = new createjs.Point(oldPt.x + x >> 1, oldPt.y + y >> 1);
+
+    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
+    moveTo(midPt.x, midPt.y).
+    curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
+
+    oldPt.x = x;
+    oldPt.y = y;
+
+    oldMidPt.x = midPt.x;
+    oldMidPt.y = midPt.y;
+
+    stage.update();
+}
+
+/** 
+ * @summary clothes
+ */
+function handleStrokeMouseUp(evt) {
+    "use strict";
+    var x = evt.stageX;
+    var y = evt.stageY;
+
+    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
+    moveTo(oldMidPt.x, oldMidPt.y).
+    lineTo(x, y);
+    
+    
+    refreshCrayons(); //xxxxxxxxxxx
+    
+    
+    stage.update();
+    stage.removeEventListener("stagemousemove", handleStrokeMouseMove);
+    stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
+
+}
+
+/** 
+ * @summary clothes
+ */
+function detectPaint(x,y) {
+    "use strict";
+    var detected = false;
+    var pt;
+    var i;
+    for (i = 0; i < paintDetect.length && !detected; i += 1) {
+        pt = paintDetect[i].globalToLocal(x, y); //xxx kan inte detta göras en gång för alla?
+        if (paintDetect[i].hitTest(pt.x, pt.y)) {
+            detected = true;
+            handleClothesPaint();
+        }
+    }
+
+}
+
+/** 
+ * @summary clothes
+ */
+function drawCrayons(index,oldindex,keep) {
+    "use strict";
+    var crayonDelta = 50; //xxx to setup
+    var number = crayons.length;
+    var crayonTop = canvasHeight - (number + 1) * crayonDelta;
+    var crayonShowLength = 100; //xxx to setup
+
+
+    var i;
+    for (i = 0; i < number; i += 1) {
+
+        //crayonsOverlay[i].y = crayonTop + i * crayonDelta;
+        //crayonsOverlay[i].x = canvasWidth - crayonShowLength - 2;
+
+        crayons[i].y = crayonTop + i * crayonDelta;
+        if (i == index) {
+            crayons[i].x = canvasWidth - crayonShowLength;
+        } else {
+            if (i == oldindex) {
+                crayonOverlay.y = crayons[i].y;
+                crayonOverlay.x = canvasWidth - crayonShowLength;
+                stage.addChild(crayonOverlay);
+            }
+            crayons[i].x = canvasWidth - crayonShowLength / 2;
+        }
+        stage.addChild(crayons[i]);
+    }
+    stage.update();
+    if (!keep) {
+        for (i = 0; i < number; i += 1) {
+            stage.removeChild(crayons[i]);
+        }
+        stage.removeChild(crayonOverlay);
+    }
+}
+
+function refreshCrayons() {
+    drawCrayons(crayonColorIndex,crayonColorIndex,false);
 }
 
 /** 
@@ -2830,21 +2964,76 @@ function makeCrayon(color, outlineColor, outlineWidth) {
 /** 
  * @summary clothes
  */
-function handleClothesPaint() {
+function makeCrayonOverlay(color, outlineColor, outlineWidth) {
     "use strict";
-    if (clothesGameContainer.clean) {
-        clothesGameContainer.clean = false;
-        tore.sad.alpha = 1.0; //xxx eller tween?
-        stage.update();
-        clothesGameContainer.alpha = 0.0;
-    }
-
+    var crayon = new createjs.Shape();
+    crayon.name = color + " crayon";
+    crayon.graphics.
+    beginFill(color).
+    beginStroke(outlineColor).setStrokeStyle(outlineWidth, 'round', 'round').
+    moveTo(40, 0).
+    lineTo(200, 0).
+    lineTo(200, 40).
+    lineTo(40, 40).
+    lineTo(36, 35).
+    lineTo(2, 23).
+    lineTo(2, 17).
+    lineTo(36, 5).
+    lineTo(40, 0);
+    return crayon;
 }
+
+
+function enableDrawing() {
+    "use strict";
+    if (helpContainer.visible) {
+        //wait until helpContainer is gone
+        setTimeout(enableDrawing, 2000);
+    } else if (menuClothes.focus) {
+        clothesGameContainer.drawingEnabled = true;
+        menuHelp.alpha = 0.0;
+        stage.update();
+        crayonColors = ["red", "yellow", "green", "pink", "blue", "orange", "brown", "purple"]; //xxx till setup
+        crayonColorIndex = 0;
+        crayonColor = crayonColors[crayonColorIndex];
+
+        var i;
+        for (i = 0; i < crayonColors.length; i += 1) {
+            crayons[i] = makeCrayon(crayonColors[i], "black", 3); //xxx possibly move to init or startfunction
+            //crayonsOverlay[i] = makeCrayon("lightblue", "lightblue", 4);
+            
+            crayons[i].index = i;
+            //crayonsOverlay[i].index = i;
+            //stage.addChild(crayonsOverlay[i]);
+            //stage.addChild(crayons[i]);
+            //crayons[i].addEventListener("mousedown", handleCrayonMouseDown);
+            //crayonsOverlay[i].addEventListener("mousedown", handleCrayonMouseDown);
+        }
+        
+        crayonOverlay = makeCrayonOverlay(clothesBackgroundColor[0],clothesBackgroundColor[0],4);//xxx possibly move to init or startfunction
+
+        drawingCanvas = new createjs.Shape(); //xxx probably move to init
+        drawingCanvas.name = "drawing canvas";
+        stage.addEventListener("stagemousedown", handleStrokeMouseDown);
+        stage.addEventListener("stagemousedown", handleInvisibleCrayonButton);
+        stage.addChild(drawingCanvas);
+        drawCrayons(crayonColorIndex,crayonColorIndex,true); 
+        
+        stage.update();//this is done in drawCrayons but an extra update seems to be needed for correct update in android webview
+        stage.autoClear = false;
+        drawCrayons(crayonColorIndex,crayonColorIndex,false); 
+        
+    }
+}
+
+
+
+/* Old crayon functions that draws vector crayons in any color */
 
 /** 
  * @summary clothes
  */
-function drawCrayons(index) {
+function drawCrayonsOld(index) {
     "use strict";
     var crayonDelta = 50; //xxx to setup
     var number = crayons.length;
@@ -2864,100 +3053,180 @@ function drawCrayons(index) {
         } else {
             crayons[i].x = canvasWidth - crayonShowLength / 2;
         }
+        
+    }
+    stage.update();
+}
+
+/** 
+ * @summary clothes
+ */
+function makeCrayonOld(color, outlineColor, outlineWidth) {
+    "use strict";
+    var crayon = new createjs.Shape();
+    crayon.name = color + " crayon";
+    crayon.graphics.
+    beginFill(color).
+    beginStroke(outlineColor).setStrokeStyle(outlineWidth, 'round', 'round').
+    moveTo(40, 0).
+    lineTo(200, 0).
+    lineTo(200, 40).
+    lineTo(40, 40).
+    lineTo(36, 35).
+    lineTo(2, 23).
+    lineTo(2, 17).
+    lineTo(36, 5).
+    lineTo(40, 0).
+    beginFill(outlineColor).
+    drawRect(60, 2, 20, 36).
+    beginStroke(color).setStrokeStyle(7, 'round', 'round').
+    moveTo(70, 2).
+    curveTo(65, 10, 70, 20).
+    curveTo(75, 30, 70, 38).
+    beginStroke(outlineColor).setStrokeStyle(outlineWidth - 1, 'round', 'round').
+    moveTo(60, 0).lineTo(80, 0).
+    moveTo(60, 40).lineTo(80, 40);
+    return crayon;
+}
+
+function enableDrawingOld() {
+    "use strict";
+    if (helpContainer.visible) {
+        //wait until helpContainer is gone
+        setTimeout(enableDrawing, 2000);
+    } else if (menuClothes.focus) {
+        clothesGameContainer.drawingEnabled = true;
+        menuHelp.alpha = 0.0;
+        stage.update();
+        stage.autoClear = false;
+        crayonColors = ["red", "yellow", "green", "#FFAABB", "blue", "orange", "brown", "purple"]; //xxx till setup
+        crayonColorIndex = 0;
+        crayonColor = crayonColors[crayonColorIndex];
+
+        var i;
+        for (i = 0; i < crayonColors.length; i += 1) {
+            crayons[i] = makeCrayon(crayonColors[i], "black", 3); //xxx possibly move to init
+            crayonsOverlay[i] = makeCrayon("lightblue", "lightblue", 4);
+            
+            crayons[i].index = i;
+            crayonsOverlay[i].index = i;
+            stage.addChild(crayonsOverlay[i]);
+            stage.addChild(crayons[i]);
+            crayons[i].addEventListener("mousedown", handleCrayonMouseDown);
+            crayonsOverlay[i].addEventListener("mousedown", handleCrayonMouseDown);
+        }
+
+        drawCrayons(crayonColorIndex);
+        drawingCanvas = new createjs.Shape(); //xxx probably move to init
+        drawingCanvas.name = "drawing canvas";
+        stage.addEventListener("stagemousedown", handleStrokeMouseDown);
+        stage.addChild(drawingCanvas);
+        stage.update();
+    }
+}
+
+// drawing functions cul de sac
+// asså återvändsgränd, en testad lösning som inte funkade så bra
+/** 
+ * @summary clothes
+ */
+function enableDrawingCulDeSac() {
+    "use strict";
+    
+    var crayonDelta = 50; //xxx to setup
+    var number = 8; // xxxxxxxxxxx crayons.length; crayoncolors.length istället!!!
+    var crayonTop = canvasHeight - (number + 1) * crayonDelta;
+    
+    console.log("crayonTop:",crayonTop);
+    
+    var crayonShowLength = 100; //xxx to setup
+    
+    
+    if (helpContainer.visible) {
+        //wait until helpContainer is gone
+        setTimeout(enableDrawing, 2000);
+    } else if (menuClothes.focus) {
+        clothesGameContainer.drawingEnabled = true;
+        menuHelp.alpha = 0.0;
+        stage.update();
+        stage.autoClear = false;
+        crayonColors = ["red", "yellow", "green", "pink", "blue", "orange", "brown", "purple"]; // xxxx to setup!!! 
+        crayonColorIndex = 0;
+        crayonColor = crayonColors[crayonColorIndex];
+
+        var i;
+        for (i = 0; i < crayonColors.length; i += 1) {
+            crayons[i] = new createjs.Bitmap(queue.getResult("crayon"+crayonColors[i])); //xxx move to addclothes ???
+            crayons[i].name = "crayon"+crayonColors[i];
+            crayons[i].x = canvasWidth - crayonShowLength;
+            crayons[i].y = crayonTop;
+            
+            crayonsOverlay[i] = makeCrayon(clothesBackgroundColor[0], clothesBackgroundColor[0], 4);
+            
+            
+            crayons[i].index = i;
+            crayonsOverlay[i].index = i;
+            stage.addChild(crayonsOverlay[i]);
+            //crayons[i].addEventListener("mousedown", handleCrayonMouseDown);
+            crayonsOverlay[i].addEventListener("mousedown", handleCrayonMouseDown);
+        }
+
+        drawCrayons(crayonColorIndex);
+        drawingCanvas = new createjs.Shape(); //xxx probably move to init
+        drawingCanvas.name = "drawing canvas";
+        stage.addEventListener("stagemousedown", handleStrokeMouseDown);
+        stage.addEventListener("stagemousedown", handleInvisibleCrayonButton);
+        stage.addChild(drawingCanvas);
+        stage.update();
     }
 }
 
 /** 
  * @summary clothes
  */
-function handleCrayonMouseDown(evt) {
+function makeCrayonCulDeSac(color, outlineColor, outlineWidth) {
+    //xxx byt namn till makeCrayonButton
     "use strict";
-    crayonColorIndex = evt.target.index;
-    crayonColor = crayonColors[crayonColorIndex];
-    drawCrayons(crayonColorIndex);
-    stage.update();
+    //xxx input parameters except color not used
+    var crayon = new createjs.Shape();
+    crayon.name = "crayon" + color;
+    crayon.graphics.beginFill(color).drawRect(0,0,200,40);
+    return crayon;
 }
 
 /** 
  * @summary clothes
  */
-function handleStrokeMouseDown(evt) {
+function drawCrayonsCulDeSac(index) {
     "use strict";
-    var x = evt.stageX;
-    var y = evt.stageY;
-    console.log("vvvvv handleStrokeMouseDown", x | 0, y | 0);
-    detectPaint(x,y);
-    stroke = 10; //xxx to setup
-    oldPt = new createjs.Point(x, y);
-    oldMidPt = new createjs.Point(x, y);
+    var crayonDelta = 50; //xxx to setup
+    var number = crayons.length;  //xxxxxxxxxxx crayons.length; crayoncolors.length istället!!!
+    var crayonTop = canvasHeight - (number + 1) * crayonDelta;
+    var crayonShowLength = 100; //xxx to setup
 
-    drawingCanvas.graphics.clear().beginFill(crayonColor).drawCircle(oldPt.x, oldPt.y, stroke / 2, stroke / 2);
-    stage.update();
 
-    stage.addEventListener("stagemousemove", handleStrokeMouseMove);
-    stage.addEventListener("stagemouseup", handleStrokeMouseUp);
-    
-}
-
-/** 
- * @summary clothes
- */
-function handleStrokeMouseMove(evt) {
-    "use strict";
-    var x = evt.stageX;
-    var y = evt.stageY;
-    console.log("<< >> handleStrokeMouseMove", x | 0, y | 0);
-    detectPaint(x,y);
-
-    var midPt = new createjs.Point(oldPt.x + x >> 1, oldPt.y + y >> 1);
-
-    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
-    moveTo(midPt.x, midPt.y).
-    curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
-
-    oldPt.x = x;
-    oldPt.y = y;
-
-    oldMidPt.x = midPt.x;
-    oldMidPt.y = midPt.y;
-
-    stage.update();
-}
-
-/** 
- * @summary clothes
- */
-function handleStrokeMouseUp(evt) {
-    "use strict";
-    var x = evt.stageX;
-    var y = evt.stageY;
-    console.log("^^^^^ handleStrokeMouseUp  ", x | 0, y | 0);
-
-    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
-    moveTo(oldMidPt.x, oldMidPt.y).
-    lineTo(x, y);
-    stage.update();
-    stage.removeEventListener("stagemousemove", handleStrokeMouseMove);
-    stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
-
-}
-
-/** 
- * @summary clothes
- */
-function detectPaint(x,y) {
-    "use strict";
-    var detected = false;
-    var pt;
     var i;
-    for (i = 0; i < paintDetect.length && !detected; i += 1) {
-        pt = paintDetect[i].globalToLocal(x, y); //xxx kan inte detta göras en gång för alla?
-        if (paintDetect[i].hitTest(pt.x, pt.y)) {
-            detected = true;
-            handleClothesPaint();
+    for (i = 0; i < number; i += 1) {
+
+        crayonsOverlay[i].y = crayonTop + i * crayonDelta;
+        console.log("crayonsOverlay[i].y:",crayonsOverlay[i].y);
+
+        crayonsOverlay[i].x = canvasWidth - crayonShowLength - 2;
+        crayonsOverlay[i].alpha=0.05; //xxxxxxxxxxxx
+
+        
+    }
+    for (i = 0; i < number; i += 1) {
+
+        if (i == index) {
+            stage.addChild(crayons[i]);
+            console.log("crayons[i].y:",crayons[i].y);
+        } else {
+            stage.removeChild(crayons[i]);
         }
     }
-
+    stage.update();
+    var xxx=crayons[index];
+    stage.removeChild(xxx);//xxxxxxxxxxxxxx
 }
-
 
