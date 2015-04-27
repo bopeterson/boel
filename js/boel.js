@@ -68,10 +68,13 @@ var timeToNewBallGame = 5000;
 /** ball bounce speed in pixels per milliseconds */
 var ballBounceSpeed = 0.4;
 /** min random time before voice "x vill ha tårta, var är x" for first character after start.*/
+
+var numberOfCakePieces = 6;
+
 var minSecSelectFirstName = 1.5;
 var maxSecSelectFirstName = 2.0;
-var minSecSelectName = 6.0; //min random time before voice: "x vill ha tårta, var är x" for characters after first character xxx should be longer than time it takes to say"ja, x fick första tårtbiten"
-var maxSecSelectName = 8.0; //max random time... xxx
+var minSecSelectName = 6.0; //min random time before voice: "nn vill ha tårta, var är nn" for characters after first character
+var maxSecSelectName = 8.0; //max random time before voice: "nn vill ha tårta, var är nn" for characters after first character
 var minSecNextBall = 3.0;
 var maxSecNextBall = 3.2;
 var showNumberDelay = 2000; //delay before number is shown after sound "nn gets cake piece number n" is started
@@ -85,8 +88,8 @@ var cakeBounceTime = 6.0; //time for a complete cake bounce cycle in seconds
 var minSecNextSmash = 18.0; //important that this is larger than cakeBounceTime
 var maxSecNextSmash = 26.0; //
 var gameTransitionTime = 700;
-var numberX = canvasWidth - 60; //canvas.width - 200;xxx canvaswidth variable
-var numberY = 80; //0; xxx finetune
+var numberX = canvasWidth - 60;
+var numberY = 80;
 var numberAppearTime = 600;
 var numberWaitTime = 2000;
 var numberMoveTime = 400;
@@ -120,17 +123,12 @@ var clothesGameContainerY = 0;
 var pieceMoveTime = 1000;
 var ballPulsateTime = 2000;
 var characterPulsateTime = 1500;
-var cakeBallNoOfTurns = 6; //xxxx was 4
+var cakeBallNoOfTurns = 6;
 
 var clothesTweenTime = 600;
 var hitDistance = 50;
 
-
-//xxx possibly put setup parameters in a setup object:
-//var setup = {timeToNewBallGame:1500,ballBounceSpeed:0.4};
-
-//xxx the clothes parameters are not really setup parameters, but determined by size on position of clothes images. 
-//should be defined somewhere else....
+//the following clothes parameters are not really setup parameters, but determined by size and position of clothes images. 
 
 var toreX = 47;
 var toreY = 530;
@@ -164,32 +162,11 @@ var crayonColors = ["red", "yellow", "green", "pink", "blue", "orange", "brown",
 
 var crayonDelta = 50; //distance in pixels between center of crayons
 var crayonShowLength = 100; //length in pixels of selected crayon
+var drawingStroke = 10;
 
 var ballTween = {};
 
-var allCharacters = []; //to find character connected to piece through getCharacter function. xxx ska nog försvinna
-
-var cardinal = [
-    "noll",
-    "en",
-    "tvaa",
-    "tre",
-    "fyra",
-    "fem",
-    "sex"
-];
-
-//xxxx don't think this is used anymore
-var ordinal = [
-    "nolltetaartbiten",
-    "foerstataartbiten",
-    "andrataartbiten",
-    "tredjetaartbiten",
-    "fjaerdetaartbiten",
-    "femtetaartbiten",
-    "sjaettetaartbiten"
-];
-
+var allCharacters = [];
 
 //help texts
 var generalHelpText = "Det finns tre olika spel, tårtspelet, bollspelet och klädspelet. Tårtspelet och bollspelet fungerar bäst om ljudet är på. Peka på knapparna för att välja ett av spelen. ";
@@ -202,7 +179,6 @@ var generalHelpSounds = ["generalhelp1","generalhelp2","generalhelp3","generalhe
 var ballHelpSounds = ["ballhelp1","ballhelp2","ballhelp3"];
 var clothesHelpSounds = ["clotheshelp1","clotheshelp2","clotheshelp3","clotheshelp4","clotheshelp5"];
 var cakeHelpSounds = ["cakehelp1","cakehelp2","cakehelp3","cakehelp4"];
-
 
 //Here follows global variable definitions
 
@@ -230,7 +206,7 @@ var offset;
 var update = false;
 var menuBall, menuCake, menuHelp;
 var backButton;
-var cakeContainer; //xxx to replace old cake
+var cakeContainer;
 var progressBar;
 var progressBarTextBox;
 var progressBarBackground;
@@ -239,11 +215,10 @@ var allBalls;
 var allPieces;
 var allSmashedPieces;
 var allCakes;
-var numberOfCakePieces;
-var cakeFilesNew; //xxx to replace cakeFiles
+var cakeFiles;
 var cakeBall;
 var table;
-var clothesGameContainer; //a container for all graphics in the clothesgame. xxx maybe rename to clothesContainer
+var clothesGameContainer; //a container for all graphics in the clothesgame.
 var line;
 var shirt;
 var trousers;
@@ -263,10 +238,6 @@ var numberBackground;
 var debugText;
 var loadedFiles;
 var filesToLoad;
-//var ballBackground; //xxx delete
-//var splashScreenBackground; //xxx delete
-//var tableBackground; //xxx delete
-//var clothesBackground; //xxx delete
 var nowMillis;
 var nextSmash;
 var nextRandomCheck;
@@ -284,11 +255,9 @@ var drawingCanvas;
 var oldPt;
 var oldMidPt;
 var crayonColor;
-var crayonStroke;
 var crayonColorIndex;
 var crayons = [];
-var crayonOverlay; //xxx was crayonsOverlay = [];
-var stroke;
+var crayonOverlay;
 var numberOfCrayons;
 var crayonTop;
 
@@ -469,7 +438,7 @@ function init() {
         {id: "yes", src: "assets/yes.mp3"}
     ];
 
-    var cakeFilesNew = [{
+    var cakeFiles = [{
         id: "piece1",
         src: "assets/piece1.png"
     }, {
@@ -597,7 +566,6 @@ function init() {
        src: "assets/cake_ball.png"
     }];
 
-    numberOfCakePieces = 6; //xxx move to setup
 
     var numberFiles = [];
     var i;
@@ -665,7 +633,7 @@ function init() {
         src: "assets/tablegranddadhand.png"
     }];
 
-    var files = simpleImageFiles.concat(cakeFilesNew, numberFiles, tableFiles, soundFiles);
+    var files = simpleImageFiles.concat(cakeFiles, numberFiles, tableFiles, soundFiles);
 
 
     queue = new createjs.LoadQueue(false);
@@ -675,7 +643,6 @@ function init() {
     queue.installPlugin(createjs.Sound);
     queue.addEventListener("complete", handleComplete);
     queue.addEventListener("error", handleFileError);
-    //queue.addEventListener("fileerror", handleFileError); //xxx what's the difference
     queue.addEventListener("fileload", handleFileLoad);
 
     queue.loadManifest(files);
@@ -793,7 +760,7 @@ function handleTick(event) {
     if (showfps) {
         fpsLabel.text = Math.round(createjs.Ticker.getMeasuredFPS()) + " fps";
     }
-    update = createjs.Tween.hasActiveTweens(); //xxxtickxxx
+    update = createjs.Tween.hasActiveTweens();
 }
 
 /** 
@@ -886,9 +853,6 @@ function handleFileLoad(event) {
     loadedFiles += 1;
     var progress = loadedFiles / filesToLoad;
     updateProgressBar(progress);
-    //xxx the loader div is only for debugging and should be deleted
-    //var div = document.getElementById("loader");
-    //div.innerHTML = xxxxx;
 }
 
 /** 
@@ -937,9 +901,7 @@ function addProgressBar() {
  */
 function addHelpBackground() {
     "use strict";
-    helpBackground = createBackground("#FFFFFF", 0.5); //should be less
-
-    //stage.addChild(background); xxx done when help is shown
+    helpBackground = createBackground("#FFFFFF", 0.4);
     helpBackground.addEventListener("mousedown", handleHelpBackgroundTouch);
 }
 
@@ -977,8 +939,7 @@ function addHelp() {
     helpContainer.addChild(helpFrame);
     helpContainer.addChild(helpTextBox);
 
-
-    menuHelp.focus = false; //xxx ska detta in som gamerunning? inte riktigt kanke. den ska nog bort
+    menuHelp.focus = false;
 }
 
 /** 
@@ -1111,7 +1072,6 @@ function handleMenuHelpTouch(evt) {
  */
 function showHelp(text, sounds) {
     "use strict";
-    //xxx ska man pausa tweens? pausa ljud? blir lite knepigt...
     helpTextBox.text = text;
     helpContainer.visible = true;
     stage.addChild(helpBackground);
@@ -1153,7 +1113,7 @@ function isRunning(tween) {
 function addBoelToreSplash() {
     "use strict";
     console.log("addboeltoresplash");
-    //boelToreSplash = new createjs.Bitmap(queue.getResult("boelToreSplash")); xxx
+    //load directly, not from queue. Should be shown as soon as possible while loading
     boelToreSplash = new createjs.Bitmap("assets/boeltoresplash.png");
     boelToreSplash.name = "Splash screen";
     stage.addChildAt(boelToreSplash, 0); //add at the bottom, behind progress bar
@@ -1169,8 +1129,6 @@ function addBackButton() {
     backButton.x = backButtonX;
     backButton.y = backButtonY;
     backButton.alpha = 0;
-    //button.regX = button.image.width/2; //should be deleted xxx
-    //button.regY = button.image.height/2;
     backButton.name = "Back button";
     backButton.addEventListener("mousedown", handleBackButtonTouch);
 }
@@ -1458,7 +1416,6 @@ function handleCharacterTouch(event) {
     "use strict";
     //ok, vi har ett event. detta är en bitmapimage. men hur veta vilken character den hör till?
     var c = event.target.character;
-    //moveCakePiece(c.pieceNumber, c.pieceDeltaX, c.pieceDeltaY, "character");
     
     if (c.hasCake === false) { //more safe than !c.hasCake if hasCake is undefined
         moveCakePiece(c);
@@ -1552,8 +1509,7 @@ function showTable() {
 function startCakeGame() {
     "use strict";
     nextRandomCheck = randomFutureMillis(minSecSelectFirstName, maxSecSelectFirstName);
-    //no need to clear previous timeout here (I think xxx)
-    randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
+    randomCheckId = setTimeout(checkCharacter, nextRandomCheck); //no need to clear previous timeout before
 }
 
 /** 
@@ -1703,8 +1659,6 @@ function addCake(numberOfCakePieces) {
     stage.addChild(menuCake);
     menuCake.x = menuCakeX;
     menuCake.y = menuCakeY;
-    //menuCake.regX = menuCake.image.width/2|0; xxx should probably be deleted
-    //menuCake.regY = menuCake.image.height/2|0;
     menuCake.name = "menu cake";
 
     //these will change
@@ -1713,7 +1667,6 @@ function addCake(numberOfCakePieces) {
 
     menuCake.addEventListener("mousedown", handleMenuCakeTouch);
 
-    //brand new cake!!!!!! xxxx
     var missingPiece=[{x:30,y:-6},{x:21,y:-26},{x:-23,y:-25},{x:-29,y:0},{x:-17,y:14},{x:27,y:14},{x:0,y:0}];
     cakeContainer = new createjs.Container();
     
@@ -1780,7 +1733,7 @@ function moveCakePiece(character) {
     var y = character.pieceY;
     var playingSound = getPlayingSound();
     var piece=allPieces[pieceNumber];
-    var nameClicked = getCharacterNameSound(pieceNumber); //xxx better to get directly from character    
+    var nameClicked = getCharacterNameSound(pieceNumber);
     var nameSelected = getCharacterNameSound(selectedCharacterIndex);
     var correctCharacterClicked = (selectedCharacterIndex == pieceNumber);
 
@@ -1966,8 +1919,6 @@ function Character(x ,y ,pieceNumber, pieceX, pieceY, happyPic, hasSadPic, hasHa
     "use strict";
     //constructor for character
     this.pieceNumber = pieceNumber;
-    this.pieceDeltaX = pieceX; //xxx to be deleted
-    this.pieceDeltaY = pieceY; //xxx to be deleted
     
     this.pieceX = pieceX;
     this.pieceY = pieceY;
@@ -2027,9 +1978,6 @@ function hideAllNumbers() {
 function showNumber(number) {
     "use strict";
     var n = numbers[number];
-    
-    //xxx lite säkrare att gömma alla nummer, men tar mer resurser
-    //hideAllNumbers();
     
     if (number > 1) {
         numbers[number-1].alpha = 0;
@@ -2158,7 +2106,6 @@ function handleMenuBallTouch(event) {
  */
 function showBallGame() {
     "use strict";
-    //ballBackground.alpha = 1.0;//xxx yyy createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
     changeBackground(ballBackgroundColor);
     showBalls();
     showBackButton();
@@ -2198,11 +2145,6 @@ function hideBallGame() {
     nextBallTime = -1;
     clearTimeout(nextBallId);
     var i;
-    /* xxx not needed anymore now that all tweens are removed 
-    for (i = 0; i < allBalls.length; i += 1) {
-        createjs.Tween.removeTweens(allBalls[i]);
-    }
-    */
     hideBalls();
     hideStar();
     hideBackButton();
@@ -2409,42 +2351,32 @@ function Clothes(linePicId, wearPicId, name, startRotation, startX, startY, wear
     this.linePic.clothes = this;
     this.wearPic = new createjs.Bitmap(queue.getResult(wearPicId));
     this.wearPic.clothes = this;
-    this.linePic.alpha = 1.0;
-    this.wearPic.alpha = 0.0;
+    
+    this.linePic.startX = startX;
 
-    this.linePic.startX = this.linePic.x = startX;
-    this.linePic.startY = this.linePic.y = startY;
+    this.linePic.startY = startY;
+
     this.linePic.regX = this.linePic.image.width / 2 | 0;
     this.linePic.regY = this.linePic.image.height / 2 | 0;
-    this.linePic.startRotation = this.linePic.rotation = startRotation;
-    this.linePic.tweening = false; //true if tweening back to position. Used because of bug in hasActiveTweens
+    
+    this.linePic.startRotation = startRotation;
+    
     this.linePic.wearX = wearX;
     this.linePic.wearY = wearY;
     this.linePic.kind = "linePic";
 
     this.wearPic.regX = this.wearPic.image.width / 2 | 0;
     this.wearPic.regY = this.wearPic.image.height / 2 | 0;
-    this.wearPic.startRotation = this.wearPic.rotation = startRotation;
 
+    this.wearPic.startRotation = startRotation;
 
     this.extraArea = new createjs.Shape();
     this.extraArea.graphics.beginFill(clothesBackgroundColor[0]).drawCircle(0, 0, 50, 50);
-    this.extraArea.x = startX;
-    this.extraArea.y = startY;
     this.extraArea.clothes = this;
     this.extraArea.startX = startX;
     this.extraArea.startY = startY;
-    //this.extraArea.startRotation = this.extraArea.rotation = startRotation;
 
-    //this.extraArea.regX = this.linePic.regX;
-    //this.extraArea.regY = this.linePic.regY;
     this.extraArea.kind = "extraArea";
-    //xxx hade varit trevligt med sock + extraarea som en container men då måste allt ligga i lager ovanför tore, inte extraarean under
-    //kan lägga till en ifsats på pressmove så att den gör lite olika om man drar i extraarean. 
-
-
-
-    this.onBody = false;
 
     if (movable) {
         this.extraArea.addEventListener("mousedown", handlePrePressmoveMousedown);
@@ -2456,6 +2388,8 @@ function Clothes(linePicId, wearPicId, name, startRotation, startX, startY, wear
         this.linePic.addEventListener("pressup", handlePostPressmovePressup);
 
     }
+    
+    restorePieceOfClothes(this);
 }
 
 /** 
@@ -2572,9 +2506,9 @@ function startClothesGame() {
  */
 function restorePieceOfClothes(c) {
     "use strict";
-    //xxx this is basically the same as in function Clothes. Should be unified
     createjs.Tween.removeTweens(c.linePic);
     createjs.Tween.removeTweens(c.wearPic);
+    c.linePic.tweening = false; //true if tweening back to position. Used because of bug in hasActiveTweens
     c.linePic.rotation = c.linePic.startRotation;
     c.wearPic.rotation = c.wearPic.startRotation;
     c.linePic.alpha = 1.0;
@@ -2829,11 +2763,10 @@ function handleStrokeMouseDown(evt) {
     var x = evt.stageX;
     var y = evt.stageY;
     detectPaint(x,y);
-    stroke = 10; //xxx to setup
     oldPt = new createjs.Point(x, y);
     oldMidPt = new createjs.Point(x, y);
 
-    drawingCanvas.graphics.clear().beginFill(crayonColor).drawCircle(oldPt.x, oldPt.y, stroke / 2, stroke / 2);
+    drawingCanvas.graphics.clear().beginFill(crayonColor).drawCircle(oldPt.x, oldPt.y, drawingStroke / 2, drawingStroke / 2);
     stage.update();
 
     stage.addEventListener("stagemousemove", handleStrokeMouseMove);
@@ -2852,7 +2785,7 @@ function handleStrokeMouseMove(evt) {
 
     var midPt = new createjs.Point(oldPt.x + x >> 1, oldPt.y + y >> 1);
 
-    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
+    drawingCanvas.graphics.clear().setStrokeStyle(drawingStroke, 'round', 'round').beginStroke(crayonColor).
     moveTo(midPt.x, midPt.y).
     curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
 
@@ -2873,14 +2806,10 @@ function handleStrokeMouseUp(evt) {
     var x = evt.stageX;
     var y = evt.stageY;
 
-    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
+    drawingCanvas.graphics.clear().setStrokeStyle(drawingStroke, 'round', 'round').beginStroke(crayonColor).
     moveTo(oldMidPt.x, oldMidPt.y).
     lineTo(x, y);
-    
-    
-    refreshCrayons(); //xxxxxxxxxxx
-    
-    
+    refreshCrayons(); //show crayons if overdrawn and covered by paint
     stage.update();
     stage.removeEventListener("stagemousemove", handleStrokeMouseMove);
     stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
@@ -2896,7 +2825,7 @@ function detectPaint(x,y) {
     var pt;
     var i;
     for (i = 0; i < paintDetect.length && !detected; i += 1) {
-        pt = paintDetect[i].globalToLocal(x, y); //xxx kan inte detta göras en gång för alla?
+        pt = paintDetect[i].globalToLocal(x, y); //maybe this can be optimised by doing transformation only once
         if (paintDetect[i].hitTest(pt.x, pt.y)) {
             detected = true;
             handleClothesPaint();
