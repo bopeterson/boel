@@ -1,17 +1,17 @@
 body, html {
-	margin: 0px; /* all four margins are 0px */
-	/*padding: 0px;*/ /* padding is not needed to be set */
-	text-align: center; /* alignt the canvqs */
-	height: 100%;
+    margin: 0px; /* all four margins are 0px */
+    /*padding: 0px;*/ /* padding is not needed to be set */
+    text-align: center; /* alignt the canvqs */
+    height: 100%;
 }
 
 #canvasHolder {
-	height:inherit; /* required by chrome but not safari for correct height adjustment */
-	background-color:#FFFFFF; /* changed by javascript */
+    height:inherit; /* required by chrome but not safari for correct height adjustment */
+    background-color:#FFFFFF; /* changed by javascript */
 }
 
 canvas {
-	max-height: 100%;
-	max-width: 100%;
-	background-color:#FFFFFF; /* changed by javascript */
+    max-height: 100%;
+    max-width: 100%;
+    background-color:#FFFFFF; /* changed by javascript */
 }
