@@ -12,7 +12,6 @@
 //originals for tore's clothes are found in toreclothes.psd
 //file->scripts->export layers to files, check Trim layers
 
-
 //line
 //original is found in line.psd
 //save for web->scale 50%
@@ -21,41 +20,45 @@
 //balls
 
 //table pics
+//file->scripts->export layers to files, check Trim layers
+//hand pics must be positioned to match body
+// note: almost invisible dot left of dog's back leg, to force same widht as dogsad
 
-
-
-
-/*make documentation with 
+/*make documentation with
 
 cd Sites/djallo/boel/js
 /Users/k3bope/node_modules/.bin/jsdoc boel.js
-
 
 see https://github.com/jsdoc3/jsdoc
 
 */
 
 //debug settings
-var debug = true;
+var debug = false;
 var debugAlwaysUpdate = false;
+var fpsLabel;
+var showfps = true;
+
+//platform specific settings
+var useRAF = false; //should probably be false for Android, true for all other platforms
 
 //variables that must be the same as attributes in index.html
-//they could be retrived as canvas.height etc, but must sometimes be used before they can be retrieved. 
-var canvasWidth = 1024;
-var canvasHeight = 768;
+//they could be retrived as canvas.height etc, but must sometimes be used before they can be retrieved.
+var canvasWidth = 1024; //optimised for iPad aspect ratio
+var canvasHeight = 768; //optimised for iPad aspect ratio
 
 //prototypes for subclasses
 Ball.prototype = Object.create(createjs.Bitmap.prototype);
 
 //setup parameters
-var splashScreenBackgroundColor = "#86DBD5";
-var ballBackgroundColor = "#FFFF00";
-var tableBackgroundColor = "#FF95CB";
-var clothesBackgroundColor = "#93D4F2";
+var splashScreenBackgroundColor = ["#86DBD5", "#B5E7EF"]; //canvas color and a more pale canvasholder color
+var ballBackgroundColor = ["#FFFF00", "#F8FF88"];
+var tableBackgroundColor = ["#FF95CB", "#FFC7E5"];
+var clothesBackgroundColor = ["#93D4F2", "#BFEAF8"];
 
 /**time between forced stage update in milliseconds*/
 var wakeInterval = 20 * 1000;
-/**return speed to clothes line in pixels per millisecond 
+/**return speed to clothes line in pixels per millisecond
  * @summary clothes */
 var returnSpeed = 0.5;
 /** time to new ball game in ms */
@@ -63,32 +66,39 @@ var timeToNewBallGame = 5000;
 /** ball bounce speed in pixels per milliseconds */
 var ballBounceSpeed = 0.4;
 /** min random time before voice "x vill ha tårta, var är x" for first character after start.*/
+
+var numberOfCakePieces = 6;
+
 var minSecSelectFirstName = 1.5;
-var maxSecSelectFirstName = 1.6;
-var minSecSelectName = 4.0; //min random time before voice: "x vill ha tårta, var är x" for characters after first character
-var maxSecSelectName = 5.0; //max random time...
+var maxSecSelectFirstName = 2.0;
+var minSecSelectName = 6.0; //min random time before voice: "nn vill ha tårta, var är nn" for characters after first character
+var maxSecSelectName = 8.0; //max random time before voice: "nn vill ha tårta, var är nn" for characters after first character
 var minSecNextBall = 3.0;
 var maxSecNextBall = 3.2;
-var progressBarHeight = 20;
+var showNumberDelay = 2000; //delay before number is shown after sound "nn gets cake piece number n" is started
+var tadaDelay = 6000; //delay before tada and star is shown when all cake pieces delivered
+var progressBarHeight = 40;
 var progressBarColor = "#060";
 var progressBarErrorColor = "#C00";
 var progressBarFadeTime = 400;
-var enableCakePieceTouch = false; //if true, cake pieces can be distributet by clicking cake
-var useRAF = true;
-var fps = 24; //fps not used if useRAF = true;
+var fps = 30; //fps not used if useRAF = true;
 var cakeBounceTime = 6.0; //time for a complete cake bounce cycle in seconds
-var minSecNextSmash = 1000*8.0; //important that this is larger than cakeBounceTime
-var maxSecNextSmash = 1000*14.0;
+var minSecNextSmash = 18.0; //important that this is larger than cakeBounceTime
+var maxSecNextSmash = 26.0; //
 var gameTransitionTime = 700;
-var numberX = canvasWidth - 60; //canvas.width - 200;xxx canvaswidth variable
-var numberY = 80; //0; xxx finetune
-var numberTransitionTime = 1000;
+var numberX = canvasWidth - 60;
+var numberY = 80;
+var numberAppearTime = 600;
+var numberWaitTime = 2000;
+var numberMoveTime = 400;
+var numberBackgroundWidth = 380;
+var numberBackgroundHeight = 460;
 var startBallGameRotationTime = 2000;
 var startBallGameNoOfTurns = 2;
 
 var menuClothesX = 412 - 3;
 var menuClothesY = 484;
-var menuCakeX = menuClothesX + 100 + 6; //was (menuCake.image.width/2|0) + 20; 
+var menuCakeX = menuClothesX + 100 + 6; //was (menuCake.image.width/2|0) + 20;
 var menuCakeY = menuClothesY; //was (menuCake.image.height/2|0) + 20;
 var menuBallX = menuClothesX; //was canvas.width - menuBall.image.width/2 - 20;
 var menuBallY = menuClothesY + 100 + 6; //was menuBall.image.height/2 + 20;
@@ -105,23 +115,18 @@ var wrongBallNumberOfTurns = 4;
 var wrongBallTurnTime = 2000; //must be at least as long as the sound "det var ju blåa bollen", otherwise there might be an error if wrong ball is touched
 var tableX = 100;
 var tableY = 50;
-var clothesGameContainerX = (canvasWidth - 768); //768 is width of line.png, which is not loaded yet. 
+var clothesGameContainerX = (canvasWidth - 768); //768 is width of line.png, which is not loaded yet.
 var clothesGameContainerY = 0;
 
 var pieceMoveTime = 1000;
-var ballPulsateTime = 1000;
-var characterPulsateTime = 1000;
-var cakeBallNoOfTurns = 6; //xxxx was 4
+var ballPulsateTime = 2000;
+var characterPulsateTime = 1500;
+var cakeBallNoOfTurns = 6;
 
 var clothesTweenTime = 600;
 var hitDistance = 50;
 
-
-//xxx possibly put setup parameters in a setup object:
-//var setup = {timeToNewBallGame:1500,ballBounceSpeed:0.4};
-
-//xxx the clothes parameters are not really setup parameters, but determined by size on position of clothes images. 
-//should be defined somewhere else....
+//the following clothes parameters are not really setup parameters, but determined by size and position of clothes images.
 
 var toreX = 47;
 var toreY = 530;
@@ -151,48 +156,31 @@ var sockRightStartRotation = 30;
 var sockRightWearX = 28;
 var sockRightWearY = 186;
 
+var crayonColors = ["red", "yellow", "green", "pink", "blue", "orange", "brown", "purple"];
+
+var crayonDelta = 50; //distance in pixels between center of crayons
+var crayonShowLength = 100; //length in pixels of selected crayon
+var drawingStroke = 10;
+
 var ballTween = {};
 
-var characters = {}; //to find character connected to piece through getCharacter function
-
-var cardinal = [
-    "noll",
-    "en",
-    "tvaa",
-    "tre",
-    "fyra",
-    "fem",
-    "sex"
-];
-
-var ordinal = [
-    "nolltetaartbiten",
-    "foerstataartbiten",
-    "andrataartbiten",
-    "tredjetaartbiten",
-    "fjaerdetaartbiten",
-    "femtetaartbiten",
-    "sjaettetaartbiten"
-];
-
+var allCharacters = [];
 
 //help texts
 var generalHelpText = "Det finns tre olika spel, tårtspelet, bollspelet och klädspelet. Tårtspelet och bollspelet fungerar bäst om ljudet är på. Peka på knapparna för att välja ett av spelen. ";
-var ballHelpText = "Du ska försöka få bort alla bollarna från skärmen. Lyssna på rösten och peka på bollen med rätt färg. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
-var clothesHelpText = "Dra kläderna från tvättlinan till Tore. Sätt de olika plaggen på rätt ställe på kroppen. När Tore har alla kläder på sig kan du rita på skärmen. Men rita inte på Tore, för då blir han ledsen. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel eller börja om det här spelet. ";
-var cakeHelpText = "Alla vill ha tårta. Rösten berättar vems tur det är att få tårta. Peka på den personen som rösten säger vill ha tårta. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
+var ballHelpText = "Du ska försöka få bort alla bollarna. Lyssna på rösten och peka på bollen med rätt färg. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
+var clothesHelpText = "Dra kläderna från tvättlinan till Tore. Sätt kläderna på rätt ställe på kroppen. När Tore har alla kläder på sig kan du rita på skärmen. Men rita inte på Tore, då blir han ledsen. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel eller börja om det här spelet. ";
+var cakeHelpText = "Alla vill ha tårta. Rösten berättar vems tur det är att få tårta. Peka på den personen som vill ha tårta. \n\nPeka på pilen för att komma till startsidan där du kan välja ett annat spel. ";
 
 //help sounds
-var generalHelpSound;
-var ballHelpSound;
-var clothesHelpSound;
-var cakeHelpSound;
-
+var generalHelpSounds = ["generalhelp1", "generalhelp2", "generalhelp3", "generalhelp4"];
+var ballHelpSounds = ["ballhelp1", "ballhelp2", "ballhelp3"];
+var clothesHelpSounds = ["clotheshelp1", "clotheshelp2", "clotheshelp3", "clotheshelp4", "clotheshelp5"];
+var cakeHelpSounds = ["cakehelp1", "cakehelp2", "cakehelp3", "cakehelp4"];
 
 //Here follows global variable definitions
 
-var n; //xxx a global n is evil and must be replaced
-
+var piecesLeft;
 
 var menuClothes;
 var boelToreSplash;
@@ -200,6 +188,8 @@ var boelToreSplash;
 var nextSmashId;
 var nextBallId;
 var randomCheckId;
+var showNumberId;
+var tadaId;
 
 var helpFrame;
 var helpTextBox;
@@ -208,21 +198,25 @@ var helpContainer;
 var canvas;
 var minBounceDistance;
 var stage;
-var background; //xxx only for debug, should be deleted. No, revitalized as a cover when help is shown.
+var helpBackground; //cover when help is shown.
 var queue;
 var offset;
 var update = false;
 var menuBall, menuCake, menuHelp;
 var backButton;
-var cake;
+var cakeContainer;
 var progressBar;
+var progressBarTextBox;
+var progressBarBackground;
 var blueBall, redBall, yellowBall, greenBall;
 var allBalls;
-var pieceParts, numberOfCakePieces;
+var allPieces;
+var allSmashedPieces;
+var allCakes;
 var cakeFiles;
 var cakeBall;
 var table;
-var clothesGameContainer; //a container for all graphics in the clothesgame. xxx maybe rename to clothesContainer
+var clothesGameContainer; //a container for all graphics in the clothesgame.
 var line;
 var shirt;
 var trousers;
@@ -238,21 +232,17 @@ var tableTore = {};
 var tableDog = {};
 var tableTable;
 var numbers = [];
-var cakeComplete = [];
+var numberBackground;
 var debugText;
 var loadedFiles;
 var filesToLoad;
-//var ballBackground; //xxx delete
-//var splashScreenBackground; //xxx delete
-//var tableBackground; //xxx delete
-//var clothesBackground; //xxx delete
 var nowMillis;
 var nextSmash;
 var nextRandomCheck;
 var pieceNumberToSmash;
 var nextBall;
 var nextBallTime;
-var selectedNameNumber;
+var selectedCharacterIndex;
 var selectedName;
 var soundQueue = [];
 var paintDetect = [];
@@ -263,37 +253,34 @@ var drawingCanvas;
 var oldPt;
 var oldMidPt;
 var crayonColor;
-var crayonStroke;
-var crayonColors;
 var crayonColorIndex;
 var crayons = [];
-var crayonsOverlay = [];
-var stroke;
+var crayonOverlay;
+var numberOfCrayons;
+var crayonTop;
 
-
-
-
-/* =========== MIXED ========== */
+/* ========== MIXED ========= */
 
 /**
  * Launched from index.html
  * @summary mixed
  *  */
+
 function init() {
     "use strict";
-    console.log("almost passes jslint");
+
+    var canvasHolder = document.getElementById("canvasHolder");
+    canvasHolder.innerHTML = "<canvas id='myCanvas' width='" + canvasWidth + "' height='" + canvasHeight + "'></canvas>";
+
     console.log("Boel game starting at " + new Date());
     console.log("TweenJS version " + createjs.TweenJS.version);
+    console.log("EaselJS version " + createjs.EaselJS.version);
+    setTimeout(printDebug, 5000, createjs.TweenJS.version + " " + createjs.EaselJS.version);
 
     // create stage and point it to the canvas:
     canvas = document.getElementById("myCanvas");
 
-
-
-
     changeBackground(splashScreenBackgroundColor);
-
-
 
     //some initial values of "constans"
     //pixels, must be larger than canvas diagonal to make sure ball bounces outside of canvas
@@ -306,203 +293,374 @@ function init() {
     nextRandomCheck = -1;
     pieceNumberToSmash = -1;
     nextBallTime = -1;
-    selectedNameNumber = -1;
+    selectedCharacterIndex = -1;
     selectedName = "";
 
     //check to see if we are running in a browser with touch support
     stage = new createjs.Stage(canvas);
 
-
     stage.name = "The Stage";
     // enable touch interactions if supported on the current device:
     createjs.Touch.enable(stage);
 
-
-
-    /*
-        var debugbutton1 = new createjs.Shape();
-        debugbutton1.graphics.beginFill("blue").drawCircle(30, 0, 30, 30);
-        stage.addChild(debugbutton1);
-        debugbutton1.addEventListener("click",function(event){hideHelp()});
-        */
+    //show splash screen image as early as possible
+    addBoelToreSplash();
 
     /*
-        var debugbutton2 = new createjs.Shape();
-        debugbutton2.graphics.beginFill("blue").drawCircle(90, 0, 30, 30);
-        stage.addChild(debugbutton2);
-        debugbutton2.addEventListener("click",function(event){console.log(sockRight.extraArea.x,sockRight.extraArea.y,sockRight.linePic.x,sockRight.linePic.y);stage.update();console.log("updating stage")});
-        */
-
-    /* to be deleted
-        splashScreenBackground = createBackground("#86DBD5",0 * 1.0);//xxxyyy
-        ballBackground = createBackground("#FFFF00",0.0);
-        tableBackground = createBackground("#FF95CB",0.0);
-        clothesBackground = createBackground("#93D4F2",0,0);
-        */
-
-    /* to be deleted 
-        stage.addChild(splashScreenBackground);
-        stage.addChild(ballBackground);
-        stage.addChild(tableBackground);
-        stage.addChild(clothesBackground);
-        */
+    var debugbutton1 = new createjs.Shape();
+    debugbutton1.graphics.beginFill("blue").drawCircle(1024-30, 30, 30, 30);
+    debugbutton1.name = "debugbutton";
+    stage.addChild(debugbutton1);
+    debugbutton1.addEventListener("click",function(event){var i;console.log("----");for (i=0;i<stage.children.length;i++){console.log(stage.children[i].name)}});
+    */
 
     addProgressBar();
     addDebugText();
 
     //loading assets
 
-    //xxx must include ogg as well. Please use the new alternateExtensions property.
-    //se http://www.createjs.com/tutorials/SoundJS%20and%20PreloadJS/. Gör olika testljud med ogg och mp3 för att testa
     var soundFiles = [{
-            id: "andrataartbiten",
-            src: "assets/andrataartbiten.mp3"
-        }, {
-            id: "boelslut",
-            src: "assets/boelslut.mp3"
-        }, {
-            id: "boelstart",
-            src: "assets/boelstart.mp3"
-        }, {
-            id: "boelvill_",
-            src: "assets/boelvill_.mp3"
-        }, {
-            id: "detaerju",
-            src: "assets/detaerju.mp3"
-        }, {
-            id: "detaerjuentaartbit",
-            src: "assets/detaerjuentaartbit.mp3"
-        }, {
-            id: "detvarvaelinte",
-            src: "assets/detvarvaelinte.mp3"
-        }, {
-            id: "faar",
-            src: "assets/faar.mp3"
-        }, {
-            id: "femtetaartbiten",
-            src: "assets/femtetaartbiten.mp3"
-        }, {
-            id: "fjaerdetaartbiten",
-            src: "assets/fjaerdetaartbiten.mp3"
-        }, {
-            id: "foerstataartbiten",
-            src: "assets/foerstataartbiten.mp3"
-        }, {
-            id: "hundenslut",
-            src: "assets/hundenslut.mp3"
-        }, {
-            id: "hundenstart",
-            src: "assets/hundenstart.mp3"
-        }, {
-            id: "hundenvill_",
-            src: "assets/hundenvill_.mp3"
-        }, {
-            id: "ja",
-            src: "assets/ja.mp3"
-        }, {
-            id: "mammaslut",
-            src: "assets/mammaslut.mp3"
-        }, {
-            id: "mammastart",
-            src: "assets/mammastart.mp3"
-        }, {
-            id: "mammavill_",
-            src: "assets/mammavill_.mp3"
-        }, {
-            id: "morfarslut",
-            src: "assets/morfarslut.mp3"
-        }, {
-            id: "morfarstart",
-            src: "assets/morfarstart.mp3"
-        }, {
-            id: "morfarvill_",
-            src: "assets/morfarvill_.mp3"
-        }, {
-            id: "pappaslut",
-            src: "assets/pappaslut.mp3"
-        }, {
-            id: "pappastart",
-            src: "assets/pappastart.mp3"
-        }, {
-            id: "pappavill_",
-            src: "assets/pappavill_.mp3"
-        }, {
-            id: "sjaettetaartbiten",
-            src: "assets/sjaettetaartbiten.mp3"
-        }, {
-            id: "somfaar",
-            src: "assets/somfaar.mp3"
-        }, {
-            id: "toreslut",
-            src: "assets/toreslut.mp3"
-        }, {
-            id: "torestart",
-            src: "assets/torestart.mp3"
-        }, {
-            id: "torevill_",
-            src: "assets/torevill_.mp3"
-        }, {
-            id: "tredjetaartbiten",
-            src: "assets/tredjetaartbiten.mp3"
-        }, {
-            id: "tyst1000",
-            src: "assets/tyst1000.mp3"
-        }, {
-            id: "cakebounce",
-            src: "assets/cakebounce.mp3"
-        }, {
-            id: "detjublue",
-            src: "assets/detjublue.mp3"
-        }, {
-            id: "detjuyellow",
-            src: "assets/detjuyellow.mp3"
-        }, {
-            id: "detjugreen",
-            src: "assets/detjugreen.mp3"
-        }, {
-            id: "detjured",
-            src: "assets/detjured.mp3"
-        },
-        //{id:"nejinteyellow",src:"assets/nejinteyellow.mp3"},
-        //{id:"nejintegreen",src:"assets/nejintegreen.mp3"},
-        //{id:"nejinteblue",src:"assets/nejinteblue.mp3"},
-        //{id:"nejintered",src:"assets/nejintered.mp3"},
-        {
-            id: "jagreen",
-            src: "assets/jagreen.mp3"
-        }, {
-            id: "jablue",
-            src: "assets/jablue.mp3"
-        }, {
-            id: "jared",
-            src: "assets/jared.mp3"
-        }, {
-            id: "jayellow",
-            src: "assets/jayellow.mp3"
-        }, {
-            id: "vargreen",
-            src: "assets/vargreen.mp3"
-        }, {
-            id: "varblue",
-            src: "assets/varblue.mp3"
-        }, {
-            id: "varyellow",
-            src: "assets/varyellow.mp3"
-        }, {
-            id: "varred",
-            src: "assets/varred.mp3"
-        }, {
-            id: "tada",
-            src: "assets/tada.mp3"
-        }
-    ];
+        id: "boelgets1",
+        src: "assets/boelgets1.mp3"
+    }, {
+        id: "boelgets2",
+        src: "assets/boelgets2.mp3"
+    }, {
+        id: "boelgets3",
+        src: "assets/boelgets3.mp3"
+    }, {
+        id: "boelgets4",
+        src: "assets/boelgets4.mp3"
+    }, {
+        id: "boelgets5",
+        src: "assets/boelgets5.mp3"
+    }, {
+        id: "boelgets6",
+        src: "assets/boelgets6.mp3"
+    }, {
+        id: "dadgets1",
+        src: "assets/dadgets1.mp3"
+    }, {
+        id: "dadgets2",
+        src: "assets/dadgets2.mp3"
+    }, {
+        id: "dadgets3",
+        src: "assets/dadgets3.mp3"
+    }, {
+        id: "dadgets4",
+        src: "assets/dadgets4.mp3"
+    }, {
+        id: "dadgets5",
+        src: "assets/dadgets5.mp3"
+    }, {
+        id: "dadgets6",
+        src: "assets/dadgets6.mp3"
+    }, {
+        id: "doggets1",
+        src: "assets/doggets1.mp3"
+    }, {
+        id: "doggets2",
+        src: "assets/doggets2.mp3"
+    }, {
+        id: "doggets3",
+        src: "assets/doggets3.mp3"
+    }, {
+        id: "doggets4",
+        src: "assets/doggets4.mp3"
+    }, {
+        id: "doggets5",
+        src: "assets/doggets5.mp3"
+    }, {
+        id: "doggets6",
+        src: "assets/doggets6.mp3"
+    }, {
+        id: "granddadgets1",
+        src: "assets/granddadgets1.mp3"
+    }, {
+        id: "granddadgets2",
+        src: "assets/granddadgets2.mp3"
+    }, {
+        id: "granddadgets3",
+        src: "assets/granddadgets3.mp3"
+    }, {
+        id: "granddadgets4",
+        src: "assets/granddadgets4.mp3"
+    }, {
+        id: "granddadgets5",
+        src: "assets/granddadgets5.mp3"
+    }, {
+        id: "granddadgets6",
+        src: "assets/granddadgets6.mp3"
+    }, {
+        id: "mumgets1",
+        src: "assets/mumgets1.mp3"
+    }, {
+        id: "mumgets2",
+        src: "assets/mumgets2.mp3"
+    }, {
+        id: "mumgets3",
+        src: "assets/mumgets3.mp3"
+    }, {
+        id: "mumgets4",
+        src: "assets/mumgets4.mp3"
+    }, {
+        id: "mumgets5",
+        src: "assets/mumgets5.mp3"
+    }, {
+        id: "mumgets6",
+        src: "assets/mumgets6.mp3"
+    }, {
+        id: "toregets1",
+        src: "assets/toregets1.mp3"
+    }, {
+        id: "toregets2",
+        src: "assets/toregets2.mp3"
+    }, {
+        id: "toregets3",
+        src: "assets/toregets3.mp3"
+    }, {
+        id: "toregets4",
+        src: "assets/toregets4.mp3"
+    }, {
+        id: "toregets5",
+        src: "assets/toregets5.mp3"
+    }, {
+        id: "toregets6",
+        src: "assets/toregets6.mp3"
+    }, {
+        id: "tada",
+        src: "assets/tada.mp3"
+    }, {
+        id: "yesblue",
+        src: "assets/yesblue.mp3"
+    }, {
+        id: "yesgreen",
+        src: "assets/yesgreen.mp3"
+    }, {
+        id: "yesred",
+        src: "assets/yesred.mp3"
+    }, {
+        id: "yesyellow",
+        src: "assets/yesyellow.mp3"
+    }, {
+        id: "thatwasblue",
+        src: "assets/thatwasblue.mp3"
+    }, {
+        id: "thatwasgreen",
+        src: "assets/thatwasgreen.mp3"
+    }, {
+        id: "thatwasred",
+        src: "assets/thatwasred.mp3"
+    }, {
+        id: "thatwasyellow",
+        src: "assets/thatwasyellow.mp3"
+    }, {
+        id: "cakebounce",
+        src: "assets/cakebounce.mp3"
+    }, {
+        id: "silence1000",
+        src: "assets/silence1000.mp3"
+    }, {
+        id: "silence300",
+        src: "assets/silence300.mp3"
+    }, {
+        id: "whereblue",
+        src: "assets/whereblue.mp3"
+    }, {
+        id: "wheregreen",
+        src: "assets/wheregreen.mp3"
+    }, {
+        id: "wherered",
+        src: "assets/wherered.mp3"
+    }, {
+        id: "whereyellow",
+        src: "assets/whereyellow.mp3"
+    }, {
+        id: "boeltap",
+        src: "assets/boeltap.mp3"
+    }, {
+        id: "boelwhereis",
+        src: "assets/boelwhereis.mp3"
+    }, {
+        id: "boelwouldlike",
+        src: "assets/boelwouldlike.mp3"
+    }, {
+        id: "dadtap",
+        src: "assets/dadtap.mp3"
+    }, {
+        id: "dadwhereis",
+        src: "assets/dadwhereis.mp3"
+    }, {
+        id: "dadwouldlike",
+        src: "assets/dadwouldlike.mp3"
+    }, {
+        id: "dogtap",
+        src: "assets/dogtap.mp3"
+    }, {
+        id: "dogwhereis",
+        src: "assets/dogwhereis.mp3"
+    }, {
+        id: "dogwouldlike",
+        src: "assets/dogwouldlike.mp3"
+    }, {
+        id: "granddadtap",
+        src: "assets/granddadtap.mp3"
+    }, {
+        id: "granddadwhereis",
+        src: "assets/granddadwhereis.mp3"
+    }, {
+        id: "granddadwouldlike",
+        src: "assets/granddadwouldlike.mp3"
+    }, {
+        id: "mumtap",
+        src: "assets/mumtap.mp3"
+    }, {
+        id: "mumwhereis",
+        src: "assets/mumwhereis.mp3"
+    }, {
+        id: "mumwouldlike",
+        src: "assets/mumwouldlike.mp3"
+    }, {
+        id: "toretap",
+        src: "assets/toretap.mp3"
+    }, {
+        id: "torewhereis",
+        src: "assets/torewhereis.mp3"
+    }, {
+        id: "torewouldlike",
+        src: "assets/torewouldlike.mp3"
+    }, {
+        id: "boelbut",
+        src: "assets/boelbut.mp3"
+    }, {
+        id: "torebut",
+        src: "assets/torebut.mp3"
+    }, {
+        id: "granddadbut",
+        src: "assets/granddadbut.mp3"
+    }, {
+        id: "dogbut",
+        src: "assets/dogbut.mp3"
+    }, {
+        id: "mumbut",
+        src: "assets/mumbut.mp3"
+    }, {
+        id: "dadbut",
+        src: "assets/dadbut.mp3"
+    }, {
+        id: "ballhelp1",
+        src: "assets/ballhelp1.mp3"
+    }, {
+        id: "ballhelp2",
+        src: "assets/ballhelp2.mp3"
+    }, {
+        id: "ballhelp3",
+        src: "assets/ballhelp3.mp3"
+    }, {
+        id: "generalhelp1",
+        src: "assets/generalhelp1.mp3"
+    }, {
+        id: "generalhelp2",
+        src: "assets/generalhelp2.mp3"
+    }, {
+        id: "generalhelp3",
+        src: "assets/generalhelp3.mp3"
+    }, {
+        id: "generalhelp4",
+        src: "assets/generalhelp4.mp3"
+    }, {
+        id: "cakehelp1",
+        src: "assets/cakehelp1.mp3"
+    }, {
+        id: "cakehelp2",
+        src: "assets/cakehelp2.mp3"
+    }, {
+        id: "cakehelp3",
+        src: "assets/cakehelp3.mp3"
+    }, {
+        id: "cakehelp4",
+        src: "assets/cakehelp4.mp3"
+    }, {
+        id: "clotheshelp1",
+        src: "assets/clotheshelp1.mp3"
+    }, {
+        id: "clotheshelp2",
+        src: "assets/clotheshelp2.mp3"
+    }, {
+        id: "clotheshelp3",
+        src: "assets/clotheshelp3.mp3"
+    }, {
+        id: "clotheshelp4",
+        src: "assets/clotheshelp4.mp3"
+    }, {
+        id: "clotheshelp5",
+        src: "assets/clotheshelp5.mp3"
+    }, {
+        id: "yes",
+        src: "assets/yes.mp3"
+    }];
 
+    var cakeFiles = [{
+        id: "piece1",
+        src: "assets/piece1.png"
+    }, {
+        id: "piece2",
+        src: "assets/piece2.png"
+    }, {
+        id: "piece3",
+        src: "assets/piece3.png"
+    }, {
+        id: "piece4",
+        src: "assets/piece4.png"
+    }, {
+        id: "piece5",
+        src: "assets/piece5.png"
+    }, {
+        id: "piece6",
+        src: "assets/piece6.png"
+    }, {
+        id: "smashedPiece1",
+        src: "assets/smashedpiece1.png"
+    }, {
+        id: "smashedPiece2",
+        src: "assets/smashedpiece2.png"
+    }, {
+        id: "smashedPiece3",
+        src: "assets/smashedpiece3.png"
+    }, {
+        id: "smashedPiece4",
+        src: "assets/smashedpiece4.png"
+    }, {
+        id: "smashedPiece5",
+        src: "assets/smashedpiece5.png"
+    }, {
+        id: "smashedPiece6",
+        src: "assets/smashedpiece6.png"
+    }, {
+        id: "cake0",
+        src: "assets/cake0.png"
+    }, {
+        id: "cake1",
+        src: "assets/cake1.png"
+    }, {
+        id: "cake2",
+        src: "assets/cake2.png"
+    }, {
+        id: "cake3",
+        src: "assets/cake3.png"
+    }, {
+        id: "cake4",
+        src: "assets/cake4.png"
+    }, {
+        id: "cake5",
+        src: "assets/cake5.png"
+    }, {
+        id: "cake6",
+        src: "assets/cake6.png"
+    }];
 
     //simple as opposed to the more complex files making a cake and a table
     var simpleImageFiles = [{
-        id: "boelToreSplash",
-        src: "assets/boeltoresplash.png"
-    }, {
         id: "menuBall",
         src: "assets/menuball.png"
     }, {
@@ -517,9 +675,6 @@ function init() {
     }, {
         id: "backButton",
         src: "assets/backbutton.png"
-    }, {
-        id: "cakePlate",
-        src: "assets/cake_plate.png"
     }, {
         id: "line",
         src: "assets/line.png"
@@ -575,16 +730,12 @@ function init() {
 
     var numberFiles = [];
     var i;
-    for (i = 0; i < 10; i += 1) {
+    for (i = 0; i <= numberOfCakePieces; i += 1) {
         numberFiles.push({
             id: i + "",
             src: "assets/" + i + ".png"
         });
     }
-
-    pieceParts = ["smashed_piece", "cake_base", "cake_outsidelines"]; //these are filenames for differnent parts of a cake. Filenames should never be in camelCase. 
-    numberOfCakePieces = 6;
-    cakeFiles = buildCakeFiles(pieceParts, numberOfCakePieces);
 
     //no camelCase in filenames (might lead to cross platform issues...)
     var tableFiles = [{
@@ -645,7 +796,6 @@ function init() {
 
     var files = simpleImageFiles.concat(cakeFiles, numberFiles, tableFiles, soundFiles);
 
-
     queue = new createjs.LoadQueue(false);
     createjs.Sound.alternateExtensions = ["ogg"];
     //in theory, you could list .mp3 files and have "ogg" as alternate extension, but that
@@ -657,67 +807,76 @@ function init() {
 
     queue.loadManifest(files);
     filesToLoad = files.length;
+    console.log(createjs.Sound.activePlugin.toString());
 } //init
 
-/** 
+/**
  * @summary mixed
  */
+
 function watchSound(s0) {
     "use strict";
-    var i;
-    for (i = 0; i < ordinal.length; i += 1) {
-        if (s0 == ordinal[i]) {
-            showNumber(i);
+
+    if (s0.slice(-7) === "whereis") {
+        var character = getCharacter(selectedCharacterIndex);
+        if (character.hasOwnProperty("happyPic")) {
+            pulsate(character.happyPic, characterPulsateTime);
+        }
+        if (character.hasOwnProperty("handPic")) {
+            pulsate(character.handPic, characterPulsateTime);
         }
     }
-    if (s0 == "varblue" || s0 == "varred" || s0 == "varyellow" || s0 == "vargreen") {
-        pulsate(nextBall, ballPulsateTime);
 
-    }
-    if (s0 == "tada") {
+    if (s0 === "whereblue" || s0 === "wherered" || s0 === "whereyellow" || s0 === "wheregreen") {
+        if (nextBall !== null) {
+            pulsate(nextBall, ballPulsateTime);
+        }
+    } else if (s0 === "tada") {
         showStar();
+    } else if (s0.slice(-5, -1) === "gets") {
+        var currentNumber = parseInt(s0.slice(-1), 10);
+        showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
     }
 }
 
-/** 
+/**
  * @summary mixed
  */
+
 function noGameRunning() {
     "use strict";
     return (!menuBall.focus && !menuCake.focus && !menuClothes.focus);
 }
 
-/** 
+/**
  * @summary mixed
  */
+
 function handleComplete(event) {
     "use strict";
     //event triggered even if file not loaded
     if (loadedFiles < filesToLoad) {
         progressBar.graphics.beginFill(progressBarErrorColor).drawRect(0, 0, canvasWidth, progressBar.height);
-        //xxx the loader div is only for debugging and should be deleted
-        //var div = document.getElementById("loader");
-        //div.innerHTML = "Some resources were not loaded: " + (filesToLoad - loadedFiles);
     } else {
+        stage.removeChild(progressBarBackground);
+        stage.removeChild(progressBarTextBox);
         createjs.Tween.get(progressBar).to({
             alpha: 0.0
-        }, progressBarFadeTime);
+        }, progressBarFadeTime).call(function(evt) {
+            stage.removeChild(progressBar);
+        });
     }
 
-    addBoelToreSplash();
-    stage.removeChild(progressBar); //to make it visible on top of BoelToreSplash
-    stage.addChild(progressBar);
-    stage.removeChild(debugText); //to make it visible on top of BoelToreSplash
-    stage.addChild(debugText);
+    //addBoelToreSplash(); moved to init
+
     addHelp();
     addTable();
-    addCake(pieceParts, numberOfCakePieces, cakeFiles);
     addBall();
     addClothes();
     addBackButton();
     addNumbers();
     addStar();
-    addBackground();
+    addHelpBackground();
 
     //setup almost complete, start the ticker
 
@@ -725,56 +884,25 @@ function handleComplete(event) {
         createjs.Ticker.timingMode = createjs.Ticker.RAF;
     } else {
         createjs.Ticker.timingMode = createjs.Ticker.TIMEOUT;
-        createjs.Ticker.framerate=fps;
+        createjs.Ticker.framerate = fps;
     }
     stage.update();
 
     createjs.Ticker.addEventListener("tick", handleTick);
 
-}
-
-/** 
- * @summary mixed
- */
-function changeSplashScreen(alpha) {
-    "use strict";
-    createjs.Tween.get(menuCake).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(menuBall).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(menuClothes).to({
-        alpha: alpha
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(backButton).to({
-        alpha: (1 - alpha)
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(boelToreSplash).to({
-        alpha: alpha
-    }, gameTransitionTime / 2, createjs.Ease.linear);
-    //splashScreenBackground.alpha = alpha;//xxxyyy createjs.Tween.get(splashScreenBackground).to({alpha:alpha},gameTransitionTime, createjs.Ease.linear);
-
-
-
-    if (alpha > 0.9) {
-        changeBackground(splashScreenBackgroundColor);
-        createjs.Tween.get(menuHelp).to({
-            x: menuHelpX,
-            y: menuHelpY
-        }, gameTransitionTime / 2, createjs.Ease.linear);
-    } else {
-        createjs.Tween.get(menuHelp).to({
-            x: menuHelpRunningX,
-            y: menuHelpRunningY
-        }, gameTransitionTime / 2, createjs.Ease.linear);
+    if (showfps) {
+        fpsLabel = new createjs.Text("-- fps", "bold 24px Arial", "#FFF");
+        fpsLabel.name = "fps label";
+        stage.addChild(fpsLabel);
+        fpsLabel.x = 10;
+        fpsLabel.y = 160;
     }
-
 }
 
-/** 
+/**
  * @summary mixed
  */
+
 function handleTick(event) {
     "use strict";
     nowMillis = createjs.Ticker.getTime(false);
@@ -794,41 +922,48 @@ function handleTick(event) {
         }
         stage.update(event); //pass event to make sure for example sprite animation works
     }
-    update = createjs.Tween.hasActiveTweens(); //xxxtickxxx
+    if (showfps) {
+        fpsLabel.text = Math.round(createjs.Ticker.getMeasuredFPS()) + " fps";
+    }
+    update = createjs.Tween.hasActiveTweens();
 }
 
-/** 
+/**
  * @summary mixed
  */
+
 function handleBackButtonTouch(event) {
     "use strict";
-    //update = true; //xxxtick nu funkar det att gå tillbaka men utan tween, istället pang på!
     if (menuBall.focus) {
-        restoreMenuBall();
+        hideBallGame();
     } else if (menuCake.focus) {
-        restoreMenuCake();
+        hideCakeGame();
     } else if (menuClothes.focus) {
-        restoreMenuClothes();
+        hideClothesGame();
     }
 }
 
-/* =========== GENERAL ========== */
+/* ========== GENERAL ========= */
 
 /** Changes background color of canvas
  * @summary general
  * @param {string} color - Background color in valid css format, for example "#FF0000" or "red"
  * */
+
 function changeBackground(color) {
     "use strict";
-    canvas.style.backgroundColor = color;
+    canvas.style.backgroundColor = color[0];
+    var frame = document.getElementById("canvasHolder");
+    frame.style.backgroundColor = color[1];
 }
 
-/** Creates a Background of certain color and alpha. Used to create transparent overlay when help is shown. 
+/** Creates a Background of certain color and alpha. Used to create transparent overlay when help is shown.
  * @summary general
  * @param {string} color - Background color in valid css format, for example "#FF0000" or "red"
  * @param {float} alpha
  * @returns {Shape} Shape object filling the canvas
  */
+
 function createBackground(color, alpha) {
     "use strict";
     var b = new createjs.Shape();
@@ -842,105 +977,122 @@ function createBackground(color, alpha) {
 /** Detects mousedown events on transparent overlay when help is shown. Used to hide the help dialog.
  * @summary general
  * @param event */
-function handleBackgroundTouch(event) {
+
+function handleHelpBackgroundTouch(event) {
     "use strict";
     if (debug) {
         console.log("background touch", event.stageX, event.stageY);
-        background.touchX = event.stageX;
-        background.touchY = event.stageY;
+        helpBackground.touchX = event.stageX;
+        helpBackground.touchY = event.stageY;
         stage.update();
     }
     hideHelp();
 }
 
-/** 
+/**
  * @summary general
  */
+
 function printDebug(text) {
     "use strict";
-    //console.log("printDebug ",text);
     if (debug) {
         debugText.text += text;
-        debugText.text = debugText.text.substring(debugText.text.length - 68, debugText.text.length);
+        debugText.text = debugText.text.substring(debugText.text.length - 68, debugText.text.length); //could use slice instead of substring
         //stage.update();
     }
 }
 
-/** 
+/**
  * @summary general
  */
+
 function handleFileError(event) {
     "use strict";
+    console.log("handlefileerror", event);
     //var div = document.getElementById("loader");
     //div.innerHTML = "File load error";
     //div.style.backgroundColor = "#FF0000";
 }
 
-/** 
+/**
  * @summary general
  */
+
 function handleFileLoad(event) {
     "use strict";
-    console.log(event.item.src);
     printDebug(event.item.src + ',');
 
     loadedFiles += 1;
     var progress = loadedFiles / filesToLoad;
     updateProgressBar(progress);
-    //xxx the loader div is only for debugging and should be deleted
-    //var div = document.getElementById("loader");
-    //div.innerHTML = xxxxx;
 }
 
-/** 
+/**
  * @summary general
  */
+
 function updateProgressBar(progress) {
     "use strict";
     progressBar.scaleX = progress;
     stage.update();
 }
 
-/** 
+/**
  * @summary general
  */
+
 function addProgressBar() {
     "use strict";
+    progressBarBackground = new createjs.Shape();
+
+    progressBarBackground.graphics.beginFill("white").drawRect(0, 0, canvasWidth / 3 + 6, progressBarHeight + 6);
+    progressBarBackground.x = canvasWidth / 3 - 3;
+    progressBarBackground.y = 350 - 3;
+    progressBarBackground.alpha = 0.2;
+
     progressBar = new createjs.Shape();
-    progressBar.graphics.beginFill(progressBarColor).drawRect(0, 0, canvasWidth, progressBarHeight);
-    progressBar.x = 0;
-    progressBar.y = 0;
+    progressBar.graphics.beginFill(progressBarColor).drawRect(0, 0, canvasWidth / 3, progressBarHeight);
+    progressBar.x = canvasWidth / 3;
+    progressBar.y = 350;
     progressBar.scaleX = 0.05;
     progressBar.height = progressBarHeight;
+    progressBar.name = "progress bar";
+
+    progressBarTextBox = new createjs.Text("Laddar...", "36px sans-serif", "#000");
+    progressBarTextBox.lineHeight = 42;
+    //progressBarTextBox.lineWidth = canvasWidth - 4 * 100;
+    progressBarTextBox.textAlign = "center";
+    progressBarTextBox.x = canvasWidth / 2;
+    progressBarTextBox.y = 350;
+
+    stage.addChild(progressBarBackground);
     stage.addChild(progressBar);
+    stage.addChild(progressBarTextBox);
 }
 
-/** 
+/**
  * @summary general
  */
-function addBackground() {
+
+function addHelpBackground() {
     "use strict";
-    //the background is an almost invisible object, there to be able to click the background
-    //currently only used for testing and debugging
-    //UPDATE: not so invisible anymore, there for preventing clicks behind it when help is shown. 
-    background = createBackground("#FFFFFF", 0.5); //should be less
-
-    //stage.addChild(background); xxx done when help is shown
-    background.addEventListener("mousedown", handleBackgroundTouch);
+    helpBackground = createBackground("#FFFFFF", 0.4);
+    helpBackground.addEventListener("mousedown", handleHelpBackgroundTouch);
 }
 
-/** 
+/**
  * @summary general
  */
+
 function addHelp() {
     "use strict";
     menuHelp = new createjs.Bitmap(queue.getResult("menuHelp"));
+    menuHelp.name = "menu help";
     stage.addChild(menuHelp);
     menuHelp.x = menuHelpX;
     menuHelp.y = menuHelpY;
     menuHelp.alpha = 1.0;
     menuHelp.addEventListener("mousedown", handleMenuHelpTouch);
-
 
     helpContainer = new createjs.Container();
     helpContainer.x = 100;
@@ -954,8 +1106,6 @@ function addHelp() {
     beginStroke("orange").setStrokeStyle(20, 'round', 'round').
     drawRect(0, 0, canvasWidth - 100 * 2, canvasHeight - 100 * 2);
 
-
-
     helpTextBox = new createjs.Text("", "36px sans-serif", "#000");
     helpTextBox.lineHeight = 42;
     helpTextBox.lineWidth = canvasWidth - 4 * 100;
@@ -964,31 +1114,32 @@ function addHelp() {
     helpContainer.addChild(helpFrame);
     helpContainer.addChild(helpTextBox);
 
-
-    menuHelp.focus = false; //xxx ska detta in som gamerunning? inte riktigt kanke. den ska nog bort
+    menuHelp.focus = false;
 }
 
-/** 
+/**
  * @summary general
  */
+
 function addStar() {
     "use strict";
     star = new createjs.Bitmap(queue.getResult("star"));
-    stage.addChild(star);
     star.regX = star.image.width / 2 | 0;
     star.regY = star.image.height / 2 | 0;
     star.x = canvasWidth / 2 | 0;
     star.y = canvasHeight / 2 | 0;
+    star.name = "star";
     hideStar();
 }
 
-/** 
+/**
  * @summary general
  */
+
 function addDebugText() {
     "use strict";
     debugText = new createjs.Text("", "24px Courier", "#000");
-
+    debugText.name = "debug text";
     debugText.x = 20;
     debugText.y = canvasHeight - 30;
     if (debug) {
@@ -999,90 +1150,173 @@ function addDebugText() {
     stage.addChild(debugText);
 }
 
-/** 
+/**
  * @summary general
  */
+
 function showSplashScreen() {
     "use strict";
-    changeSplashScreen(1.0);
+    console.log("showspalshscreen");
+    stage.addChildAt(boelToreSplash, 0); //add at the bottom, behind progress bar
+    stage.addChild(menuCake);
+    stage.addChild(menuBall);
+    stage.addChild(menuClothes);
+    var alpha = 1.0;
+    createjs.Tween.get(menuCake).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(menuBall).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(menuClothes).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear);
+    createjs.Tween.get(boelToreSplash).to({
+        alpha: alpha
+    }, gameTransitionTime / 2, createjs.Ease.linear);
+
+    changeBackground(splashScreenBackgroundColor);
+    createjs.Tween.get(menuHelp).to({
+        x: menuHelpX,
+        y: menuHelpY
+    }, gameTransitionTime / 2, createjs.Ease.linear);
 }
 
-/** 
+/**
  * @summary general
  */
+
 function hideSplashScreen() {
     "use strict";
-    changeSplashScreen(0.0);
+    var alpha = 0.0;
+    createjs.Tween.get(menuCake).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear).call(function(evt) {
+        stage.removeChild(menuCake);
+    });
+    createjs.Tween.get(menuBall).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear).call(function(evt) {
+        stage.removeChild(menuBall);
+    });
+    createjs.Tween.get(menuClothes).to({
+        alpha: alpha
+    }, gameTransitionTime, createjs.Ease.linear).call(function(evt) {
+        stage.removeChild(menuClothes);
+    });
+    createjs.Tween.get(boelToreSplash).to({
+        alpha: alpha
+    }, gameTransitionTime / 2, createjs.Ease.linear).call(function(evt) {
+        stage.removeChild(boelToreSplash);
+    });
+    createjs.Tween.get(menuHelp).to({
+        x: menuHelpRunningX,
+        y: menuHelpRunningY
+    }, gameTransitionTime / 2, createjs.Ease.linear);
 }
 
-/** 
+/**
  * @summary general
  */
+
+function showBackButton() {
+    "use strict";
+    stage.addChild(backButton);
+    createjs.Tween.get(backButton).to({
+        alpha: 1
+    }, gameTransitionTime, createjs.Ease.linear);
+}
+
+/**
+ * @summary general
+ */
+
+function hideBackButton() {
+    "use strict";
+    createjs.Tween.get(backButton).to({
+        alpha: 0
+    }, gameTransitionTime, createjs.Ease.linear).call(function(evt) {
+        stage.removeChild(backButton);
+    });
+}
+
+/**
+ * @summary general
+ */
+
 function handleMenuHelpTouch(evt) {
     "use strict";
     if (noGameRunning()) {
-        showHelp(generalHelpText, generalHelpSound);
+        showHelp(generalHelpText, generalHelpSounds);
     } else if (menuCake.focus) {
-        showHelp(cakeHelpText, cakeHelpSound);
+        showHelp(cakeHelpText, cakeHelpSounds);
     } else if (menuBall.focus) {
-        showHelp(ballHelpText, ballHelpSound);
+        showHelp(ballHelpText, ballHelpSounds);
     } else if (menuClothes.focus) {
-        showHelp(clothesHelpText, clothesHelpSound);
+        showHelp(clothesHelpText, clothesHelpSounds);
     }
 }
 
-/** 
+/**
  * @summary general
  */
-function showHelp(text, sound) {
+
+function showHelp(text, sounds) {
     "use strict";
-    console.log("showHelp");
-    //xxx ska man pausa tweens? pausa ljud? blir lite knepigt...
     helpTextBox.text = text;
     helpContainer.visible = true;
-    stage.addChild(background);
+    stage.addChild(helpBackground);
     stage.addChild(helpContainer);
     stage.update();
+    extendAndPlayQueue(sounds);
 }
 
-/** 
+/**
  * @summary general
  */
+
 function hideHelp() {
     "use strict";
     helpTextBox.text = "";
     stage.removeChild(helpContainer);
-    stage.removeChild(background);
+    stage.removeChild(helpBackground);
     helpContainer.visible = false;
+    removeAllButFirstSound(); //do not remove currently playing sound
     stage.update();
 }
 
-/** 
+/**
  * @summary general
  */
+
 function isRunning(tween) {
     "use strict";
     //if no argument is given it should check all running tweens, but if argument is given only that tween should be checked
-    //however, due to a bug in 0.5.1, all tweens are checked, with or without tween argument. 
+    //however, due to a bug in 0.5.1, all tweens are checked, with or without tween argument.
 
-    //possibly somtehing like createjs.Tween.hasActiveTweens(tween.target???) might work, but 
+    //possibly somtehing like createjs.Tween.hasActiveTweens(tween.target???) might work, but
     //in NEXT version
-    //NOTE: if this is fixed in a future version make sure this function works both with and without argument.  
+    //NOTE: if this is fixed in a future version make sure this function works both with and without argument.
     return createjs.Tween.hasActiveTweens();
 }
 
-/** 
+/**
  * @summary general
  */
+
 function addBoelToreSplash() {
     "use strict";
-    boelToreSplash = new createjs.Bitmap(queue.getResult("boelToreSplash"));
-    stage.addChild(boelToreSplash);
+    console.log("addboeltoresplash");
+    //load directly, not from queue. Should be shown as soon as possible while loading
+    boelToreSplash = new createjs.Bitmap("assets/boeltoresplash.png");
+    boelToreSplash.name = "Splash screen";
+    stage.addChildAt(boelToreSplash, 0); //add at the bottom, behind progress bar
 }
 
-/** 
+/**
  * @summary general
  */
+
 function addBackButton() {
     "use strict";
     backButton = new createjs.Bitmap(queue.getResult("backButton"));
@@ -1090,27 +1324,28 @@ function addBackButton() {
     backButton.x = backButtonX;
     backButton.y = backButtonY;
     backButton.alpha = 0;
-    //button.regX = button.image.width/2; //should be deleted xxx
-    //button.regY = button.image.height/2;
     backButton.name = "Back button";
     backButton.addEventListener("mousedown", handleBackButtonTouch);
 }
 
-/** 
+/**
+sounds can be a string or array of strings
  * @summary general
  */
+
 function extendAndPlayQueue(sounds) {
     "use strict";
     var soundQueueLengthBefore = soundQueue.length;
     soundQueue = soundQueue.concat(sounds);
-    if (soundQueueLengthBefore == 0) { //queue was empty, no sound was playing
+    if (soundQueueLengthBefore === 0) { //queue was empty, no sound was playing
         playQueue();
     }
 }
 
-/** 
+/**
  * @summary general
  */
+
 function playQueue() {
     "use strict";
     console.log("playQueue: ", soundQueue);
@@ -1121,7 +1356,7 @@ function playQueue() {
         watchSound(sq0);
         printDebug(sq0);
         soundinstance = createjs.Sound.play(sq0);
-        if (soundinstance.playState != "playFailed") {
+        if (soundinstance.playState !== "playFailed") {
             soundinstance.addEventListener("complete", handleNextSound);
         } else {
             console.log("play failed");
@@ -1130,29 +1365,59 @@ function playQueue() {
     }
 }
 
-/** 
+/**
  * @summary general
  */
+
+function getPlayingSound() {
+    "use strict";
+    if (soundQueue.length > 0) {
+        return soundQueue[0];
+    } else {
+        return "";
+    }
+}
+
+/**
+ * @summary general
+ */
+
 function playSingle(sound) {
     "use strict";
     var soundinstance;
     soundinstance = createjs.Sound.play(sound);
 }
 
-/** 
+/**
  * @summary general
  */
+
 function handleNextSound(evt) {
     "use strict";
-    soundQueue = soundQueue.splice(1);
+    soundQueue.splice(0, 1); //removes first element in soundQueue
     playQueue();
 }
-
-/** 
+/**
  * @summary general
  */
+
+function removeNextSound() {
+    "use strict";
+    soundQueue.splice(1, 1); //removes second element in soundQueue
+}
+
+function removeAllButFirstSound() {
+    "use strict";
+    soundQueue = soundQueue.splice(0, 1); //removes all but first sound
+}
+
+/**
+ * @summary general
+ */
+
 function showStar() {
     "use strict";
+    stage.addChild(star);
     createjs.Tween.get(star).
     to({
         alpha: 0.7,
@@ -1166,24 +1431,28 @@ function showStar() {
     to({
         scaleX: 0.1,
         scaleY: 0.1
-    }, 10);
+    }, 10).call(function(evt) {
+        stage.removeChild(star);
+    });
 }
 
-/** 
+/**
  * @summary general
  */
+
 function hideStar() {
     "use strict";
     createjs.Tween.removeTweens(star);
     star.alpha = 0;
     star.scaleX = 0.1;
     star.scaleY = 0.1;
+    stage.removeChild(star);
 }
 
-
-/** 
+/**
  * @summary general
  */
+
 function randomFutureMillis(minSec, maxSec) {
     "use strict";
     //note: input in milliseconds and seconds, output in milliseconds
@@ -1191,48 +1460,65 @@ function randomFutureMillis(minSec, maxSec) {
     return 1000 * randomSec;
 }
 
-/** 
+/**
  * @summary general
  */
+
 function pulsate(bitmap, pulsetime) {
     "use strict";
-    //console.log("bitmap",bitmap,"pulsetime",pulsetime);
-    var partTime = Math.floor(pulsetime / 4);
-    createjs.Tween.get(bitmap).to({
-        scaleX: 1.1,
-        scaleY: 1.1
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.0,
-        scaleY: 1.0
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.1,
-        scaleY: 1.1
-    }, partTime, createjs.Ease.sineInOut).to({
-        scaleX: 1.0,
-        scaleY: 1.0
-    }, partTime, createjs.Ease.sineInOut);
+    var cycles = Math.floor(pulsetime / 500 + 0.5);
+
+    var partTime = Math.floor(pulsetime / 2 / cycles);
+
+    pulsateOne(bitmap, partTime, cycles);
 }
 
-/** 
+/**
  * @summary general
  */
+
+function pulsateOne(bitmap, partTime, cycles) {
+    "use strict";
+    if (cycles <= 1) {
+        createjs.Tween.get(bitmap).to({
+            scaleX: 1.1,
+            scaleY: 1.1
+        }, partTime, createjs.Ease.sineInOut).to({
+            scaleX: 1.0,
+            scaleY: 1.0
+        }, partTime, createjs.Ease.sineInOut);
+    } else {
+        createjs.Tween.get(bitmap).to({
+            scaleX: 1.1,
+            scaleY: 1.1
+        }, partTime, createjs.Ease.sineInOut).to({
+            scaleX: 1.0,
+            scaleY: 1.0
+        }, partTime, createjs.Ease.sineInOut).call(function(evt) {
+            pulsateOne(bitmap, partTime, cycles - 1);
+        });
+    }
+}
+
+/**
+ * @summary general
+ */
+
 function log(text) {
     "use strict";
     console.log(text);
     console.log("active tweens: " + createjs.Tween.hasActiveTweens());
 }
 
+/* ========== CAKE ========= */
 
-/* =========== CAKE ========== */
-
-
-/** 
+/**
  * @summary cake
  */
+
 function checkCharacter() {
     "use strict";
-    console.log("checking character");
-    if (helpContainer.visible) {
+    if (soundQueue.length > 0 || helpContainer.visible) {
         console.log("not ready to check character");
         randomCheckId = setTimeout(checkCharacter, 2000);
     } else {
@@ -1245,66 +1531,61 @@ function checkCharacter() {
     }
 }
 
-/** 
+/**
  * @summary cake
+    returns true if a character is selected, false otherwise
+    "selected" means that the character is the next in turn to
+    supposedly receive a piece of cake.
+    It also also pulsates a character and plays sound, if there is a character to select
+
  */
+
 function selectNextCharacter() {
     "use strict";
+
     var notMoved = [];
 
     function pushNotMovedPiece(piece, pieceNumber, array) {
-        console.log("piece: ", pieceNumber, piece);
         if (!piece.moved) {
             notMoved.push(pieceNumber);
         }
     }
 
-    //returns true if a character is selected, false otherwise
-    //also pulsates a character and plays sound, if there is a character to select
     //who has no cake yet?
     var characterSelected = false;
-    if (soundQueue.length == 0 && selectedNameNumber == -1) {
+    if (selectedCharacterIndex === -1) {
 
-
-        /* original for in, now replaced with Array.foreach
-            var pieceNumber;
-            var piece;
-            for (pieceNumber in cakeComplete) {
-                piece = cakeComplete[pieceNumber];
-                if (!piece.moved) {
-                    notMoved.push(pieceNumber);
-                }
-            }*/
-
-        cakeComplete.forEach(pushNotMovedPiece);
-
+        allPieces.forEach(pushNotMovedPiece);
         if (notMoved.length > 0) {
             var randomIndex = Math.floor(Math.random() * notMoved.length);
-            selectedNameNumber = notMoved[randomIndex];
-            selectedName = getCharacterNameSound(selectedNameNumber);
-            var character = getCharacter(selectedNameNumber);
+            selectedCharacterIndex = notMoved[randomIndex];
+            selectedName = getCharacterNameSound(selectedCharacterIndex);
+
+            /*
+            var character = getCharacter(selectedCharacterIndex);
             pulsate(character.happyPic, characterPulsateTime);
             if (character.hasOwnProperty("handPic")) {
                 pulsate(character.handPic, characterPulsateTime);
             }
-            extendAndPlayQueue([selectedName + "vill_"]); //namn vill ha tårta, var är namn?
+ */
+
+            extendAndPlayQueue([selectedName + "wouldlike", selectedName + "whereis", selectedName + "tap"]); //namn vill ha tårta, var är namn?
             characterSelected = true;
         }
     }
     return characterSelected;
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function smashNextPiece() {
     "use strict";
-    console.log("trying to smash next piece");
     var movedAndNotSmashed = [];
 
     function pushMovedAndNotSmashedPiece(piece, pieceNumber, array) {
         if (piece.moved && !piece.smashed) {
-            console.log("======= moved and not smashed: ", pieceNumber);
             movedAndNotSmashed.push(pieceNumber);
         }
     }
@@ -1315,18 +1596,10 @@ function smashNextPiece() {
         nextSmashId = setTimeout(smashNextPiece, 2000);
     } else {
         //smashes a random piece
-        /* old for in
-            var pieceNumber;
-            var piece;
-            for (pieceNumber in cakeComplete) {
-                piece = cakeComplete[pieceNumber];
-                if (piece.moved && !piece.smashed) {
-                    console.log("xxxmoved and not smashed: ",pieceNumber);
-                    movedAndNotSmashed.push(pieceNumber);
-                }
-            }*/
 
-        cakeComplete.forEach(pushMovedAndNotSmashedPiece);
+        //cakeComplete.forEach(pushMovedAndNotSmashedPiece);
+
+        allPieces.forEach(pushMovedAndNotSmashedPiece);
 
         if (movedAndNotSmashed.length > 0) {
             //decide which piece to smash
@@ -1338,148 +1611,222 @@ function smashNextPiece() {
             //there might not be a piece to smash now, but might be at nextSmash. If there is no piece to smash at nextSmash, nextSmash will get a new value
             clearTimeout(nextSmashId);
             nextSmashId = setTimeout(smashNextPiece, nextSmash);
-            console.log("smashNextPiece: next smash in ", (nextSmash - 0 * nowMillis) / 1000, " seconds", nextSmashId);
         }
-
     }
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function handleCharacterTouch(event) {
     "use strict";
     //ok, vi har ett event. detta är en bitmapimage. men hur veta vilken character den hör till?
     var c = event.target.character;
-    moveCakePiece(c.pieceNumber, c.pieceDeltaX, c.pieceDeltaY, "character");
-}
 
-/** 
- * @summary cake
- */
-function handleCakePieceTouch(event) {
-    "use strict";
-    var pieceNumber = event.target.number;
-    var c = getCharacter(pieceNumber);
-    moveCakePiece(c.pieceNumber, c.pieceDeltaX, c.pieceDeltaY, "piece");
-}
-
-/** 
- * @summary cake
- */
-function handleMenuCakeTouch(event) {
-    "use strict";
-    if (noGameRunning()) {
-        menuCake.focus = true;
-        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone. 
-
-        hideSplashScreen();
-
-        //xxx to be moved to startcakegame
-        nextRandomCheck = randomFutureMillis(minSecSelectFirstName, maxSecSelectFirstName);
-        console.log("---->next random check at ", nextRandomCheck);
-        //no need to clear previous timeout here (I think xxx)
-        randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
-        createjs.Tween.get(cake).to({
-            alpha: 1.0
-        }, gameTransitionTime, createjs.Ease.linear);
-        createjs.Tween.get(table).to({
-            alpha: 1.0
-        }, gameTransitionTime, createjs.Ease.linear);
-        //tableBackground.alpha = 1.0;//xxxyyy createjs.Tween.get(tableBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
-        changeBackground(tableBackgroundColor);
+    if (c.hasCake === false) { //more safe than !c.hasCake if hasCake is undefined
+        moveCakePiece(c);
     }
 }
 
-/** 
+/**
  * @summary cake
  */
+
+function handleMenuCakeTouch(event) {
+    "use strict";
+    if (noGameRunning() && !isRunning()) {
+        menuCake.focus = true;
+        extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone.
+        hideSplashScreen();
+        showCakeGame();
+        startCakeGame();
+    }
+}
+
+/**
+ * @summary cake
+ */
+
+function showCakeGame() {
+    "use strict";
+    changeBackground(tableBackgroundColor);
+    showTable();
+    showBackButton();
+}
+
+function showTable() {
+    "use strict";
+    table.removeAllChildren();
+    table.addChild(
+        tableMom.happyPic,
+        //tableMom.sadPic,
+        tableGrandDad.happyPic,
+        //tableGrandDad.sadPic,
+        tableBoel.happyPic,
+        //tableBoel.sadPic,
+        tableDad.happyPic,
+        //tableDad.sadPic,
+        tableTore.happyPic,
+        //tableTore.sadPic,
+        tableTable,
+        tableDog.happyPic,
+        //tableDog.sadPic,
+        tableMom.handPic,
+        tableGrandDad.handPic,
+        tableBoel.handPic,
+        tableDad.handPic,
+        tableTore.handPic,
+        cakeContainer
+    );
+    var p;
+    var i;
+    for (i = 0; i < allPieces.length; i += 1) {
+        p = allPieces[i];
+        p.smashed = false;
+        p.moved = false;
+    }
+
+    var c;
+    for (i = 0; i < numberOfCakePieces + 1; i += 1) {
+        c = allCakes[i];
+        c.alpha = 1.0;
+    }
+    piecesLeft = numberOfCakePieces;
+    cakeContainer.removeAllChildren();
+    cakeContainer.addChild(allCakes[piecesLeft]);
+
+    //gör figurer glada mm
+    var ch;
+    for (i = 0; i < allCharacters.length; i += 1) {
+        ch = allCharacters[i];
+        restoreCharacter(ch);
+    }
+
+    restoreCakeBall();
+
+    stage.addChild(table);
+
+    createjs.Tween.get(table).to({
+        alpha: 1.0
+    }, gameTransitionTime, createjs.Ease.linear);
+}
+
+/**
+ * @summary cake
+ */
+
+function startCakeGame() {
+    "use strict";
+    nextRandomCheck = randomFutureMillis(minSecSelectFirstName, maxSecSelectFirstName);
+    randomCheckId = setTimeout(checkCharacter, nextRandomCheck); //no need to clear previous timeout before
+}
+
+/**
+ * @summary cake
+ */
+
+function hideCakeGame() {
+    "use strict";
+    menuCake.focus = false;
+
+    createjs.Tween.removeAllTweens();
+    soundQueue = [];
+    clearTimeout(nextSmashId);
+    clearTimeout(randomCheckId);
+    clearTimeout(showNumberId);
+    clearTimeout(tadaId);
+    nextRandomCheck = -1;
+    selectedCharacterIndex = -1;
+    selectedName = "";
+
+    hideAllNumbers();
+    hideStar();
+    hideBackButton();
+    showSplashScreen();
+
+    createjs.Tween.get(table).to({
+        alpha: 0.0
+    }, gameTransitionTime, createjs.Ease.linear).call(function(evt) {
+        stage.removeChild(table);
+    });
+}
+
+/**
+ * @summary cake
+ */
+
 function addNumbers() {
     "use strict";
     var i;
     var number;
-    for (i = 0; i < 10; i += 1) {
+    for (i = 0; i <= numberOfCakePieces; i += 1) {
         number = new createjs.Bitmap(queue.getResult(i + ""));
         number.x = numberX;
         number.y = numberY;
         number.regX = number.image.width / 2 | 0;
         number.regY = number.image.height / 2 | 0;
         number.alpha = 0.0;
+        number.name = i + "";
         numbers.push(number);
-        stage.addChild(numbers[i]);
+        numberBackground = new createjs.Shape();
+        numberBackground.graphics.beginFill("white").drawEllipse(canvasWidth / 2, canvasHeight / 2, numberBackgroundWidth, numberBackgroundHeight);
+        numberBackground.regX = numberBackgroundWidth / 2;
+        numberBackground.regY = numberBackgroundHeight / 2;
+        numberBackground.alpha = 0.6;
+        numberBackground.name = "Number background";
     }
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function addTable() {
     "use strict";
     table = new createjs.Container();
 
-    //xxx borde ha en array allCharacters som allBalls.
+    addCake(numberOfCakePieces);
+    addCakeBall();
+
+    table.name = "Table container";
 
     //anticlockwise around table
-    tableDog = new Character(0, -60, 140, "tableDog", true, false, "Hunden", 180, 610);
-    tableTore = new Character(1, 115, 100, "tableTore", true, true, "Tore", 730, 500);
-    tableDad = new Character(2, 118, -38, "tableDad", true, true, "Pappa", 680, 310);
-    tableGrandDad = new Character(3, 100, -90, "tableGrandDad", true, true, "Morfar", 460, 210);
-    tableMom = new Character(4, -95, -55, "tableMom", true, true, "Mamma", 210, 320);
-    tableBoel = new Character(5, -120, 35, "tableBoel", true, true, "Boel", 170, 470);
+    tableDog = new Character(181, 605, 0, 417, 535, "tableDog", true, false, 0, 0, "Dog");
+    tableTore = new Character(719, 490, 1, 594, 475, "tableTore", true, true, 0, 163, "Tore");
+    tableDad = new Character(658, 266, 2, 587, 319, "tableDad", true, true, 2, 295, "Dad");
+    tableGrandDad = new Character(411, 175, 3, 527, 265, "tableGrandDad", true, true, 0, 254, "Granddad");
+    tableMom = new Character(249, 285, 4, 324, 332, "tableMom", true, true, 81, 202, "Mum");
+    tableBoel = new Character(191, 417, 5, 310, 444, "tableBoel", true, true, 107, 121, "Boel");
+
+    allCharacters = [tableDog, tableTore, tableDad, tableGrandDad, tableMom, tableBoel];
 
     tableTable = new createjs.Bitmap(queue.getResult("tableTable"));
-
-    table.addChild(tableMom.happyPic,
-        tableMom.sadPic,
-        tableGrandDad.happyPic,
-        tableGrandDad.sadPic,
-        tableBoel.happyPic,
-        tableBoel.sadPic,
-        tableDad.happyPic,
-        tableDad.sadPic,
-        tableTore.happyPic,
-        tableTore.sadPic,
-        tableTable,
-        tableDog.happyPic,
-        tableDog.sadPic,
-        tableMom.handPic,
-        tableGrandDad.handPic,
-        tableBoel.handPic,
-        tableDad.handPic,
-        tableTore.handPic);
+    tableTable.x = 139;
+    tableTable.y = 267;
+    tableTable.name = "Table";
 
     table.x = tableX;
     table.y = tableY;
     table.alpha = 0.0;
-
-    //make an object (with integer id-s, making it look like an array) used for looking up character 
-    //associated to cake piece
-    characters[tableMom.pieceNumber] = tableMom;
-    characters[tableGrandDad.pieceNumber] = tableGrandDad;
-    characters[tableBoel.pieceNumber] = tableBoel;
-    characters[tableDad.pieceNumber] = tableDad;
-    characters[tableTore.pieceNumber] = tableTore;
-    characters[tableDog.pieceNumber] = tableDog;
-
-    stage.addChild(table);
-
-    //xxx only a test
     table.addEventListener("mousedown", handleTableTouch);
 }
 
-//gjort trimvariabler hit
-
-/** 
+/**
  * @summary cake
  */
-function handleTableTouch(event) {
+
+function handleTableTouch(evt) {
     "use strict";
-    //console.log("xxx not used right now, but prevents from clicking through table");
+    //not used right now, but prevents from clicking through table
+    var x = evt.stageX;
+    var y = evt.stageY;
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function addCharacterEventListener(character) {
     "use strict";
     if (character.hasOwnProperty("happyPic")) {
@@ -1494,47 +1841,41 @@ function addCharacterEventListener(character) {
 
 }
 
-/** 
+/**
  * @summary cake
  */
-function makeCharacterHappy(character) {
+
+function restoreCharacter(character) {
     "use strict";
-    var c = character;
-    if (c.hasOwnProperty("happyPic")) {
-        c.happyPic.visible = true;
-    }
-    if (c.hasOwnProperty("sadPic")) {
-        c.sadPic.visible = false;
-    }
+    character.mood = "happy";
+    character.hasCake = false;
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function makeCharacterSad(character) {
     "use strict";
-    var c = character;
-    if (c.hasOwnProperty("happyPic")) {
-        c.happyPic.visible = false;
+    if (character.hasOwnProperty("sadPic") && character.mood === "happy") {
+        table.addChildAt(character.sadPic, table.getChildIndex(character.happyPic));
+        table.removeChild(character.happyPic);
     }
-    if (c.hasOwnProperty("sadPic")) {
-        c.sadPic.visible = true;
-    }
+    character.mood = "sad";
 }
 
-/** 
+/**
  * @summary cake
  */
-function addCake(pieceParts, numberOfCakePieces, cakeFiles) {
+
+function addCake(numberOfCakePieces) {
     "use strict";
     //these won't change
     menuCake = new createjs.Bitmap(queue.getResult("menuCake"));
     stage.addChild(menuCake);
     menuCake.x = menuCakeX;
     menuCake.y = menuCakeY;
-    //menuCake.regX = menuCake.image.width/2|0; xxx should probably be deleted
-    //menuCake.regY = menuCake.image.height/2|0;
-    menuCake.name = "menuCake";
+    menuCake.name = "menu cake";
 
     //these will change
     menuCake.alpha = 1;
@@ -1542,309 +1883,189 @@ function addCake(pieceParts, numberOfCakePieces, cakeFiles) {
 
     menuCake.addEventListener("mousedown", handleMenuCakeTouch);
 
-    cake = new createjs.Container();
+    var missingPiece = [{
+        x: 30,
+        y: -6
+    }, {
+        x: 21,
+        y: -26
+    }, {
+        x: -23,
+        y: -25
+    }, {
+        x: -29,
+        y: 0
+    }, {
+        x: -17,
+        y: 14
+    }, {
+        x: 27,
+        y: 14
+    }, {
+        x: 0,
+        y: 0
+    }];
+    cakeContainer = new createjs.Container();
 
-    //alltså, behöver en cake som är en multidimensionell array, som dels består av alla bitar och varje bit av 5? delar
-    //första index är bit, andra index är del. 
-
-    //xxx bättre göra varje bit till en container istället för hela tårtan väl...
-    //nu finns det en 2-dim array cakeComplete som pieces och parts
-    //sedan är varje part child till cake, istället för att varje part är child till piece som 
-    //är child till part. 
-    //eg skulle jag inte behöva cakeComplete
-    var k = 0;
-    var onePiece;
-    var part;
-    var i, j;
-    for (i = 0; i < numberOfCakePieces; i += 1) {
-        onePiece = [];
-        for (j = 0; j < pieceParts.length + 1; j += 1) { // + 1 because cake_outsidelines doubled
-            part = new createjs.Bitmap(queue.getResult(cakeFiles[k]["id"]));
-            k += 1;
-            part.number = i; //first piece has number 0, all parts get number i
-            part.name = "part" + j + "piece" + i;
-            onePiece.push(part);
-            if (enableCakePieceTouch) {
-                part.addEventListener("mousedown", handleCakePieceTouch);
-            }
-        }
-        cakeComplete.push(onePiece);
-        restoreCakePiece(i);
+    allCakes = [];
+    var i;
+    var c;
+    for (i = 0; i < numberOfCakePieces + 1; i += 1) {
+        c = new createjs.Bitmap(queue.getResult("cake" + i));
+        c.regX = c.image.width / 2 | 0;
+        c.regY = c.image.height / 2 | 0;
+        c.missingPieceX = missingPiece[i].x;
+        c.missingPieceY = missingPiece[i].y;
+        c.name = "cake with " + i + " pieces";
+        allCakes.push(c);
     }
 
-    var cakePlate = new createjs.Bitmap(queue.getResult("cakePlate"));
-    cake.addChild(cakePlate);
+    cakeContainer.x = 450;
+    cakeContainer.y = 380;
+    cakeContainer.name = "cake";
 
+    allPieces = [];
+    allSmashedPieces = [];
+    var p;
+    var sp;
+    for (i = 1; i < numberOfCakePieces + 1; i += 1) {
+        //move to function
+        p = new createjs.Bitmap(queue.getResult("piece" + i));
+        sp = new createjs.Bitmap(queue.getResult("smashedPiece" + i));
+        p.regX = p.image.width / 2 | 0;
+        p.regY = p.image.height / 2 | 0;
+        p.x = 0;
+        p.y = 0;
+        p.alpha = 0;
+        p.moved = false;
+        p.smashed = false;
+        p.name = "piece " + i;
+        sp.regX = sp.image.width / 2 | 0;
+        sp.regY = sp.image.height / 2 | 0;
+        sp.name = "smashed piece " + i;
 
-    var pieceOrder = [3, 4, 2, 5, 1, 6];
-    for (i = 0; i < cakeComplete.length; i += 1) {
-        for (j = 0; j < cakeComplete[i].length; j += 1) {
-            cake.addChild(cakeComplete[pieceOrder[i] - 1][j]); //-1 because piece 1 has index 0 etc
-        }
+        //stage.addChild(p);
+        allPieces.push(p);
+        allSmashedPieces.push(sp);
     }
 
-    //ok, hyfsat, men skulle behöva samla kakkonstruktion istället för att ha det så utspritt. 
-    stage.addChild(cake);
-    cake.scaleStart = 1.0;
-    cake.scaleX = cake.scaleY = cake.scale = cake.scaleStart;
+}
 
-    cake.width = cakeComplete[0][0].image.width;
-    cake.height = cakeComplete[0][0].image.height;
-
-
-    cake.relativeTableX = 450;
-    cake.relativeTableY = 380;
-
-    cake.x = table.x + cake.relativeTableX;
-    cake.y = table.y + cake.relativeTableY;
-    cake.regX = cake.width / 2;
-    cake.regY = cake.height / 2;
-    cake.name = "Tårta";
-
-    cake.alpha = 0.0;
-
-
+function addCakeBall() {
+    "use strict";
     cakeBall = new createjs.Bitmap(queue.getResult("cakeBall"));
     cakeBall.regX = cakeBall.image.width / 2 | 0;
     cakeBall.regY = cakeBall.image.height / 2 | 0;
-
+    cakeBall.name = "cake ball";
     restoreCakeBall(); //place in initial position
-
-    stage.addChild(cakeBall);
-
 }
 
-/** 
+/**
  * @summary cake
  */
-function restoreMenuCake() {
-    "use strict";
 
-    if (menuCake.focus) {
-        createjs.Tween.removeAllTweens();
-        soundQueue = [];
+function moveCakePiece(character) {
+    "use strict";
+    var pieceNumber = character.pieceNumber;
+    var x = character.pieceX;
+    var y = character.pieceY;
+    var playingSound = getPlayingSound();
+    var piece = allPieces[pieceNumber];
+    var nameClicked = getCharacterNameSound(pieceNumber);
+    var nameSelected = getCharacterNameSound(selectedCharacterIndex);
+    var correctCharacterClicked = (selectedCharacterIndex === pieceNumber);
+
+    if (menuCake.focus &&
+        (playingSound === "" ||
+            (correctCharacterClicked && playingSound.slice(-3) === "but") ||
+            (correctCharacterClicked && playingSound.slice(-9) === "wouldlike") ||
+            (correctCharacterClicked && playingSound.slice(-7) === "whereis") ||
+            (correctCharacterClicked && playingSound.slice(-3) === "tap"))) {
+        //the condition above can be simplified
+
+        if (playingSound.slice(-3) === "but") {
+            removeNextSound();
+            removeNextSound();
+        } else if (playingSound.slice(-9) === "wouldlike") {
+            removeNextSound();
+            removeNextSound();
+        } else if (playingSound.slice(-7) === "whereis") {
+            removeNextSound();
+        }
+
+        var oldCake = allCakes[piecesLeft];
+        piecesLeft -= 1;
+        var newCake = allCakes[piecesLeft];
+        cakeContainer.addChildAt(newCake, cakeContainer.getChildIndex(oldCake));
+        piece.x = newCake.missingPieceX + cakeContainer.x;
+        piece.y = newCake.missingPieceY + cakeContainer.y;
+        table.addChild(piece);
+        createjs.Tween.get(oldCake).to({
+            alpha: 0.0
+        }, 400, createjs.Ease.linear).call(function(evt) {
+            cakeContainer.removeChild(oldCake);
+        });
+        createjs.Tween.get(piece).to({
+            alpha: 1.0
+        }, 200, createjs.Ease.linear).wait(10).to({
+            x: x,
+            y: y
+        }, 700, createjs.Ease.linear);
+        piece.moved = true;
+        character.hasCake = true;
+
+        nextSmash = randomFutureMillis(minSecNextSmash, maxSecNextSmash); //note: nextSmash is also updated when a cake bounce is started
         clearTimeout(nextSmashId);
-        clearTimeout(randomCheckId);
-        nextRandomCheck = -1;
-        selectedNameNumber = -1;
-        selectedName = "";
-        hideAllNumbers();
-        makeCharacterHappy(tableMom);
-        makeCharacterHappy(tableGrandDad);
-        makeCharacterHappy(tableBoel);
-        makeCharacterHappy(tableDad);
-        makeCharacterHappy(tableTore);
-        makeCharacterHappy(tableDog);
-        restoreCakeBall();
+        nextSmashId = setTimeout(smashNextPiece, nextSmash);
 
-        var i;
-        for (i = 0; i < cakeComplete.length; i += 1) {
-            restoreCakePiece(i);
-        }
-
-        menuCake.focus = false;
-
-    }
-
-    //detta kan paketeras i en funktion XXXXXXXXXX. I guess these are the same as in handlemenucaketouch but show<->hide
-    //show
-    showSplashScreen();
-
-    //hide
-    createjs.Tween.get(cake).to({
-        alpha: 0.0
-    }, gameTransitionTime, createjs.Ease.linear);
-    createjs.Tween.get(table).to({
-        alpha: 0.0
-    }, gameTransitionTime, createjs.Ease.linear);
-    //createjs.Tween.get(tableBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
-
-}
-
-
-/** 
- * @summary cake
- */
-function buildCakeFiles(pieceParts, numberOfCakePieces) {
-    "use strict";
-    var cakeFiles = []; //((pieceParts.length + 1) * numberOfCakePieces); // + 1 because cake_outsidelines doubled
-    var shared = pieceParts[pieceParts.length - 1];
-    var first, second, third, index;
-    var k = 0;
-    var i, j;
-    for (i = 1; i < numberOfCakePieces + 1; i += 1) {
-        for (j = 0; j < pieceParts.length - 1; j += 1) {
-            cakeFiles.push({
-                id: pieceParts[j] + i,
-                src: "assets/" + pieceParts[j] + i + ".png"
-            });
-            k += 1;
-        }
-        //here is some tricky code to find outside lines...
-        first = i;
-        second = ((i % numberOfCakePieces) + 1);
-        third = (i - 2 + numberOfCakePieces) % numberOfCakePieces + 1;
-        index = first + "" + second;
-        cakeFiles.push({
-            id: shared + index,
-            src: "assets/" + shared + index + ".png"
-        });
-        k += 1;
-        index = first + "" + third;
-        cakeFiles.push({
-            id: shared + index,
-            src: "assets/" + shared + index + ".png"
-        });
-        k += 1;
-    }
-    return cakeFiles;
-}
-
-/** 
- * @summary cake
- */
-function restoreCakePiece(piecenumber) {
-    "use strict";
-    var piece = cakeComplete[piecenumber];
-
-    var j;
-    for (j = 0; j < piece.length; j += 1) {
-        if (j == 0 || j == 2 || j == 3) {
-            piece[j].visible = false;
+        var currentNumber = numberOfCakePieces - piecesLeft;
+        if (correctCharacterClicked) {
+            //"rätt" person klickad
+            extendAndPlayQueue(["yes"]);
+            extendAndPlayQueue([nameClicked + "gets" + currentNumber]);
+            //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
+            selectedCharacterIndex = -1;
+            nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
+            clearTimeout(randomCheckId);
+            randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
+        } else if (selectedCharacterIndex === -1) {
+            //person utan tårtbit klickad, ingen person i kö för att bli klickad
+            //exakt samma som tidigare, men ingen yes
+            extendAndPlayQueue([nameClicked + "gets" + currentNumber]);
+            //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
+            selectedCharacterIndex = -1;
+            nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
+            clearTimeout(randomCheckId);
+            randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
         } else {
-            piece[j].visible = true;
+            //"fel" person som inte än fått tårtbit klickad
+            extendAndPlayQueue([nameClicked + "gets" + currentNumber, "silence300", nameSelected + "but", selectedName + "whereis", selectedName + "tap"]);
+            //showNumberId = setTimeout(showNumber, showNumberDelay, currentNumber);
         }
-        piece[j].x = 0;
-        piece[j].y = 0;
-    }
-    piece.smashed = false;
-    piece.moved = false;
-}
-
-/** 
- * @summary cake
- */
-function moveCakePiece(piecenumber, x, y, action) {
-    "use strict";
-    //action can be character eller piece men för närvarande används endast character
-
-
-    var movePerformed = false;
-    if (menuCake.focus && soundQueue.length == 0) {
-        var piece = cakeComplete[piecenumber];
-
-        if (!piece.moved) {
-            var j;
-            for (j = 0; j < piece.length; j += 1) {
-
-                createjs.Tween.get(piece[j]).to({
-                    x: x,
-                    y: y
-                }, pieceMoveTime, createjs.Ease.sineInOut);
-                piece.moved = true;
-                movePerformed = true;
-            }
+        if (piecesLeft === 0) {
+            extendAndPlayQueue(["tada"]);
+            //tadaId=setTimeout(extendAndPlayQueue,tadaDelay,"tada");
         }
-        var movedPieces = 0;
-        var nextPiece;
-        var prevPiece;
-        var k;
-        for (k = 0; k < cakeComplete.length; k += 1) {
-            //om bit är på plats men nästa bit ej på plats: visa skiljelinje
-            piece = cakeComplete[k];
-            nextPiece = cakeComplete[(k + 1) % cakeComplete.length];
-            if (!piece.moved && nextPiece.moved) {
-                piece[2].visible = true;
-            } else {
-                piece[2].visible = false;
-            }
-            prevPiece = cakeComplete[(k - 1 + cakeComplete.length) % cakeComplete.length];
-            if (!piece.moved && prevPiece.moved) {
-                piece[3].visible = true;
-            } else {
-                piece[3].visible = false;
-            }
-
-            if (piece.moved) {
-                //flyttad bit
-                movedPieces += 1;
-                if (!piece.smashed) {
-                    piece[2].visible = true;
-                    piece[3].visible = true;
-                }
-            }
-        }
-
-        var nameClicked = getCharacterNameSound(piecenumber);
-        var nameSelected = getCharacterNameSound(selectedNameNumber);
-
-        if (movePerformed) {
-            //här bestämmer vi tid för nästa smash. Vilken bit som smashas bestäms dock inte här
-            //utan i handleTick
-            nextSmash = randomFutureMillis(minSecNextSmash, maxSecNextSmash); //note: nextSmash is also updated when a cake bounce is started
-
-            clearTimeout(nextSmashId);
-            nextSmashId = setTimeout(smashNextPiece, nextSmash);
-
-            console.log("move: next smash in ", (nextSmash - 0 * nowMillis) / 1000, " seconds", nextSmashId);
-
-            if (selectedNameNumber == piecenumber) {
-                //"rätt" person klickad
-                if (action == "character") {
-                    extendAndPlayQueue(["ja"]);
-                }
-                extendAndPlayQueue([nameClicked + "start", "faar", ordinal[movedPieces]]);
-                selectedNameNumber = -1;
-                nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
-                console.log("2---->next random check at ", nextRandomCheck);
-
-                clearTimeout(randomCheckId);
-                randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
-            } else if (selectedNameNumber == -1) {
-                //person utan tårtbit klickad
-                extendAndPlayQueue([nameClicked + "start", "faar", ordinal[movedPieces]]); //somma som föregående
-                nextRandomCheck = randomFutureMillis(minSecSelectName, maxSecSelectName);
-                console.log("3---->next random check at ", nextRandomCheck);
-                clearTimeout(randomCheckId);
-                randomCheckId = setTimeout(checkCharacter, nextRandomCheck);
-            } else {
-                //"fel" person som inte än fått tårtbit klickad
-                extendAndPlayQueue(["detvarvaelinte", nameSelected + "slut"]);
-                if (action == "character") {
-                    extendAndPlayQueue(["detaerju", nameClicked + "start", "somfaar", ordinal[movedPieces]]); //xxx inte helt nöjd med denna
-                } else if (action == "piece") {
-                    extendAndPlayQueue(["detaerju", ordinal[movedPieces]]);
-                }
-            }
-        } else if (selectedNameNumber != piecenumber && selectedNameNumber != -1) {
-            //"fel" person som redan fått tårtbit klickad
-            extendAndPlayQueue(["detvarvaelinte", nameSelected + "slut"]);
-            if (action == "character") {
-                extendAndPlayQueue(["detaerju", nameClicked + "start"]);
-            } else if (action == "piece") {
-                extendAndPlayQueue(["detaerjuentaartbit"]);
-            }
-        }
-
     }
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function bounceToTable(piecenumber) {
     "use strict";
     var time = Math.floor(1000 * cakeBounceTime / 4);
     var startX = cakeBall.x;
     var startY = cakeBall.y;
-    var smashX = cake.x + cakeComplete[piecenumber][0].x;
-    var smashY = cake.y + cakeComplete[piecenumber][0].y;
+    var smashX = allPieces[piecenumber].x;
+    var smashY = allPieces[piecenumber].y; //+table.y; //cake.y + cakeComplete[piecenumber][0].y;
     var endX = startX + (smashX - startX) * 3.9;
     //should be 4 but this only affects movement outside canvas
     //it is slightly less than 4 to ensure that x tween finishes before y tween
     //as handleComplete is done by y tween and the x tween should be finished
-    var endY = startY;
     pieceNumberToSmash = piecenumber;
+    table.addChild(cakeBall);
     createjs.Tween.get(cakeBall).to({
         x: endX,
         rotation: cakeBallNoOfTurns * 360
@@ -1861,45 +2082,50 @@ function bounceToTable(piecenumber) {
     }, time, createjs.Ease.getPowOut(2)).call(restoreCakeBall);
 }
 
-/** 
+/**
+    table must exist when this function is called. At least I think so...
  * @summary cake
  */
+
 function restoreCakeBall() {
     "use strict";
-    if (cakeBall.x > canvasWidth + 100) {
-        cakeBall.x = canvasWidth + 100;
-        cakeBall.y = 100;
-    } else if (cakeBall.x < -100) {
-        cakeBall.x = -100;
-        cakeBall.y = 100;
+    table.removeChild(cakeBall);
+    if (cakeBall.x > canvasWidth + 100 - tableX) {
+        cakeBall.x = canvasWidth + 100 - tableX;
+        cakeBall.y = 100 - tableY;
+    } else if (cakeBall.x < -100 - tableX) {
+        cakeBall.x = -100 - tableX;
+        cakeBall.y = 100 - tableY;
     } else {
-        cakeBall.x = canvasWidth + 100;
-        cakeBall.y = 100;
+        cakeBall.x = canvasWidth + 100 - tableX;
+        cakeBall.y = 100 - tableY;
     }
     cakeBall.rotation = 0;
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function smashPiece() {
     "use strict";
-    var piece = cakeComplete[pieceNumberToSmash];
+    var p = allPieces[pieceNumberToSmash];
     playSingle("cakebounce");
 
     var character = getCharacter(pieceNumberToSmash);
     makeCharacterSad(character);
-
-    piece.smashed = true;
-    piece[0].visible = true;
-    piece[1].visible = false;
-    piece[2].visible = false;
-    piece[3].visible = false;
+    p.smashed = true;
+    var sp = allSmashedPieces[pieceNumberToSmash];
+    sp.x = p.x;
+    sp.y = p.y;
+    table.removeChild(p);
+    table.addChildAt(sp, table.getChildIndex(cakeBall));
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function getCharacterNameSound(pieceNumber) {
     "use strict";
     var character = getCharacter(pieceNumber);
@@ -1910,107 +2136,125 @@ function getCharacterNameSound(pieceNumber) {
     }
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function getCharacter(pieceNumber) {
     "use strict";
-    var character = {};
-    if (characters.hasOwnProperty(pieceNumber)) {
-        character = characters[pieceNumber];
+    if (pieceNumber > -1) {
+        return allCharacters[pieceNumber];
+    } else {
+        return {};
     }
-    return character;
 }
 
-
-/** 
+/**
  * @summary cake
+ 
+ * x position of center of characeter relative to table container
+ * handPicX pos of left upper corner of handpic relative left upper of happypic
+ * pieceX relative to table
  */
-function Character(pieceNumber, pieceDeltaX, pieceDeltaY, happyPic, hasSadPic, hasHandPic, name, regX, regY) {
+
+function Character(x, y, pieceNumber, pieceX, pieceY, happyPic, hasSadPic, hasHandPic, handPicX, handPicY, name) {
     "use strict";
     //constructor for character
     this.pieceNumber = pieceNumber;
-    this.pieceDeltaX = pieceDeltaX;
-    this.pieceDeltaY = pieceDeltaY;
+
+    this.pieceX = pieceX;
+    this.pieceY = pieceY;
+
     this.happyPic = new createjs.Bitmap(queue.getResult(happyPic));
     this.happyPic.character = this;
-    //will this circular reference cause garbage? 
+    //will this circular reference cause garbage?
     //Not according to
     //http://stackoverflow.com/questions/7347203/circular-references-in-javascript-garbage-collector
 
-    this.happyPic.regX = regX;
-    this.happyPic.regY = regY;
-    this.happyPic.x = regX;
-    this.happyPic.y = regY;
+    this.happyPic.regX = this.happyPic.image.width / 2 | 0;
+    this.happyPic.regY = this.happyPic.image.height / 2 | 0;
+    this.happyPic.x = x; //+this.happyPic.image.width / 2 | 0;
+    this.happyPic.y = y; //+this.happyPic.image.height / 2 | 0;
+    this.happyPic.name = name + " happy";
 
     if (hasSadPic) {
         this.sadPic = new createjs.Bitmap(queue.getResult(happyPic + "Sad"));
         this.sadPic.character = this;
-        this.sadPic.regX = regX;
-        this.sadPic.regY = regY;
-        this.sadPic.x = regX;
-        this.sadPic.y = regY;
-
+        this.sadPic.regX = this.happyPic.regX;
+        this.sadPic.regY = this.happyPic.regY;
+        this.sadPic.x = this.happyPic.x;
+        this.sadPic.y = this.happyPic.y;
+        this.sadPic.name = name + " sad";
     }
+
     if (hasHandPic) {
         this.handPic = new createjs.Bitmap(queue.getResult(happyPic + "Hand"));
         this.handPic.character = this;
-        this.handPic.regX = regX;
-        this.handPic.regY = regY;
-        this.handPic.x = regX;
-        this.handPic.y = regY;
+        this.handPic.regX = this.happyPic.regX - handPicX;
+        this.handPic.regY = this.happyPic.regY - handPicY;
+        this.handPic.x = this.happyPic.x;
+        this.handPic.y = this.happyPic.y;
+        this.handPic.name = name + " hand";
     }
     this.name = name;
+    restoreCharacter(this);
     addCharacterEventListener(this);
-    makeCharacterHappy(this);
 }
 
-/** 
+/**
  * @summary cake
  */
+
 function hideAllNumbers() {
     "use strict";
-    //basically the same as hideNumber but immediate instead of tween
     var i;
     for (i = 0; i < numbers.length; i += 1) {
         numbers[i].alpha = 0;
+        stage.removeChild(numbers[i]);
     }
+    stage.removeChild(numberBackground);
 }
 
-/** 
+/**
  * @summary cake
  */
-function hideNumber() {
-    "use strict";
-    var i;
-    for (i = 0; i < numbers.length; i += 1) {
-        if (numbers[i].alpha > 0.0) {
-            createjs.Tween.get(n).to({
-                alpha: 0.0
-            }, numberTransitionTime / 3, createjs.Ease.linear);
-        }
-    }
-}
 
-/** 
- * @summary cake
- */
 function showNumber(number) {
     "use strict";
-    hideNumber();
-    n = numbers[number];
+    var n = numbers[number];
+
+    if (number > 1) {
+        numbers[number - 1].alpha = 0;
+        stage.removeChild(numbers[number - 1]);
+    }
+
+    n.x = canvasWidth / 2; //880;
+    n.y = canvasHeight / 2; //220;
+    n.scaleX = 3.0;
+    n.scaleY = 3.0;
+
+    stage.addChild(numberBackground);
+
+    stage.addChild(n);
+
     createjs.Tween.get(n).to({
         alpha: 1.0
-    }, numberTransitionTime, createjs.Ease.linear);
-    pulsate(n, numberTransitionTime);
+    }, numberAppearTime, createjs.Ease.linear).wait(numberWaitTime).call(function(evt) {
+        stage.removeChild(numberBackground);
+    }).to({
+        x: numberX,
+        y: numberY,
+        scaleX: 1.0,
+        scaleY: 1.0
+    }, numberMoveTime, createjs.Ease.linear);
 }
 
+/* ======== BALL ======= */
 
-/* =========== BALL ========== */
-
-/** 
+/**
  * @summary ball
  */
+
 function handleNextBall() {
     "use strict";
     if (isRunning() || helpContainer.visible) {
@@ -2018,14 +2262,15 @@ function handleNextBall() {
         nextBallId = setTimeout(handleNextBall, 2000);
     } else if (menuBall.focus) {
         nextBall = findRandomBall();
-        extendAndPlayQueue("var" + nextBall.color); //this sound is "watched" and will trigger pulsating ball
-        nextBallTime = -1; //no new nextBall until this nextBall is touched 
+        extendAndPlayQueue("where" + nextBall.color); //this sound is "watched" and will trigger pulsating ball
+        nextBallTime = -1; //no new nextBall until this nextBall is touched
     }
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function checkBallOutsideAndBallBounce() {
     "use strict";
     if (ballTween.hasOwnProperty("target")) {
@@ -2043,11 +2288,11 @@ function checkBallOutsideAndBallBounce() {
                 startBallGame(timeToNewBallGame);
             }
         }
-        //check if ball has bounced into another ball 
+        //check if ball has bounced into another ball
         if (detectBallCollision(ball, 0)) {
-            if (ball.obstacleBall != ball.lastObstacleBall) {
+            if (ball.obstacleBall !== ball.lastObstacleBall) {
                 //ball has bounced into another ball. stop running tween and start new tween in new direction
-                if (isRunning(ballTween)) {
+                if (isRunning(ballTween)) { //note isRunning(ballTween) is checking ALL running tweens due to a bug in tweenjs
                     ballTween.setPaused(true); //funkar nog bäst
                 }
                 //calculate bounce direction
@@ -2063,9 +2308,10 @@ function checkBallOutsideAndBallBounce() {
     }
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function makeBallTween(ball, x, y, speed) {
     "use strict";
     //speed in pixels per millisecond
@@ -2080,49 +2326,55 @@ function makeBallTween(ball, x, y, speed) {
     }, time, createjs.Ease.linear);
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function randomDirection() {
     "use strict";
     return (Math.random() < 0.5) ? -1.0 : 1.0;
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function randomSpeedAndDirection() {
     "use strict";
     //returns random value betwwen -1 and 1
     return 2 * Math.random() - 1.0;
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function handleMenuBallTouch(event) {
     "use strict";
-    if (noGameRunning()) {
+    if (noGameRunning() && !isRunning()) {
         menuBall.focus = true;
-        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone.
+        extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone.
         hideSplashScreen();
         showBallGame();
         startBallGame(0);
     }
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function showBallGame() {
     "use strict";
-    //ballBackground.alpha = 1.0;//xxx yyy createjs.Tween.get(ballBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
     changeBackground(ballBackgroundColor);
+    showBalls();
+    showBackButton();
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function startBallGame(delay) {
     "use strict";
     hideStar();
@@ -2144,25 +2396,27 @@ function startBallGame(delay) {
     }
 }
 
-/** 
+/**
  * @summary ball
  */
-function restoreMenuBall() {
+
+function hideBallGame() {
     "use strict";
     menuBall.focus = false;
+    createjs.Tween.removeAllTweens();
     nextBallTime = -1;
     clearTimeout(nextBallId);
-    var i;
-    for (i = 0; i < allBalls.length; i += 1) {
-        createjs.Tween.removeTweens(allBalls[i]);
-    }
-    showSplashScreen();
+
     hideBalls();
+    hideStar();
+    hideBackButton();
+    showSplashScreen();
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function addBall() {
     "use strict";
     menuBall = new createjs.Bitmap(queue.getResult("menuBall"));
@@ -2171,7 +2425,7 @@ function addBall() {
     //these parameters won't change
     menuBall.x = menuBallX;
     menuBall.y = menuBallY;
-    menuBall.name = "menuBall";
+    menuBall.name = "menu ball";
 
     //these will change
     menuBall.alpha = 1.0;
@@ -2179,7 +2433,7 @@ function addBall() {
 
     menuBall.addEventListener("mousedown", handleMenuBallTouch);
 
-    //here are balls of different colors used in the ball game. 
+    //here are balls of different colors used in the ball game.
     blueBall = new Ball("blueBall", "Blå boll", "blue");
     redBall = new Ball("redBall", "Röd boll", "red");
     yellowBall = new Ball("yellowBall", "Gul boll", "yellow");
@@ -2187,23 +2441,34 @@ function addBall() {
     allBalls = [blueBall, redBall, yellowBall, greenBall];
 }
 
-/** 
+/**
  * @summary ball
  */
+
+function showBalls() {
+    "use strict";
+    var i;
+    for (i = 0; i < allBalls.length; i += 1) {
+        stage.addChild(allBalls[i]);
+    }
+}
+
+/**
+ * @summary ball
+ */
+
 function hideBalls() {
     "use strict";
     var i;
     for (i = 0; i < allBalls.length; i += 1) {
-        createjs.Tween.get(allBalls[i]).to({
-            alpha: 0.0
-        }, gameTransitionTime, createjs.Ease.linear);
+        stage.removeChild(allBalls[i]);
     }
-    //createjs.Tween.get(ballBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function setRandomPosition(ball) {
     "use strict";
     var free = false;
@@ -2220,9 +2485,10 @@ function setRandomPosition(ball) {
     delete ball.lastObstacleBall;
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function collides(ball1, ball2, forceField) {
     "use strict";
     var cathX = ball1.x - ball2.x; //horizontal catheter
@@ -2233,16 +2499,17 @@ function collides(ball1, ball2, forceField) {
     return (distanceSquare < centerDistSquare);
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function findRandomBall(thisBall) {
     "use strict";
     //find random ball  * other than thisBall
     var allBallsButThis = [];
     var i;
     for (i = 0; i < allBalls.length; i += 1) {
-        if (allBalls[i] != thisBall && allBalls[i].inside) {
+        if (allBalls[i] !== thisBall && allBalls[i].inside) {
             allBallsButThis.push(allBalls[i]);
         }
     }
@@ -2254,9 +2521,10 @@ function findRandomBall(thisBall) {
     }
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function detectBallCollision(thisBall, forceField) {
     "use strict";
     //klumpigt kanske, men funkar för bara fyra bollar.
@@ -2264,7 +2532,7 @@ function detectBallCollision(thisBall, forceField) {
     var otherBall = {};
     var i;
     for (i = 0; i < allBalls.length && !collision; i += 1) {
-        if (allBalls[i] != thisBall && allBalls[i].inside) {
+        if (allBalls[i] !== thisBall && allBalls[i].inside) {
             otherBall = allBalls[i];
             collision = collides(thisBall, otherBall, forceField);
             if (collision) {
@@ -2278,17 +2546,19 @@ function detectBallCollision(thisBall, forceField) {
     return collision;
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function handlePlayBallTouch(event) {
     "use strict";
     var ball = event.target;
 
-    if (!isRunning(ballTween)) {
-        if (ball == nextBall) {
+    //if (!isRunning(ballTween)) { //note isRunning(ballTween) is checking ALL running tweens due to a bug in tweenjs
+    if (getPlayingSound() === "") {
+        if (ball === nextBall) {
             //correct ball is touched
-            extendAndPlayQueue("ja" + ball.color);
+            extendAndPlayQueue("yes" + ball.color);
             var otherBall = findRandomBall(ball);
             if (otherBall !== null) {
                 var directionX = otherBall.x + 0.35 * otherBall.image.width * randomDirection();
@@ -2296,7 +2566,6 @@ function handlePlayBallTouch(event) {
                 ballTween = makeBallTween(ball, directionX, directionY, ballBounceSpeed);
                 nextBall = null;
                 nextBallTime = randomFutureMillis(minSecNextBall, maxSecNextBall);
-                console.log("Next ball time: ", nextBallTime);
                 nextBallId = setTimeout(handleNextBall, nextBallTime);
             } else {
                 //random direction for last ball
@@ -2307,8 +2576,6 @@ function handlePlayBallTouch(event) {
                 ballTween = makeBallTween(ball, x, y, ballBounceSpeed);
             }
         } else if (nextBall !== null) {
-            console.log("next ball", nextBall);
-            console.log("wrong ball touched");
             //wrong ball is touched
             var startRotation = ball.rotation;
             createjs.Tween.get(ball).to({
@@ -2316,21 +2583,22 @@ function handlePlayBallTouch(event) {
             }, wrongBallTurnTime, createjs.Ease.sineInOut);
             //createjs.Tween.get(ball).to({rotation:startRotation + 360 * 4}, 2000,createjs.Ease.sineInOut);
 
-            extendAndPlayQueue(["detju" + ball.color, "var" + nextBall.color]);
+            extendAndPlayQueue(["thatwas" + ball.color, "where" + nextBall.color]);
         } else {
+            //no ball chosen yet
             //nothing should be done here
         }
     }
 }
 
-/** 
+/**
  * @summary ball
  */
+
 function Ball(imageid, name, color) {
     "use strict";
     //constructor for ball
     createjs.Bitmap.call(this, queue.getResult(imageid));
-    stage.addChild(this);
     this.regX = this.image.width / 2 | 0;
     this.regY = this.image.height / 2 | 0;
     this.name = name;
@@ -2341,55 +2609,48 @@ function Ball(imageid, name, color) {
     this.last = false;
 }
 
+/* ======== CLOTHES ======= */
 
-/* =========== CAKE ========== */
-
-/** 
+/**
  * @summary clothes
  */
+
 function Clothes(linePicId, wearPicId, name, startRotation, startX, startY, wearX, wearY, movable) {
     "use strict";
     //note linepic and wearpic should have approximately the same size but must not be exact
+    
+    this.name = name;
+    
     this.linePic = new createjs.Bitmap(queue.getResult(linePicId));
     this.linePic.clothes = this;
     this.wearPic = new createjs.Bitmap(queue.getResult(wearPicId));
     this.wearPic.clothes = this;
-    this.linePic.alpha = 1.0;
-    this.wearPic.alpha = 0.0;
 
-    this.linePic.startX = this.linePic.x = startX;
-    this.linePic.startY = this.linePic.y = startY;
+    this.linePic.startX = startX;
+
+    this.linePic.startY = startY;
+
     this.linePic.regX = this.linePic.image.width / 2 | 0;
     this.linePic.regY = this.linePic.image.height / 2 | 0;
-    this.linePic.startRotation = this.linePic.rotation = startRotation;
-    this.linePic.tweening = false; //true if tweening back to position. Used because of bug in hasActiveTweens
+
+    this.linePic.startRotation = startRotation;
+
     this.linePic.wearX = wearX;
     this.linePic.wearY = wearY;
     this.linePic.kind = "linePic";
 
     this.wearPic.regX = this.wearPic.image.width / 2 | 0;
     this.wearPic.regY = this.wearPic.image.height / 2 | 0;
-    this.wearPic.startRotation = this.wearPic.rotation = startRotation;
 
+    this.wearPic.startRotation = startRotation;
 
     this.extraArea = new createjs.Shape();
-    this.extraArea.graphics.beginFill(clothesBackgroundColor).drawCircle(0, 0, 50, 50);
-    this.extraArea.x = startX;
-    this.extraArea.y = startY;
+    this.extraArea.graphics.beginFill(clothesBackgroundColor[0]).drawCircle(0, 0, 50, 50);
     this.extraArea.clothes = this;
     this.extraArea.startX = startX;
     this.extraArea.startY = startY;
-    //this.extraArea.startRotation = this.extraArea.rotation = startRotation;
 
-    //this.extraArea.regX = this.linePic.regX;
-    //this.extraArea.regY = this.linePic.regY;
     this.extraArea.kind = "extraArea";
-    //xxx hade varit trevligt med sock + extraarea som en container men då måste allt ligga i lager ovanför tore, inte extraarean under
-    //kan lägga till en ifsats på pressmove så att den gör lite olika om man drar i extraarean. 
-
-
-
-    this.onBody = false;
 
     if (movable) {
         this.extraArea.addEventListener("mousedown", handlePrePressmoveMousedown);
@@ -2401,11 +2662,14 @@ function Clothes(linePicId, wearPicId, name, startRotation, startX, startY, wear
         this.linePic.addEventListener("pressup", handlePostPressmovePressup);
 
     }
+
+    restorePieceOfClothes(this);
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function addClothes() {
     "use strict";
 
@@ -2415,7 +2679,7 @@ function addClothes() {
     //these parameters won't change
     menuClothes.x = menuClothesX;
     menuClothes.y = menuClothesY;
-    menuClothes.name = "menuClothes";
+    menuClothes.name = "menu clothes";
 
     //these will change
     menuClothes.alpha = 1.0;
@@ -2431,8 +2695,12 @@ function addClothes() {
 
     tore = new createjs.Bitmap(queue.getResult("tore"));
     tore.sad = new createjs.Bitmap(queue.getResult("toreSad"));
-    tore.startX = tore.x = toreX;
-    tore.startY = tore.y = toreY;
+    tore.startX = toreX;
+    tore.x = toreX;
+
+    tore.startY = toreY;
+    tore.y = toreY;
+
     tore.regX = tore.image.width / 2 | 0;
     tore.regY = tore.image.height / 2 | 0;
     tore.sad.x = tore.x - 42;
@@ -2441,13 +2709,11 @@ function addClothes() {
     tore.rotation = 0;
     tore.dressed = false;
 
-
     sockRight = new Clothes("sockRightLine", "sockRightWear", "sockRight", sockRightStartRotation, sockRightX, sockRightY, sockRightWearX, sockRightWearY, true);
     sockLeft = new Clothes("sockLeftLine", "sockLeftWear", "sockLeft", sockLeftStartRotation, sockLeftX, sockLeftY, sockLeftWearX, sockLeftWearY, true);
     trousers = new Clothes("trousersLine", "trousersWear", "trousers", trousersStartRotation, trousersX, trousersY, trousersWearX, trousersWearY, true);
     shirt = new Clothes("shirtLine", "shirtWear", "shirt", shirtStartRotation, shirtX, shirtY, shirtWearX, shirtWearY, true);
     clothesGameContainer.clean = true;
-
 
     line = new createjs.Bitmap(queue.getResult("line"));
     line.x = lineX;
@@ -2460,27 +2726,14 @@ function addClothes() {
     paintDetect.push(sockRight.wearPic);
     paintDetect.push(trousers.wearPic);
 
-
-    //note shirt and trousers have extraArea but they are not used and not added to clothesGameContainer. 
+    //note shirt and trousers have extraArea but they are not used and not added to clothesGameContainer.
     clothesGameContainer.addChild(sockRight.extraArea);
     clothesGameContainer.addChild(sockLeft.extraArea);
-
 
     clothesGameContainer.addChild(tore);
     clothesGameContainer.addChild(tore.sad);
 
-    /* original order - not so good
-        clothes.addChild(sockRight.linePic);
-        clothes.addChild(sockRight.wearPic);
-        clothes.addChild(sockLeft.linePic);
-        clothes.addChild(sockLeft.wearPic);    
-        clothes.addChild(trousers.linePic);
-        clothes.addChild(trousers.wearPic);
-        clothes.addChild(shirt.linePic);
-        clothes.addChild(shirt.wearPic);
-        */
-
-    /* line pics on top of wear pics - much better! */
+    /* line pics on top of wear pics */
     clothesGameContainer.addChild(sockRight.wearPic);
     clothesGameContainer.addChild(sockLeft.wearPic);
     clothesGameContainer.addChild(trousers.wearPic);
@@ -2490,55 +2743,50 @@ function addClothes() {
     clothesGameContainer.addChild(trousers.linePic);
     clothesGameContainer.addChild(shirt.linePic);
 
-
-
-
     clothesGameContainer.addChild(line);
-    stage.addChild(clothesGameContainer);
+    clothesGameContainer.name = "clothes game container";
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function handleMenuClothesTouch(event) {
     "use strict";
-    if (noGameRunning()) {
+    if (noGameRunning() && !isRunning()) {
         menuClothes.focus = true;
-        extendAndPlayQueue(["tyst1000"]); //very weird. this sound is needed for first sound to play on iphone.
+        extendAndPlayQueue(["silence1000"]); //very weird. this sound is needed for first sound to play on iphone.
         hideSplashScreen();
         showClothesGame();
-        startClothesGame(0);
+        startClothesGame();
     }
 }
 
-/** 
+/**
  * @summary clothes
  */
-function startClothesGame(delay) {
+
+function startClothesGame() {
     "use strict";
-
-    //xxx mpste snyggas till, detta är quick and dirty
-
 
     line.alpha = 1.0;
     tore.alpha = 1.0;
     tore.dressed = false;
-
     createjs.Tween.get(clothesGameContainer).to({
         alpha: 1.0
     }, gameTransitionTime, createjs.Ease.linear);
 
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function restorePieceOfClothes(c) {
     "use strict";
-    //xxx this is basically the same as in function Clothes. Should be unified
-    log("restorePieceOfClothes()");
     createjs.Tween.removeTweens(c.linePic);
     createjs.Tween.removeTweens(c.wearPic);
+    c.linePic.tweening = false; //true if tweening back to position. Used because of bug in hasActiveTweens
     c.linePic.rotation = c.linePic.startRotation;
     c.wearPic.rotation = c.wearPic.startRotation;
     c.linePic.alpha = 1.0;
@@ -2551,13 +2799,14 @@ function restorePieceOfClothes(c) {
     c.onBody = false;
 }
 
-/** 
+/**
  * @summary clothes
  */
-function restoreMenuClothes() {
+
+function hideClothesGame() {
     "use strict";
     menuClothes.focus = false;
-    log("restoreMenuClothes()");
+    createjs.Tween.removeAllTweens();
     restorePieceOfClothes(shirt);
     restorePieceOfClothes(trousers);
     restorePieceOfClothes(sockLeft);
@@ -2565,49 +2814,63 @@ function restoreMenuClothes() {
     if (clothesGameContainer.drawingEnabled) {
         disableDrawing();
     }
-    //xxx almost works but must make tore happy again!!!!! and make clothes not dirty. hm, dirty är egenskap på ett plagg, kan få konsekvenser om man sedan ritar på annat plagg
-    menuClothes.focus = false;
-    showSplashScreen();
+
     hideClothes();
+    hideStar();
+    hideBackButton();
+    showSplashScreen();
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function hideClothes() {
     "use strict";
-    log("hideClothes()");
     createjs.Tween.get(clothesGameContainer).to({
         alpha: 0.0
-    }, gameTransitionTime, createjs.Ease.linear);
-    //createjs.Tween.get(clothesBackground).to({alpha:0.0},gameTransitionTime, createjs.Ease.linear);
+    }, gameTransitionTime, createjs.Ease.linear).call(function(evt) {
+        stage.removeChild(clothesGameContainer);
+    });
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function showClothesGame() {
     "use strict";
     //createjs.Tween.get(clothesBackground).to({alpha:1.0},gameTransitionTime, createjs.Ease.linear);
     changeBackground(clothesBackgroundColor);
+    showTore();
+    showBackButton();
 }
 
-/** 
+/**
  * @summary clothes
  */
+
+function showTore() {
+    "use strict";
+    stage.addChild(clothesGameContainer);
+}
+
+/**
+ * @summary clothes
+ */
+
 function handlePrePressmoveMousedown(evt) {
     "use strict";
     var t;
     var t2;
     //make sure t is always linepic, and t2 is extraarea
-    if (evt.target.kind == "linePic") {
+    if (evt.target.kind === "linePic") {
         t = evt.target;
         t2 = t.clothes.extraArea;
-    } else if (evt.target.kind == "extraArea") {
+    } else if (evt.target.kind === "extraArea") {
         t2 = evt.target;
         t = t2.clothes.linePic;
     }
-
 
     if (!t.tweening) {
         t.mousedownOffset = {
@@ -2617,18 +2880,19 @@ function handlePrePressmoveMousedown(evt) {
     }
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function handlePressmove(evt) {
     "use strict";
     var t;
     var t2;
     //make sure t is always linepic, and t2 is extraarea
-    if (evt.target.kind == "linePic") {
+    if (evt.target.kind === "linePic") {
         t = evt.target;
         t2 = t.clothes.extraArea;
-    } else if (evt.target.kind == "extraArea") {
+    } else if (evt.target.kind === "extraArea") {
         t2 = evt.target;
         t = t2.clothes.linePic;
     }
@@ -2660,9 +2924,10 @@ function handlePressmove(evt) {
     }
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function checkIfAllClothesOn() {
     "use strict";
     if (shirt.onBody && trousers.onBody && sockLeft.onBody && sockRight.onBody && !tore.dressed) {
@@ -2674,18 +2939,19 @@ function checkIfAllClothesOn() {
     }
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function handlePostPressmovePressup(evt) {
     "use strict";
     var t;
     var t2;
     //make sure t is always linepic, and t2 is extraarea
-    if (evt.target.kind == "linePic") {
+    if (evt.target.kind === "linePic") {
         t = evt.target;
         t2 = t.clothes.extraArea;
-    } else if (evt.target.kind == "extraArea") {
+    } else if (evt.target.kind === "extraArea") {
         t2 = evt.target;
         t = t2.clothes.linePic;
     }
@@ -2709,47 +2975,10 @@ function handlePostPressmovePressup(evt) {
 
 //drawing functions
 
-/** 
+/**
  * @summary clothes
  */
-function enableDrawing() {
-    "use strict";
-    if (helpContainer.visible) {
-        //wait until helpContainer is gone
-        console.log("not ready to enable drawing");
-        setTimeout(enableDrawing, 2000);
-    } else if (menuClothes.focus) {
-        clothesGameContainer.drawingEnabled = true;
-        menuHelp.alpha = 0.0;
-        stage.update();
-        stage.autoClear = false;
-        crayonColors = ["red", "yellow", "green", "#FFAABB", "blue", "orange", "brown", "purple"]; //xxx till setup
-        crayonColorIndex = 0;
-        crayonColor = crayonColors[crayonColorIndex];
 
-        var i;
-        for (i = 0; i < crayonColors.length; i += 1) {
-            crayons[i] = makeCrayon(crayonColors[i], "black", 3); //xxx possibly move to init
-            crayonsOverlay[i] = makeCrayon("lightblue", "lightblue", 4);
-            crayons[i].index = i;
-            crayonsOverlay[i].index = i;
-            stage.addChild(crayonsOverlay[i]);
-            stage.addChild(crayons[i]);
-            crayons[i].addEventListener("mousedown", handleCrayonMouseDown);
-            crayonsOverlay[i].addEventListener("mousedown", handleCrayonMouseDown);
-        }
-
-        drawCrayons(crayonColorIndex);
-        drawingCanvas = new createjs.Shape(); //xxx probably move to init
-        stage.addEventListener("stagemousedown", handleStrokeMouseDown);
-        stage.addChild(drawingCanvas);
-        stage.update();
-    }
-}
-
-/** 
- * @summary clothes
- */
 function disableDrawing() {
     "use strict";
     clothesGameContainer.drawingEnabled = false;
@@ -2765,24 +2994,181 @@ function disableDrawing() {
     stage.removeEventListener("stagemousemove", handleStrokeMouseMove);
 }
 
-/** 
+/**
  * @summary clothes
  */
+
 function removeCrayons() {
     "use strict";
     var i;
     for (i = 0; i < crayonColors.length; i += 1) {
-        stage.removeChild(crayonsOverlay[i]);
         stage.removeChild(crayons[i]);
+    }
+    stage.removeChild(crayonOverlay);
+}
+
+/**
+ * @summary clothes
+ */
+
+function handleClothesPaint() {
+    "use strict";
+    if (clothesGameContainer.clean) {
+        clothesGameContainer.clean = false;
+        tore.sad.alpha = 1.0;
+        stage.update();
+        clothesGameContainer.alpha = 0.0;
+    }
+
+}
+
+/**
+ * @summary clothes
+ */
+
+function handleInvisibleCrayonButton(evt) {
+    "use strict";
+
+    var x = evt.stageX;
+    var y = evt.stageY;
+
+    if (x >= canvasWidth - crayonShowLength && x <= canvasWidth &&
+        y >= crayonTop && y <= crayonTop + numberOfCrayons * crayonDelta) {
+        //a crayon is hit
+        var oldCrayonColorIndex = crayonColorIndex;
+        crayonColorIndex = Math.floor((y - crayonTop) / crayonDelta);
+        crayonColor = crayonColors[crayonColorIndex];
+        drawCrayons(crayonColorIndex, oldCrayonColorIndex, false);
+        stage.update();
     }
 }
 
-/** 
+/**
  * @summary clothes
  */
+
+function handleStrokeMouseDown(evt) {
+    "use strict";
+    var x = evt.stageX;
+    var y = evt.stageY;
+    detectPaint(x, y);
+    oldPt = new createjs.Point(x, y);
+    oldMidPt = new createjs.Point(x, y);
+
+    drawingCanvas.graphics.clear().beginFill(crayonColor).drawCircle(oldPt.x, oldPt.y, drawingStroke / 2, drawingStroke / 2);
+    stage.update();
+
+    stage.addEventListener("stagemousemove", handleStrokeMouseMove);
+    stage.addEventListener("stagemouseup", handleStrokeMouseUp);
+
+}
+
+/**
+ * @summary clothes
+ */
+
+function handleStrokeMouseMove(evt) {
+    "use strict";
+    var x = evt.stageX;
+    var y = evt.stageY;
+    detectPaint(x, y);
+
+    var midPt = new createjs.Point(oldPt.x + x >> 1, oldPt.y + y >> 1);
+
+    drawingCanvas.graphics.clear().setStrokeStyle(drawingStroke, 'round', 'round').beginStroke(crayonColor).
+    moveTo(midPt.x, midPt.y).
+    curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
+
+    oldPt.x = x;
+    oldPt.y = y;
+
+    oldMidPt.x = midPt.x;
+    oldMidPt.y = midPt.y;
+
+    stage.update();
+}
+
+/**
+ * @summary clothes
+ */
+
+function handleStrokeMouseUp(evt) {
+    "use strict";
+    var x = evt.stageX;
+    var y = evt.stageY;
+
+    drawingCanvas.graphics.clear().setStrokeStyle(drawingStroke, 'round', 'round').beginStroke(crayonColor).
+    moveTo(oldMidPt.x, oldMidPt.y).
+    lineTo(x, y);
+    refreshCrayons(); //show crayons if overdrawn and covered by paint
+    stage.update();
+    stage.removeEventListener("stagemousemove", handleStrokeMouseMove);
+    stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
+
+}
+
+/**
+ * @summary clothes
+ */
+
+function detectPaint(x, y) {
+    "use strict";
+    var detected = false;
+    var pt;
+    var i;
+    for (i = 0; i < paintDetect.length && !detected; i += 1) {
+        pt = paintDetect[i].globalToLocal(x, y); //maybe this can be optimised by doing transformation only once
+        if (paintDetect[i].hitTest(pt.x, pt.y)) {
+            detected = true;
+            handleClothesPaint();
+        }
+    }
+
+}
+
+/**
+ * @summary clothes
+ */
+
+function drawCrayons(index, oldindex, keep) {
+    "use strict";
+    var i;
+    for (i = 0; i < numberOfCrayons; i += 1) {
+        crayons[i].y = crayonTop + i * crayonDelta;
+        if (i === index) {
+            crayons[i].x = canvasWidth - crayonShowLength;
+        } else {
+            if (i === oldindex) {
+                crayonOverlay.y = crayons[i].y;
+                crayonOverlay.x = canvasWidth - crayonShowLength;
+                stage.addChild(crayonOverlay);
+            }
+            crayons[i].x = canvasWidth - crayonShowLength / 2;
+        }
+        stage.addChild(crayons[i]);
+    }
+    stage.update();
+    if (!keep) {
+        for (i = 0; i < numberOfCrayons; i += 1) {
+            stage.removeChild(crayons[i]);
+        }
+        stage.removeChild(crayonOverlay);
+    }
+}
+
+function refreshCrayons() {
+    "use strict";
+    drawCrayons(crayonColorIndex, crayonColorIndex, false);
+}
+
+/**
+ * @summary clothes
+ */
+
 function makeCrayon(color, outlineColor, outlineWidth) {
     "use strict";
     var crayon = new createjs.Shape();
+    crayon.name = color + " crayon";
     crayon.graphics.
     beginFill(color).
     beginStroke(outlineColor).setStrokeStyle(outlineWidth, 'round', 'round').
@@ -2807,133 +3193,61 @@ function makeCrayon(color, outlineColor, outlineWidth) {
     return crayon;
 }
 
-/** 
+/**
  * @summary clothes
  */
-function handleClothesPaint() {
+
+function makeCrayonOverlay(color, outlineColor, outlineWidth) {
     "use strict";
-    if (clothesGameContainer.clean) {
-        console.log("paint on clothes");
-        clothesGameContainer.clean = false;
-        tore.sad.alpha = 1.0; //xxx eller tween?
+    var crayon = new createjs.Shape();
+    crayon.name = color + " crayon";
+    crayon.graphics.
+    beginFill(color).
+    beginStroke(outlineColor).setStrokeStyle(outlineWidth, 'round', 'round').
+    moveTo(40, 0).
+    lineTo(200, 0).
+    lineTo(200, 40).
+    lineTo(40, 40).
+    lineTo(36, 35).
+    lineTo(2, 23).
+    lineTo(2, 17).
+    lineTo(36, 5).
+    lineTo(40, 0);
+    return crayon;
+}
+
+function enableDrawing() {
+    "use strict";
+    if (helpContainer.visible) {
+        //wait until helpContainer is gone
+        setTimeout(enableDrawing, 2000);
+    } else if (menuClothes.focus) {
+        numberOfCrayons = crayonColors.length;
+        crayonTop = canvasHeight - (numberOfCrayons + 1) * crayonDelta;
+        clothesGameContainer.drawingEnabled = true;
+        menuHelp.alpha = 0.0;
         stage.update();
-        clothesGameContainer.alpha = 0.0;
-    }
+        crayonColorIndex = 0;
+        crayonColor = crayonColors[crayonColorIndex];
 
-}
+        var i;
+        for (i = 0; i < crayonColors.length; i += 1) {
+            crayons[i] = makeCrayon(crayonColors[i], "black", 3);
 
-/** 
- * @summary clothes
- */
-function drawCrayons(index) {
-    "use strict";
-    console.log("drawCrayons", index);
-    var crayonDelta = 50; //xxx to setup
-    var number = crayons.length;
-    var crayonTop = canvasHeight - (number + 1) * crayonDelta;
-    var crayonShowLength = 100; //xxx to setup
-
-
-    var i;
-    for (i = 0; i < number; i += 1) {
-
-        crayonsOverlay[i].y = crayonTop + i * crayonDelta;
-        crayonsOverlay[i].x = canvasWidth - crayonShowLength - 2;
-
-        crayons[i].y = crayonTop + i * crayonDelta;
-        if (i == index) {
-            crayons[i].x = canvasWidth - crayonShowLength;
-        } else {
-            crayons[i].x = canvasWidth - crayonShowLength / 2;
+            crayons[i].index = i;
         }
+
+        crayonOverlay = makeCrayonOverlay(clothesBackgroundColor[0], clothesBackgroundColor[0], 4);
+
+        drawingCanvas = new createjs.Shape();
+        drawingCanvas.name = "drawing canvas";
+        stage.addEventListener("stagemousedown", handleStrokeMouseDown);
+        stage.addEventListener("stagemousedown", handleInvisibleCrayonButton);
+        stage.addChild(drawingCanvas);
+        drawCrayons(crayonColorIndex, crayonColorIndex, true);
+
+        stage.update(); //this is done in drawCrayons but an extra update seems to be needed for correct update in android webview
+        stage.autoClear = false;
+        drawCrayons(crayonColorIndex, crayonColorIndex, false);
     }
 }
-
-/** 
- * @summary clothes
- */
-function handleCrayonMouseDown(evt) {
-    "use strict";
-    crayonColorIndex = evt.target.index;
-    crayonColor = crayonColors[crayonColorIndex];
-    drawCrayons(crayonColorIndex);
-    stage.update();
-}
-
-/** 
- * @summary clothes
- */
-function handleStrokeMouseDown(evt) {
-    "use strict";
-    console.log(">>>>> handleStrokeMouseDown", stage.mouseX | 0, stage.mouseY | 0);
-    detectPaint();
-    stroke = 10; //xxx to setup
-    oldPt = new createjs.Point(stage.mouseX, stage.mouseY);
-    oldMidPt = new createjs.Point(stage.mouseX, stage.mouseY);
-
-    drawingCanvas.graphics.clear().beginFill(crayonColor).drawCircle(oldPt.x, oldPt.y, stroke / 2, stroke / 2);
-    stage.update();
-
-    stage.addEventListener("stagemousemove", handleStrokeMouseMove);
-    stage.addEventListener("stagemouseup", handleStrokeMouseUp);
-    
-}
-
-/** 
- * @summary clothes
- */
-function handleStrokeMouseMove(evt) {
-    "use strict";
-    console.log(" *  *  *  *  *  handleStrokeMouseMove");
-    detectPaint();
-
-    var midPt = new createjs.Point(oldPt.x + stage.mouseX >> 1, oldPt.y + stage.mouseY >> 1);
-
-    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
-    moveTo(midPt.x, midPt.y).
-    curveTo(oldPt.x, oldPt.y, oldMidPt.x, oldMidPt.y);
-
-    oldPt.x = stage.mouseX;
-    oldPt.y = stage.mouseY;
-
-    oldMidPt.x = midPt.x;
-    oldMidPt.y = midPt.y;
-
-    stage.update();
-}
-
-/** 
- * @summary clothes
- */
-function handleStrokeMouseUp(evt) {
-    "use strict";
-    console.log(" *  *  *  *  *  handleStrokeMouseUp", stage.mouseX | 0, stage.mouseY | 0);
-
-    drawingCanvas.graphics.clear().setStrokeStyle(stroke, 'round', 'round').beginStroke(crayonColor).
-    moveTo(oldMidPt.x, oldMidPt.y).
-    lineTo(stage.mouseX, stage.mouseY);
-    stage.update();
-    stage.removeEventListener("stagemousemove", handleStrokeMouseMove);
-    stage.removeEventListener("stagemouseup", handleStrokeMouseUp);
-
-}
-
-/** 
- * @summary clothes
- */
-function detectPaint() {
-    "use strict";
-    var detected = false;
-    var pt;
-    var i;
-    for (i = 0; i < paintDetect.length && !detected; i += 1) {
-        pt = paintDetect[i].globalToLocal(stage.mouseX, stage.mouseY); //xxx kan inte detta göras en gång för alla?
-        if (paintDetect[i].hitTest(pt.x, pt.y)) {
-            detected = true;
-            handleClothesPaint();
-        }
-    }
-
-}
-
-
